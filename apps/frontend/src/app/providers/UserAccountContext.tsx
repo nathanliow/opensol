@@ -1,4 +1,4 @@
-import { WithChildren } from '@/types/UtilityTypes';
+import { WithChildren } from '@/types/utilityTypes';
 import { usePrivy } from '@privy-io/react-auth';
 import { createContext, useContext, useMemo } from 'react';
 

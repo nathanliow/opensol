@@ -1,93 +1,157 @@
-import { useState, useEffect } from 'react';
-import { Handle, useUpdateNodeInternals } from '@xyflow/react';
-import { Position } from '@xyflow/system';
+import { memo, useCallback, useState, useMemo } from 'react';
+import { useEdges, useNodes } from '@xyflow/react';
+import TemplateNode from './TemplateNode';
+import { InputDefinition } from '../../types/inputTypes';
+import { nodeTypesData } from '../../types/nodeTypes';
+import blockTemplateService from '../services/blockTemplateService';
+import { CustomHandle } from '../../types/handleTypes';
 
-// Sample functions with parameters
-const availableFunctions = [
-  { 
-    name: 'getUserTokenBalances', 
-    parameters: ['address'] 
-  },
-  { 
-    name: 'getTokenMetadata', 
-    parameters: ['tokenAddress'] 
-  },
-  { 
-    name: 'getTokenPriceInSol', 
-    parameters: ['tokenAddress'] 
-  },
-  { 
-    name: 'getTokenPriceInUsd', 
-    parameters: ['tokenAddress'] 
-  }
-];
+interface GetNodeData {
+  label: string;
+  selectedFunction?: string;
+  parameters?: Record<string, string>;
+}
 
 interface GetNodeProps {
   id: string;
-  data: { 
-    selectedFunction?: string;
-    label?: string;
-  };
+  data: GetNodeData;
 }
 
-export default function GetNode({ id, data }: GetNodeProps) {
-  const [selectedFunction, setSelectedFunction] = useState(
-    data.selectedFunction || availableFunctions[0].name
-  );
-  const updateNodeInternals = useUpdateNodeInternals();
+const GetNode = memo(({ id, data }: GetNodeProps) => {
+  const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
+  const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
+  const blockTemplates = blockTemplateService.getTemplatesByType('GET');
+  const edges = useEdges();
+  const nodes = useNodes();
   
-  // Find the current function object
-  const currentFunction = availableFunctions.find(fn => fn.name === selectedFunction) || availableFunctions[0];
-  
-  // Update node internals when parameters change
-  useEffect(() => {
-    updateNodeInternals(id);
-  }, [id, selectedFunction, updateNodeInternals]);
-  
-  const handleFunctionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedFunction(e.target.value);
-  };
+  const nodeType = nodeTypesData['GET'];
+  const backgroundColor = nodeType?.backgroundColor || 'bg-[#2563EB]';
+  const borderColor = nodeType?.borderColor || 'border-gray-700';
+  const primaryColor = nodeType?.primaryColor || 'blue-500';
+  const secondaryColor = nodeType?.secondaryColor || 'blue-700';
+  const textColor = nodeType?.textColor || 'text-gray-200';
+
+  const getConnectedStringValue = useCallback((paramName: string) => {
+    const edge = edges.find(e => 
+      e.target === id && 
+      e.targetHandle === `param-${paramName}` &&
+      nodes.find(n => n.id === e.source)?.type === 'STRING'
+    );
+    
+    if (!edge) return null;
+    const sourceNode = nodes.find(n => n.id === edge.source);
+    return sourceNode?.data.value || null;
+  }, [edges, id, nodes]);
+
+  const handleFunctionChange = useCallback((value: string) => {
+    setSelectedFunction(value);
+    
+    // Initialize parameters
+    const newParameters: Record<string, string> = {};
+    
+    // Add Helius API key if this is getUserSolBalance
+    if (value === 'getUserSolBalance') {
+      const apiKey = localStorage.getItem('helius_api_key');
+      if (apiKey) {
+        newParameters['apiKey'] = apiKey;
+      }
+    }
+    
+    setParameters(newParameters);
+    // Update node data
+    data.selectedFunction = value;
+    data.parameters = newParameters;
+  }, [data]);
+
+  const handleParameterChange = useCallback((paramName: string, value: string) => {
+    const newParameters = { ...parameters };
+    
+    // Add Helius API key if this is a GET node that requires it
+    if (selectedFunction === 'getUserSolBalance' && paramName === 'address') {
+      const apiKey = localStorage.getItem('helius_api_key');
+      if (apiKey) {
+        newParameters['apiKey'] = apiKey;
+      }
+    }
+    
+    newParameters[paramName] = value;
+    setParameters(newParameters);
+    // Update node data
+    data.parameters = newParameters;
+  }, [parameters, data, selectedFunction]);
+
+  const currentTemplate = selectedFunction ? blockTemplates.find(t => t.metadata.name === selectedFunction) : null;
+
+  // Convert function options into dropdown options
+  const functionOptions = useMemo(() => {
+    return [
+      { value: '', label: 'Select Function' },
+      ...blockTemplates.map(template => ({
+        value: template.metadata.name,
+        label: template.metadata.name
+      }))
+    ];
+  }, [blockTemplates]);
+
+  // Create dynamic inputs based on selected function
+  const inputs: InputDefinition[] = useMemo(() => {
+    const baseInputs: InputDefinition[] = [{
+      id: 'function',
+      label: 'Function',
+      type: 'dropdown',
+      options: functionOptions,
+      defaultValue: selectedFunction
+    }];
+    
+    if (currentTemplate) {
+      const paramInputs = currentTemplate.metadata.parameters
+        .filter(param => param.name !== 'apiKey') // Skip API key parameter
+        .map(param => ({
+          id: param.name,
+          label: param.name,
+          type: 'text' as const,
+          defaultValue: parameters[param.name] || '',
+          description: param.description,
+          getConnectedValue: () => getConnectedStringValue(param.name),
+          handleId: `param-${param.name}`,
+        }));
+      return [...baseInputs, ...paramInputs];
+    }
+    
+    return baseInputs;
+  }, [currentTemplate, functionOptions, parameters, selectedFunction, getConnectedStringValue]);
+
+  const handleInputChange = useCallback((inputId: string, value: any) => {
+    if (inputId === 'function') {
+      handleFunctionChange(value);
+    } else {
+      handleParameterChange(inputId, value);
+    }
+  }, [handleFunctionChange, handleParameterChange]);
+
+  // Define custom handles
+  const customHandles: CustomHandle[] = useMemo(() => ([
+    { type: 'target', position: 'top', id: 'top-target' },
+    { type: 'source', position: 'bottom', id: 'bottom-source' }
+  ]), []);
 
   return (
-    <div className="bg-blue-200 p-3 rounded-md shadow-md border border-blue-400 min-w-[180px]">
-      <div className="text-center font-bold text-gray-800 mb-2 border-b border-blue-400 pb-1">GET</div>
-      
-      <div className="mb-3">
-        <select 
-          className="w-full p-1 rounded bg-blue-100 border border-blue-400 text-sm text-black"
-          value={selectedFunction}
-          onChange={handleFunctionChange}
-        >
-          {availableFunctions.map(fn => (
-            <option key={fn.name} value={fn.name}>
-              {fn.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      
-      {/* Parameters and handles */}
-      <div className="text-xs text-gray-700">
-        {currentFunction.parameters.map((param, index) => (
-          <div key={param} className="flex justify-between items-center mb-2 relative">
-            <div className="font-medium">{param}:</div>
-            <div className="h-5 w-20 bg-blue-100 rounded border border-blue-400"></div>
-            <Handle
-              id={`param-${index}`}
-              type="target"
-              position={Position.Left}
-              style={{ left: -8, top: `${50}%`, background: '#60A5FA' }}
-            />
-          </div>
-        ))}
-      </div>
-      
-      {/* Output handle */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{ right: 6, background: '#60A5FA' }}
-      />
-    </div>
+    <TemplateNode
+      id={id}
+      title="GET"
+      backgroundColor={backgroundColor}
+      borderColor={borderColor}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+      textColor={textColor}
+      inputs={inputs}
+      data={data}
+      onInputChange={handleInputChange}
+      customHandles={customHandles}
+    />
   );
-}
+});
+
+GetNode.displayName = 'GetNode';
+
+export default GetNode;

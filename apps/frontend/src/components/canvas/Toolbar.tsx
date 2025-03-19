@@ -1,50 +1,24 @@
+import { NodeCategory, NodeType } from "../../types/nodeTypes";
 import { Panel } from "@xyflow/react";
+import { useState } from "react";
 
 interface ToolbarProps {
   showNodeTypes: boolean;
   toggleNodeTypesDropdown: () => void;
-  availableNodeTypes: any[];
+  nodeTypesData: Record<string, NodeType>;
   addNewNode: (type: any) => void;
 }
 
 export default function Toolbar({
   showNodeTypes,
   toggleNodeTypesDropdown,
-  availableNodeTypes,
+  nodeTypesData,
   addNewNode,
 }: ToolbarProps) {
-  // Helper function to get the appropriate SVG for each node type
-  const getNodeTypeSvg = (type: string) => {
-    switch (type) {
-      case 'GET':
-        return (
-          <>
-            <rect width="50" height="30" rx="2" fill="#60A5FA" stroke="#000" strokeWidth="1" />
-            <text x="25" y="20" textAnchor="middle" fill="black" fontSize="10">
-              GET
-            </text>
-          </>
-        );
-      case 'START':
-        return (
-          <>
-            <rect width="50" height="30" rx="2" fill="#FFA500" stroke="#000" strokeWidth="1" />
-            <text x="25" y="20" textAnchor="middle" fill="black" fontSize="10">
-              START
-            </text>
-          </>
-        );
-      default:
-        return (
-          <>
-            <rect width="50" height="30" rx="2" fill="#6B7280" stroke="#000" strokeWidth="1" />
-            <text x="25" y="20" textAnchor="middle" fill="white" fontSize="10">
-              {type}
-            </text>
-          </>
-        );
-    }
-  };
+  const [activeTab, setActiveTab] = useState<NodeCategory>('Default');
+
+  // Filter node types by active category
+  const filteredNodeTypes = Object.values(nodeTypesData).filter(type => type.category === activeTab);
 
   return (
     <Panel position="top-center" className="bg-[#121212] rounded-b-md p-2 shadow-md">
@@ -63,37 +37,44 @@ export default function Toolbar({
           </button>
 
           {showNodeTypes && (
-            <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#1e1e1e] rounded shadow-lg z-10 max-h-[300px] overflow-y-auto p-2">
-              <div className="grid grid-cols-3 gap-2">
-                {availableNodeTypes.map((type) => (
+            <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#1e1e1e] rounded shadow-lg z-10 overflow-hidden">
+              {/* Tabs */}
+              <div className="flex border-b border-gray-700">
+                {['Default', 'DeFi', 'Misc'].map((tab) => (
                   <button
-                    key={type.id}
-                    className="flex flex-col items-center p-2 hover:bg-gray-700 rounded transition"
-                    onClick={() => addNewNode(type.id)}
+                    key={tab}
+                    onClick={() => setActiveTab(tab as NodeCategory)}
+                    className={`flex-1 px-4 py-2 text-sm ${
+                      activeTab === tab 
+                        ? 'bg-gray-700 text-white' 
+                        : 'text-gray-400 hover:bg-gray-800'
+                    }`}
                   >
-                    <svg width="60" height="40" viewBox="0 0 60 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      {getNodeTypeSvg(type.id)}
-                    </svg>
+                    {tab}
                   </button>
                 ))}
+              </div>
+
+              {/* Node grid */}
+              <div className="max-h-[300px] overflow-y-auto p-2">
+                <div className="grid grid-cols-3 gap-2">
+                  {filteredNodeTypes.map((type) => (
+                    <button
+                      key={type.id}
+                      className="flex flex-col items-center p-2 hover:bg-gray-700 rounded transition"
+                      onClick={() => addNewNode(type.id)}
+                    >
+                      <div className={`w-[60px] h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}>
+                        <span className={`text-xs ${type.textColor} font-medium`}>{type.label}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* <button
-          onClick={togglePanMode}
-          className={`p-2 rounded hover:bg-gray-700 transition ${
-            isPanMode ? 'bg-gray-700' : ''
-          }`}
-          title="Pan Mode"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 4V8M15 8V12M15 8H11M15 8H19" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            <path d="M9 11V15M9 15V19M9 15H5M9 15H13" stroke="white" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button> */}
-        
         <button
           className="p-2 rounded hover:bg-gray-700 transition"
           title="Run (Coming Soon)"

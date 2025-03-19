@@ -3,55 +3,42 @@ import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/inputTypes';
 import { nodeTypesData } from '../../types/nodeTypes';
 
-interface MintNodeProps {
+interface LabelNodeProps {
   id: string;
-  data: {
-    label?: string;
+  data: { 
     name?: string;
-    symbol?: string;
-    supply?: string;
   };
 }
-
-export default function MintNode({ id, data }: MintNodeProps) {
-  const nodeType = nodeTypesData['MINT'];
+ 
+export default function LabelNode({ id, data }: LabelNodeProps) {
+  const nodeType = nodeTypesData['LABEL'];
   const backgroundColor = nodeType?.backgroundColor;
   const borderColor = nodeType?.borderColor;
   const primaryColor = nodeType?.primaryColor;
   const secondaryColor = nodeType?.secondaryColor;
   const textColor = nodeType?.textColor;
   
-  // Define inputs for token minting
+  // Define inputs for the label node
   const inputs: InputDefinition[] = [
     {
       id: 'name',
-      label: 'Token Name',
+      label: 'Name',
       type: 'text',
-      defaultValue: data.name || ''
-    },
-    {
-      id: 'symbol',
-      label: 'Symbol',
-      type: 'text',
-      defaultValue: data.symbol || ''
-    },
-    {
-      id: 'supply',
-      label: 'Supply',
-      type: 'number',
-      defaultValue: data.supply || '1000000'
+      defaultValue: data.name || 'Untitled Logic'
     }
   ];
   
   const handleInputChange = useCallback((inputId: string, value: any) => {
-    console.log(`Mint parameter ${inputId} changed to ${value}`);
-    // Update logic would go here
-  }, []);
+    if (inputId === 'name') {
+      // Update the node data
+      data.name = value;
+    }
+  }, [data]);
   
   return (
     <TemplateNode
       id={id}
-      title="MINT"
+      title="LABEL"
       backgroundColor={backgroundColor}
       borderColor={borderColor}
       primaryColor={primaryColor}
@@ -60,6 +47,7 @@ export default function MintNode({ id, data }: MintNodeProps) {
       inputs={inputs}
       data={data}
       onInputChange={handleInputChange}
+      hideInputHandles={true} // No input handles for label node
     />
   );
 }

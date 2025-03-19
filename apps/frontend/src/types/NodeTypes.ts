@@ -1,9 +1,93 @@
 import { NodeTypes } from "@xyflow/react";
-import getNode from "../components/nodes/getNode";
-import objectNode from "../components/nodes/objectNode";
+import getNode from "../components/nodes/GetNode";
+import objectNode from "../components/nodes/ObjectNode";
+import mintNode from "../components/nodes/MintNode";
+import constNode from "../components/nodes/ConstNode";
+import labelNode from "../components/nodes/LabelNode";
 
-export const nodeTypes = {
+export type NodeCategory = 'Default' | 'DeFi' | 'Misc';
+
+export interface NodeType {
+  id: string;
+  label: string;
+  category: NodeCategory;
+
+  backgroundColor: string; // bg-xxxx-xxxx (tailwind)
+  borderColor: string; // border-xxxx-xxxx (tailwind)
+  primaryColor: string; 
+  secondaryColor: string;
+  textColor: string; // text-xxxx-xxxx (tailwind)
+}
+
+// nodeTypes only for Canvas
+export const createNodeTypes = (setNodes: (updater: any) => void) => ({  
   GET: getNode,
   OBJECT: objectNode,
-} satisfies NodeTypes;
-  
+  CONST: constNode,
+  MINT: mintNode,
+  LABEL: labelNode,
+} satisfies NodeTypes);
+
+// Data for node types (NEEDS TO MATCH THE NODE TYPES IN THE CANVAS)
+export const nodeTypesData: Record<string, NodeType> = {
+
+  /* ------------------------------------------------------------ */
+  /* -------------------------- DEFAULT ------------------------- */
+  /* ------------------------------------------------------------ */
+
+  GET: { 
+    id: 'GET', 
+    label: 'GET', 
+    category: 'Default', 
+    backgroundColor: 'bg-blue-200',
+    borderColor: 'border-blue-400',
+    primaryColor: 'blue-200', 
+    secondaryColor: 'blue-400',
+    textColor: 'text-black'
+  },
+  OBJECT: { 
+    id: 'OBJECT', 
+    label: 'OBJECT', 
+    category: 'Default', 
+    backgroundColor: 'bg-blue-300',
+    borderColor: 'border-blue-500',
+    primaryColor: 'blue-400', 
+    secondaryColor: 'blue-600',
+    textColor: 'text-black'
+  },
+  CONST: {
+    id: 'CONST',
+    label: 'CONST',
+    category: 'Default',
+    backgroundColor: 'bg-white',
+    borderColor: 'border-black',
+    primaryColor: 'white',
+    secondaryColor: 'white',
+    textColor: 'text-black'
+  },
+  LABEL: {
+    id: 'LABEL',
+    label: 'LABEL',
+    category: 'Default',
+    backgroundColor: 'bg-white',
+    borderColor: 'border-black',
+    primaryColor: 'white',
+    secondaryColor: 'white',
+    textColor: 'text-black'
+  },
+
+  /* ------------------------------------------------------------ */
+  /* -------------------------- DEFI ---------------------------- */
+  /* ------------------------------------------------------------ */
+
+  MINT: {
+    id: 'MINT',
+    label: 'MINT',
+    category: 'DeFi',
+    backgroundColor: 'bg-red-200',
+    borderColor: 'border-red-400',
+    primaryColor: 'red',
+    secondaryColor: 'red',
+    textColor: 'text-black'
+  },
+};

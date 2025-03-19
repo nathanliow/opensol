@@ -1,4 +1,4 @@
-import { WithChildren } from '@/types/UtilityTypes';
+import { WithChildren } from '@/types/utilityTypes';
 import { PrivyProvider } from '@privy-io/react-auth';
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 
