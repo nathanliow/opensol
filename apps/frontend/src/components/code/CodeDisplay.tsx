@@ -16,11 +16,11 @@ import { FC, useState } from 'react';
      setTimeout(() => setCopied(false), 2000);
    };
  
-   return (
-     <div className="relative">
-       <button
+  return (
+    <div className="relative">
+      <button
          onClick={handleCopy}
-         className="absolute top-2 right-2 p-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+         className="absolute top-2 right-2 p-2 rounded-lg transition-colors bg-[#252525] hover:bg-[#2D2D2D] border-[#333333]"
          title={copied ? "Copied!" : "Copy code"}
        >
          {copied ? (
@@ -28,20 +28,20 @@ import { FC, useState } from 'react';
          ) : (
            <ClipboardIcon className="h-5 w-5 text-gray-400" />
          )}
-       </button>
-       <SyntaxHighlighter
-         language="javascript"
-         style={vscDarkPlus}
-         customStyle={{
-           margin: 0,
-           borderRadius: '0.5rem',
-           padding: '1rem',
-         }}
-       >
-         {code}
-       </SyntaxHighlighter>
-     </div>
-   );
- };
+      </button>
+      <SyntaxHighlighter
+        language="javascript"
+        style={vscDarkPlus}
+        customStyle={{
+          margin: 0,
+          borderRadius: '0.5rem',
+          padding: '0.5rem',
+        }}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
+};
  
  export default CodeDisplay;

@@ -12,34 +12,25 @@ export const getUserSolBalance: BlockTemplate = {
         name: 'address',
         type: 'string',
         description: 'Wallet address to check'
-      },
-      {
-        name: 'network',
-        type: 'string',
-        description: 'Mainnet or Devnet',
-      },
-      {
-        name: 'apiKey',
-        type: 'string',
-        description: 'Helius API Key'
       }
     ],
+    requiredKeys: ['helius'],
     output: {
       type: 'string',
       description: 'User SOL balance'
     }
   },
-  execute: async (params: { address: string, apiKey: string, network: string }) => {
+  execute: async (params: { address: string; apiKey?: string; network?: string }) => {
     try {
-      const { address, apiKey, network } = params;
-      if (!apiKey) {
-        throw new Error('Helius API Key is required. Please add it in the menu.');
-      }
+      // Extract parameters
+      const { address, apiKey, network = 'mainnet' } = params;
+      
       if (!address) {
         throw new Error('Wallet address is required.');
       }
-      if (!network) {
-        throw new Error('Network is required.');
+      
+      if (!apiKey) {
+        throw new Error('Helius API key is required.');
       }
 
       // Fetch assets owned by the user (using getAssetsByOwner)
@@ -80,7 +71,7 @@ export const getUserSolBalance: BlockTemplate = {
       const assetsData = await assetsResponse.json();
 
       // Fetch the SOL balance for the account
-      const balanceResponse = await fetch(`https://mainnet.helius-rpc.com/?api-key=${apiKey}`, {
+      const balanceResponse = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

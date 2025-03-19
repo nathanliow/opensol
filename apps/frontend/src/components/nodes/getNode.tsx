@@ -5,6 +5,7 @@ import { InputDefinition } from '../../types/inputTypes';
 import { nodeTypesData } from '../../types/nodeTypes';
 import blockTemplateService from '../services/blockTemplateService';
 import { CustomHandle } from '../../types/handleTypes';
+import { useConfig } from '../../contexts/ConfigContext';
 
 interface GetNodeData {
   label: string;
@@ -23,6 +24,7 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   const blockTemplates = blockTemplateService.getTemplatesByType('GET');
   const edges = useEdges();
   const nodes = useNodes();
+  const { network, getApiKey } = useConfig();
   
   const nodeType = nodeTypesData['GET'];
   const backgroundColor = nodeType?.backgroundColor || 'bg-[#2563EB]';
@@ -51,34 +53,38 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
     
     // Add Helius API key if this is getUserSolBalance
     if (value === 'getUserSolBalance') {
-      const apiKey = localStorage.getItem('helius_api_key');
+      const apiKey = getApiKey('helius');
       if (apiKey) {
         newParameters['apiKey'] = apiKey;
       }
+      // Also set the network parameter
+      newParameters['network'] = network;
     }
     
     setParameters(newParameters);
     // Update node data
     data.selectedFunction = value;
     data.parameters = newParameters;
-  }, [data]);
+  }, [data, getApiKey, network]);
 
   const handleParameterChange = useCallback((paramName: string, value: string) => {
     const newParameters = { ...parameters };
     
     // Add Helius API key if this is a GET node that requires it
     if (selectedFunction === 'getUserSolBalance' && paramName === 'address') {
-      const apiKey = localStorage.getItem('helius_api_key');
+      const apiKey = getApiKey('helius');
       if (apiKey) {
         newParameters['apiKey'] = apiKey;
       }
+      // Also ensure network is set
+      newParameters['network'] = network;
     }
     
     newParameters[paramName] = value;
     setParameters(newParameters);
     // Update node data
     data.parameters = newParameters;
-  }, [parameters, data, selectedFunction]);
+  }, [parameters, data, selectedFunction, getApiKey, network]);
 
   const currentTemplate = selectedFunction ? blockTemplates.find(t => t.metadata.name === selectedFunction) : null;
 

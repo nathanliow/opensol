@@ -1,9 +1,10 @@
 import { NodeTypes } from "@xyflow/react";
-import getNode from "../components/nodes/GetNode";
-import objectNode from "../components/nodes/ObjectNode";
-import mintNode from "../components/nodes/MintNode";
-import constNode from "../components/nodes/ConstNode";
-import labelNode from "../components/nodes/LabelNode";
+import GetNode from "../components/nodes/GetNode";
+import ObjectNode from "../components/nodes/ObjectNode";
+import MintNode from "../components/nodes/MintNode";
+import ConstNode from "../components/nodes/ConstNode";
+import LabelNode from "../components/nodes/LabelNode";
+import PrintNode from "../components/nodes/PrintNode";
 
 export type NodeCategory = 'Default' | 'DeFi' | 'Misc';
 
@@ -21,11 +22,18 @@ export interface NodeType {
 
 // nodeTypes only for Canvas
 export const createNodeTypes = (setNodes: (updater: any) => void) => ({  
-  GET: getNode,
-  OBJECT: objectNode,
-  CONST: constNode,
-  MINT: mintNode,
-  LABEL: labelNode,
+  // Default
+  GET: GetNode,
+  OBJECT: ObjectNode,
+  CONST: ConstNode,
+  LABEL: LabelNode,
+  PRINT: PrintNode,
+
+  // DeFi
+  MINT: MintNode,
+
+  // Misc
+  
 } satisfies NodeTypes);
 
 // Data for node types (NEEDS TO MATCH THE NODE TYPES IN THE CANVAS)
@@ -68,6 +76,16 @@ export const nodeTypesData: Record<string, NodeType> = {
   LABEL: {
     id: 'LABEL',
     label: 'LABEL',
+    category: 'Default',
+    backgroundColor: 'bg-white',
+    borderColor: 'border-black',
+    primaryColor: 'white',
+    secondaryColor: 'white',
+    textColor: 'text-black'
+  },
+  PRINT: {
+    id: 'PRINT',
+    label: 'PRINT',
     category: 'Default',
     backgroundColor: 'bg-white',
     borderColor: 'border-black',

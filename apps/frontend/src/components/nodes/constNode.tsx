@@ -8,7 +8,6 @@ const dataTypes = [
   { value: 'string', label: 'String' },
   { value: 'number', label: 'Number' },
   { value: 'boolean', label: 'Boolean' },
-  { value: 'json', label: 'JSON' }
 ];
 
 interface ConstNodeProps {

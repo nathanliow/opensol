@@ -1,5 +1,6 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/nodeTypes';
+import { ApiKeyType } from '../../types/keyTypes';
 
 // Frontend block template format
 export interface BlockTemplate {
@@ -13,6 +14,7 @@ export interface BlockTemplate {
       type: string;
       description: string;
     }[];
+    requiredKeys: ApiKeyType[];
     output: {
       type: string;
       description: string;
@@ -47,6 +49,7 @@ export class BlockTemplateService {
           type: param.type,
           description: param.description
         })) : [],
+        requiredKeys: backendTemplate.metadata.requiredKeys,
         output: {
           type: 'any', // We could add this to backend template if needed
           description: 'Function output'

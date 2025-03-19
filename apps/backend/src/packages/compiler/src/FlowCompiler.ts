@@ -41,17 +41,17 @@ export class FlowCompiler {
 
     // Generate function code that uses params directly
     const functionCode = `async function ${functionName}(params) {
-  try {
-    const { address, apiKey } = params;
-    console.log('Received params:', params);
-    console.log('Extracted address:', address);
-    console.log('Extracted apiKey:', apiKey);
-    ${functionBody.replace(/const\s*{\s*address\s*,\s*apiKey\s*}\s*=\s*params\s*;/, '')}
-  } catch (error) {
-    console.error('Error in ${templateName}:', error);
-    throw error;
-  }
-}`;
+      try {
+        const { address, apiKey } = params;
+        console.log('Received params:', params);
+        console.log('Extracted address:', address);
+        console.log('Extracted apiKey:', apiKey);
+        ${functionBody.replace(/const\s*{\s*address\s*,\s*apiKey\s*}\s*=\s*params\s*;/, '')}
+      } catch (error) {
+        console.error('Error in ${templateName}:', error);
+        throw error;
+      }
+    }`;
 
     this.getFunctions.set(functionName, functionCode);
     this.templateToFunctionName.set(templateName, functionName);
@@ -67,10 +67,14 @@ export class FlowCompiler {
         const functionName = this.generateGetFunction(node);
         const parameters = node.data.parameters || {};
         
+        // Extract network from parameters or default to 'devnet'
+        const network = parameters.network || 'devnet';
+        
         // Create parameters object including apiKey
         const paramsObj = {
           ...parameters,
-          apiKey: 'HELIUS_API_KEY'
+          apiKey: 'HELIUS_API_KEY',
+          network: network
         };
         
         // Convert parameters to a string representation

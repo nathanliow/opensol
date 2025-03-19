@@ -1,44 +1,69 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useReactFlow } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/inputTypes';
 import { nodeTypesData } from '../../types/nodeTypes';
+import { CustomHandle } from '../../types/handleTypes';
 
 interface LabelNodeProps {
   id: string;
   data: { 
-    name?: string;
+    name: string;
   };
 }
- 
+
 export default function LabelNode({ id, data }: LabelNodeProps) {
+  const { setNodes } = useReactFlow();
   const nodeType = nodeTypesData['LABEL'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
-  
-  // Define inputs for the label node
-  const inputs: InputDefinition[] = [
+  const backgroundColor = nodeType?.backgroundColor || 'bg-[#059669]';
+  const borderColor = nodeType?.borderColor || 'border-gray-700';
+  const primaryColor = nodeType?.primaryColor || 'emerald-700';
+  const secondaryColor = nodeType?.secondaryColor || 'emerald-800';
+  const textColor = nodeType?.textColor || 'text-white';
+
+  const handleNameChange = useCallback((value: string) => {
+    setNodes((nodes) =>
+      nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                name: value
+              }
+            }
+          : node
+      )
+    );
+  }, [id, setNodes]);
+
+  // Define input for the name field
+  const inputs: InputDefinition[] = useMemo(() => [
     {
       id: 'name',
       label: 'Name',
       type: 'text',
-      defaultValue: data.name || 'Untitled Logic'
+      defaultValue: data.name || 'Untitled Logic',
+      placeholder: 'Enter logic name...'
     }
-  ];
-  
-  const handleInputChange = useCallback((inputId: string, value: any) => {
-    if (inputId === 'name') {
-      // Update the node data
-      data.name = value;
+  ], [data.name]);
+
+  // Define custom handle (output at bottom)
+  const customHandles: CustomHandle[] = useMemo(() => [
+    {
+      type: 'source',
+      position: 'bottom',
+      id: 'output',
+      isValidConnection: (connection: { targetHandle: string; }) => {
+        return connection.targetHandle === 'top-target';
+      }
     }
-  }, [data]);
-  
+  ], []);
+
   return (
     <TemplateNode
       id={id}
-      title="LABEL"
+      title="FUNCTION"
       backgroundColor={backgroundColor}
       borderColor={borderColor}
       primaryColor={primaryColor}
@@ -46,8 +71,13 @@ export default function LabelNode({ id, data }: LabelNodeProps) {
       textColor={textColor}
       inputs={inputs}
       data={data}
-      onInputChange={handleInputChange}
-      hideInputHandles={true} // No input handles for label node
+      onInputChange={(inputId, value) => {
+        if (inputId === 'name') {
+          handleNameChange(value);
+        }
+      }}
+      hideInputHandles={true}
+      customHandles={customHandles}
     />
   );
 }

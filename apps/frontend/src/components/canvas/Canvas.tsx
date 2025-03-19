@@ -9,7 +9,9 @@ import {
   useNodesState,
   useEdgesState,
   type OnConnect,
-  Panel,
+  useReactFlow,
+  useViewport,
+  SelectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { initialNodes } from "../nodes/InitialNodes";
@@ -18,7 +20,6 @@ import { edgeTypes } from "../../types/edgeTypes";
 import { createNodeTypes, nodeTypesData } from "../../types/nodeTypes";
 import Toolbar from "./Toolbar";
 import Console from "../console/Console";
-import RunButton from "./RunButton";
 import Menu from "./Menu";
 
 // Internal component that uses ReactFlow hooks
@@ -31,6 +32,10 @@ function Flow() {
   const [code, setCode] = useState<string>('');
   const [selectedLabel, setSelectedLabel] = useState<string>('');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const reactFlowInstance = useReactFlow();
+  
+  // Selection mode state
+  const [selectionMode, setSelectionMode] = useState(false);
 
   // Create node types with setNodes
   const nodeTypes = useMemo(() => createNodeTypes(setNodes), [setNodes]);
@@ -41,17 +46,26 @@ function Flow() {
     setDebug('');
   }, []);
 
-  const addNewNode = useCallback((type: any) => {
+  const toggleSelectionMode = useCallback(() => {
+    setSelectionMode(prev => !prev);
+  }, []);
+
+  const addNewNode = useCallback((type: string, position?: { x: number; y: number }) => {
+    // If position is provided, use it; otherwise use viewport center
+    let nodePosition = position;
+
     const newNode = {
-      id: `node-${Date.now()}`,
-      type: type,
-      position: { x: 250, y: 250 },
-      data: { label: `New ${type} node` },
+      id: `${type.toLowerCase()}-${Date.now()}`,
+      type,
+      position: nodePosition || { x: 0, y: 0 },
+      data: type === 'LABEL' 
+        ? { name: 'Untitled Logic', label: 'LABEL' }
+        : { label: type, selectedFunction: '', parameters: {} }
     };
   
     setNodes((nds) => [...nds, newNode]);
     setShowNodeTypes(false);
-  }, [setNodes]);
+  }, [reactFlowInstance, setNodes]);
 
   const toggleNodeTypesDropdown = useCallback(() => {
     setShowNodeTypes(!showNodeTypes);
@@ -77,28 +91,16 @@ function Flow() {
         return;
       }
 
-      // Get the current ReactFlow instance to access the screenToFlowPosition function
-      const flowInstance = document.querySelector('.react-flow');
-      if (!flowInstance) return;
-
-      // Calculate position manually if needed
-      const position = {
+      // Calculate position in flow coordinates
+      const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
-      };
+        y: event.clientY - reactFlowBounds.top
+      });
 
-      const newNode = {
-        id: `${type.toLowerCase()}-${Date.now()}`,
-        type,
-        position,
-        data: type === 'LABEL' 
-          ? { name: 'Untitled Logic', label: 'LABEL' }
-          : { label: type, selectedFunction: '', parameters: {} }
-      };
-
-      setNodes((nds) => nds.concat(newNode));
+      // Create the new node at the drop position
+      addNewNode(type, position);
     },
-    [setNodes]
+    [reactFlowInstance, addNewNode]
   );
 
   const proOptions = { hideAttribution: true };
@@ -116,6 +118,9 @@ function Flow() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         proOptions={proOptions}
+        selectionMode={selectionMode ? SelectionMode.Partial : SelectionMode.Full}
+        selectionOnDrag={selectionMode}
+        panOnDrag={!selectionMode}
         fitView
       >
         <Toolbar
@@ -123,26 +128,21 @@ function Flow() {
           toggleNodeTypesDropdown={toggleNodeTypesDropdown}
           nodeTypesData={nodeTypesData}
           addNewNode={addNewNode}
+          selectionMode={selectionMode}
+          toggleSelectionMode={toggleSelectionMode}
         />
         <Menu />
         <Background />
-      </ReactFlow>
-
-      <Panel position="bottom-right">
-        <RunButton 
-          onOutput={setOutput} 
-          onCodeGenerated={setCode}
-          onDebugGenerated={setDebug}
-          selectedLabel={selectedLabel} 
-        />
         <Console 
           output={output} 
           code={code}
           debug={debug}
-          onLabelSelect={setSelectedLabel} 
+          onOutput={setOutput}
+          onCodeGenerated={setCode}
+          onDebugGenerated={setDebug}
           onClear={handleClear}
         />
-      </Panel>
+      </ReactFlow>
     </div>
   );
 }

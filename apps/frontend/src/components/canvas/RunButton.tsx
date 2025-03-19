@@ -149,6 +149,7 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
             blockCategory: template.metadata.blockCategory,
             blockType: template.metadata.blockType,
             parameters: template.metadata.parameters,
+            requiredKeys: template.metadata.requiredKeys,
             output: template.metadata.output
           },
           execute: template.execute
@@ -208,7 +209,7 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
           strokeLinejoin="round"
         />
       </svg>
-      Run
+      {/* Run */}
     </button>
   );
 });

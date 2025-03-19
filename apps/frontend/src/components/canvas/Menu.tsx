@@ -4,76 +4,155 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Panel } from "@xyflow/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useConfig, Network } from "../../contexts/ConfigContext";
+import { Icons } from "../icons/icons";
 
-type Network = 'mainnet' | 'devnet';
-
-export default function Menu() {
-  const [showMenu, setShowMenu] = useState(false);
-  const [network, setNetwork] = useState<Network>('mainnet');
-  const { login, authenticated, user, logout } = usePrivy();
+const Menu = () => {
+  const { user, logout } = usePrivy();
   const router = useRouter();
+  const { network, setNetwork, apiKeys, setApiKey } = useConfig();
+  const [isOpen, setIsOpen] = useState(false);
+  const [heliusApiKey, setHeliusApiKey] = useState(apiKeys['helius'] || '');
+  const [openaiApiKey, setOpenaiApiKey] = useState(apiKeys['openai'] || '');
+  const [birdeyeApiKey, setBirdeyeApiKey] = useState(apiKeys['birdeye'] || '');
 
-  const navigateToProjects = () => {
-    router.push('/projects');
-    setShowMenu(false);
+  const handleNetworkChange = (newNetwork: Network) => {
+    setNetwork(newNetwork);
+  };
+
+  const handleApiKeySave = (provider: string, key: string) => {
+    setApiKey(provider, key);
+  };
+
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
   };
 
   return (
-    <Panel position="top-right" className="bg-[#121212] rounded-b-md p-2 shadow-md">
+    <Panel position="top-right">
       <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="p-2 rounded-md bg-[#121212] hover:bg-gray-700 transition"
-        title="Menu"
+        onClick={toggleMenu}
+        className="flex items-center justify-center w-10 h-10 bg-[#1E1E1E] hover:bg-[#2D2D2D] border border-[#333333] rounded-lg shadow-lg text-white"
+        aria-label="Toggle menu"
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 6h18M3 12h18M3 18h18" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-        </svg>
+        {isOpen ? <Icons.FiX size={20} /> : <Icons.FiMenu size={20} />}
       </button>
 
-      {showMenu && (
-        <div className="absolute top-full right-0 mt-2 w-48 bg-[#121212] rounded-md shadow-lg z-20">
-          <div className="px-4 py-2 border-b border-gray-700">
-            <select
-              value={network}
-              onChange={(e) => setNetwork(e.target.value as Network)}
-              className="w-full bg-gray-800 text-white rounded px-2 py-1 text-sm"
-            >
-              <option value="mainnet">Mainnet</option>
-              <option value="devnet">Devnet</option>
-            </select>
-          </div>
-          
-          {authenticated && (
-            <button
-              onClick={navigateToProjects}
-              className="w-full text-left px-4 py-3 text-white hover:bg-gray-700 rounded-md"
-            >
-              My Projects
-            </button>
+      {isOpen && (
+        <div className="absolute top-12 right-0 w-80 max-h-[calc(35vh)] bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg overflow-hidden overflow-y-auto">
+          {user && (
+            <div className="p-3 border-b border-[#333333]">
+              <span className="block text-sm text-gray-300 truncate text-center">
+                {user.email?.address || user.wallet?.address?.slice(0, 4) + '...' + user.wallet?.address?.slice(-4)}
+              </span>
+            </div>
           )}
-          
-          {!authenticated ? (
-            <button
-              onClick={login}
-              className="w-full text-left px-4 py-3 text-white hover:bg-gray-700 rounded-md"
-            >
-              Connect Wallet
-            </button>
-          ) : (
-            <>
-              <div className="px-4 py-2 text-sm text-gray-400 border-b border-gray-700">
-                {user?.wallet?.address?.slice(0, 6)}...{user?.wallet?.address?.slice(-4)}
+
+          <div className="p-3">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-300 mb-2">Network</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleNetworkChange('devnet')}
+                  className={`px-3 py-1.5 text-xs rounded-md flex-1 ${
+                    network === 'devnet' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-[#2D2D2D] hover:bg-[#333333] text-gray-300'
+                  }`}
+                >
+                  Devnet
+                </button>
+                <button
+                  onClick={() => handleNetworkChange('mainnet')}
+                  className={`px-3 py-1.5 text-xs rounded-md flex-1 ${
+                    network === 'mainnet' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-[#2D2D2D] hover:bg-[#333333] text-gray-300'
+                  }`}
+                >
+                  Mainnet
+                </button>
               </div>
+            </div>
+            
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-300 mb-2">API Keys</h3>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Helius API Key</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={heliusApiKey} 
+                      onChange={(e) => setHeliusApiKey(e.target.value)}
+                      className="text-xs p-2 bg-[#2D2D2D] border border-[#333333] rounded-md text-white flex-1"
+                      placeholder="Enter Helius API key"
+                    />
+                    <button 
+                      onClick={() => handleApiKeySave('helius', heliusApiKey)}
+                      className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">OpenAI API Key</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={openaiApiKey} 
+                      onChange={(e) => setOpenaiApiKey(e.target.value)}
+                      className="text-xs p-2 bg-[#2D2D2D] border border-[#333333] rounded-md text-white flex-1"
+                      placeholder="Enter OpenAI API key"
+                    />
+                    <button 
+                      onClick={() => handleApiKeySave('openai', openaiApiKey)}
+                      className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Birdeye API Key</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={birdeyeApiKey} 
+                      onChange={(e) => setBirdeyeApiKey(e.target.value)}
+                      className="text-xs p-2 bg-[#2D2D2D] border border-[#333333] rounded-md text-white flex-1"
+                      placeholder="Enter Birdeye API key"
+                    />
+                    <button 
+                      onClick={() => handleApiKeySave('birdeye', birdeyeApiKey)}
+                      className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {user && (
               <button
-                onClick={logout}
-                className="w-full text-left px-4 py-3 text-white hover:bg-gray-700"
+                onClick={() => {
+                  logout();
+                  setIsOpen(false);
+                }}
+                className="w-full text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md"
               >
-                Disconnect
+                Logout
               </button>
-            </>
-          )}
+            )}
+          </div>
         </div>
       )}
     </Panel>
   );
-}
+};
+
+export default Menu;

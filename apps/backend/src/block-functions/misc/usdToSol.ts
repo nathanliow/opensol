@@ -13,6 +13,7 @@ export const usdToSol: BlockTemplate = {
         description: 'Amount of USD to convert',
       }
     ],
+    requiredKeys: ['helius'],
     output: {
       type: 'number',
       description: 'SOL amount'

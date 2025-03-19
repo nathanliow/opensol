@@ -1,12 +1,15 @@
 import { NodeCategory, NodeType } from "../../types/nodeTypes";
 import { Panel } from "@xyflow/react";
 import { useState } from "react";
+import { Icons } from "../icons/icons";
 
 interface ToolbarProps {
   showNodeTypes: boolean;
   toggleNodeTypesDropdown: () => void;
   nodeTypesData: Record<string, NodeType>;
-  addNewNode: (type: any) => void;
+  addNewNode: (type: any, position?: { x: number; y: number }) => void;
+  selectionMode: boolean;
+  toggleSelectionMode: () => void;
 }
 
 export default function Toolbar({
@@ -14,26 +17,41 @@ export default function Toolbar({
   toggleNodeTypesDropdown,
   nodeTypesData,
   addNewNode,
+  selectionMode,
+  toggleSelectionMode,
 }: ToolbarProps) {
   const [activeTab, setActiveTab] = useState<NodeCategory>('Default');
 
   // Filter node types by active category
   const filteredNodeTypes = Object.values(nodeTypesData).filter(type => type.category === activeTab);
 
+  const onDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: string) => {
+    event.dataTransfer.setData('application/reactflow', nodeType);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
-    <Panel position="top-center" className="bg-[#121212] rounded-b-md p-2 shadow-md">
-      <div className="flex items-center space-x-4">
+    <Panel position="top-center">
+      <div className="flex bg-[#1E1E1E] rounded-lg items-center py-1 px-4 space-x-4">
+        <button
+          onClick={toggleSelectionMode}
+          className={`flex items-center justify-center w-10 h-10 ${
+            selectionMode 
+              ? 'bg-[#3D3D3D] text-white' 
+              : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300'
+          } rounded-lg shadow-lg`}
+          title="Selection Tool"
+        >
+          <Icons.FiMousePointer size={18} />
+        </button>
+
         <div className="relative">
           <button
             onClick={toggleNodeTypesDropdown}
-            className={`p-2 rounded hover:bg-gray-700 transition ${
-              showNodeTypes ? 'bg-gray-700' : ''
-            }`}
+            className="flex items-center justify-center w-10 h-10 bg-[#1E1E1E] hover:bg-[#2D2D2D] rounded-lg shadow-lg text-white"
             title="Add Node"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="3" y="3" width="18" height="18" rx="2" stroke="white" strokeWidth="2" />
-            </svg>
+            <Icons.FaRegSquare size={20} /> 
           </button>
 
           {showNodeTypes && (
@@ -59,30 +77,23 @@ export default function Toolbar({
               <div className="max-h-[300px] overflow-y-auto p-2">
                 <div className="grid grid-cols-3 gap-2">
                   {filteredNodeTypes.map((type) => (
-                    <button
+                    <div
                       key={type.id}
-                      className="flex flex-col items-center p-2 hover:bg-gray-700 rounded transition"
+                      className="flex flex-col items-center p-2 hover:bg-gray-700 rounded transition cursor-grab"
                       onClick={() => addNewNode(type.id)}
+                      draggable
+                      onDragStart={(event) => onDragStart(event, type.id)}
                     >
                       <div className={`w-[60px] h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}>
                         <span className={`text-xs ${type.textColor} font-medium`}>{type.label}</span>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
           )}
         </div>
-
-        <button
-          className="p-2 rounded hover:bg-gray-700 transition"
-          title="Run (Coming Soon)"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 4L19 12L5 20V4Z" stroke="white" strokeWidth="2" strokeLinejoin="round" />
-          </svg>
-        </button>
       </div>
     </Panel>
   );
