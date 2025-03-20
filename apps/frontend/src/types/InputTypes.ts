@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 
-export type InputType = 'dropdown' | 'text' | 'number' | 'display';
+export type InputType = 'dropdown' | 'text' | 'number' | 'display' | 'textarea';
 
 export interface InputDefinition {
   id: string;
@@ -12,4 +12,6 @@ export interface InputDefinition {
   description?: string; // For input placeholders
   getConnectedValue?: () => any | null; // Function to get connected value
   handleId?: string; // Custom handle ID
+  placeholder?: string; // For input placeholders
+  rows?: number; // For textarea rows
 }
