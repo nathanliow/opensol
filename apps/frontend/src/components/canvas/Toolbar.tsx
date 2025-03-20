@@ -1,4 +1,4 @@
-import { NodeCategory, NodeType } from "../../types/nodeTypes";
+import { NodeCategory, NodeType } from "../../types/NodeTypes";
 import { Panel } from "@xyflow/react";
 import { useState } from "react";
 import { Icons } from "../icons/icons";

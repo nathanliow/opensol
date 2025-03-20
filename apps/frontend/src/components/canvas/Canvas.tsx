@@ -16,8 +16,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { initialNodes } from "../nodes/InitialNodes";
 import { initialEdges } from "../edges/InitialEdges";
-import { edgeTypes } from "../../types/edgeTypes";
-import { createNodeTypes, nodeTypesData } from "../../types/nodeTypes";
+import { edgeTypes } from "../../types/EdgeTypes";
+import { createNodeTypes, nodeTypesData } from "../../types/NodeTypes";
 import Toolbar from "./Toolbar";
 import Console from "../console/Console";
 import Menu from "./Menu";

@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/inputTypes';
-import { nodeTypesData } from '../../types/nodeTypes';
+import { nodeTypesData } from '../../types/NodeTypes';
 import { CustomHandle } from '../../types/handleTypes';
 
 interface LabelNodeProps {

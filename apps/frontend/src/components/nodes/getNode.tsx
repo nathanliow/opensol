@@ -2,7 +2,7 @@ import { memo, useCallback, useState, useMemo } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/inputTypes';
-import { nodeTypesData } from '../../types/nodeTypes';
+import { nodeTypesData } from '../../types/NodeTypes';
 import blockTemplateService from '../services/blockTemplateService';
 import { CustomHandle } from '../../types/handleTypes';
 import { useConfig } from '../../contexts/ConfigContext';
