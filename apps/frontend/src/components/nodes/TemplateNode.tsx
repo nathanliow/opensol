@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Handle, useUpdateNodeInternals } from '@xyflow/react';
 import { Position } from '@xyflow/system';
-import { InputDefinition } from '../../types/inputTypes';
+import { InputDefinition } from '../../types/InputTypes';
 import { CustomHandle, HandlePosition } from '@/types/handleTypes';
 
 export interface TemplateNodeProps {

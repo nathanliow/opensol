@@ -2,12 +2,17 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { Panel } from "@xyflow/react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useConfig, Network } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
 
-const Menu = () => {
+interface MenuProps {
+  onExport: () => any;
+  onImport: (flowData: any) => void;
+}
+
+const Menu = ({ onExport, onImport }: MenuProps) => {
   const { user, logout } = usePrivy();
   const router = useRouter();
   const { network, setNetwork, apiKeys, setApiKey } = useConfig();
@@ -15,6 +20,7 @@ const Menu = () => {
   const [heliusApiKey, setHeliusApiKey] = useState(apiKeys['helius'] || '');
   const [openaiApiKey, setOpenaiApiKey] = useState(apiKeys['openai'] || '');
   const [birdeyeApiKey, setBirdeyeApiKey] = useState(apiKeys['birdeye'] || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleNetworkChange = (newNetwork: Network) => {
     setNetwork(newNetwork);
@@ -26,6 +32,40 @@ const Menu = () => {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleExport = () => {
+    const flowData = onExport();
+    const jsonString = JSON.stringify(flowData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `flow_${new Date().toISOString()}.os`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const flowData = JSON.parse(e.target?.result as string);
+          onImport(flowData);
+        } catch (error) {
+          console.error('Error parsing flow file:', error);
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -49,6 +89,31 @@ const Menu = () => {
           )}
 
           <div className="p-3">
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-300 mb-2">Flow Actions</h3>
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={handleExport}
+                  className="flex-1 text-xs bg-[#2D2D2D] hover:bg-[#333333] text-white px-3 py-2 rounded-md"
+                >
+                  Export Flow
+                </button>
+                <button
+                  onClick={handleImportClick}
+                  className="flex-1 text-xs bg-[#2D2D2D] hover:bg-[#333333] text-white px-3 py-2 rounded-md"
+                >
+                  Import Flow
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".os"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
             <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-300 mb-2">Network</h3>
               <div className="flex gap-2">

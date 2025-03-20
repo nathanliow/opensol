@@ -45,6 +45,22 @@ function Flow() {
     setDebug('');
   }, []);
 
+  const handleExport = useCallback(() => {
+    const flow = {
+      nodes,
+      edges,
+      viewport: reactFlowInstance.getViewport()
+    };
+    return flow;
+  }, [nodes, edges, reactFlowInstance]);
+
+  const handleImport = useCallback((flowData: any) => {
+    const { nodes: importedNodes, edges: importedEdges, viewport } = flowData;
+    setNodes(importedNodes);
+    setEdges(importedEdges);
+    reactFlowInstance.setViewport(viewport);
+  }, [setNodes, setEdges, reactFlowInstance]);
+
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => !prev);
   }, []);
@@ -130,7 +146,10 @@ function Flow() {
           selectionMode={selectionMode}
           toggleSelectionMode={toggleSelectionMode}
         />
-        <Menu />
+        <Menu 
+          onExport={handleExport}
+          onImport={handleImport}
+        />
         <Background />
         <Console 
           output={output} 
