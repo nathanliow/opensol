@@ -66,16 +66,32 @@ export class FlowCompiler {
       case 'GET': {
         const functionName = this.generateGetFunction(node);
         const parameters = node.data.parameters || {};
+        const templateName = node.data.selectedFunction || '';
+        const template = this.templates[templateName];
         
-        // Extract network from parameters or default to 'devnet'
-        const network = parameters.network || 'devnet';
-        
+        if (!template || !template.metadata || !template.metadata.parameters) {
+          throw new Error(`Invalid template or missing metadata for function: ${templateName}`);
+        }
+
         // Create parameters object including apiKey
-        const paramsObj = {
-          ...parameters,
+        const paramsObj: Record<string, any> = {
           apiKey: 'HELIUS_API_KEY',
-          network: network
+          network: parameters.network || 'devnet'
         };
+
+        // Map numeric parameters to their correct names based on metadata
+        const parameterMetadata = template.metadata.parameters;
+        Object.entries(parameters).forEach(([key, value]) => {
+          if (!isNaN(Number(key))) {
+            const paramIndex = Number(key);
+            if (paramIndex < parameterMetadata.length) {
+              const paramName = parameterMetadata[paramIndex].name;
+              paramsObj[paramName] = value;
+            }
+          } else {
+            paramsObj[key] = value;
+          }
+        });
         
         // Convert parameters to a string representation
         const paramsString = Object.entries(paramsObj)
@@ -248,9 +264,9 @@ async function execute() {
   ${printSection}
   return { output: printOutput };
 }`;
-
-    const fn = new Function(`return ${functionCode}`)();
     console.log(functionCode)
+    const fn = new Function(`return ${functionCode}`)();
+    
     return { 
       execute: fn,
       functionCode,

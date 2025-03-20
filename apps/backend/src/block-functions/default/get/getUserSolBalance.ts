@@ -12,6 +12,16 @@ export const getUserSolBalance: BlockTemplate = {
         name: 'address',
         type: 'string',
         description: 'Wallet address to check'
+      },
+      {
+        name: 'apiKey',
+        type: 'string',
+        description: 'Helius API key'
+      },
+      {
+        name: 'network',
+        type: 'string',
+        description: 'Network to use'
       }
     ],
     requiredKeys: ['helius'],

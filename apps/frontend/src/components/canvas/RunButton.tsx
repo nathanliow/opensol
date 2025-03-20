@@ -4,6 +4,7 @@ import { FlowCompiler } from '../../../../backend/src/packages/compiler/src/Flow
 import blockTemplateService from '../services/blockTemplateService';
 import { FlowNode, FlowEdge } from '../../../../backend/src/packages/compiler/src/types';
 import { BlockTemplate } from '../services/blockTemplateService';
+import { useConfig } from '../../contexts/ConfigContext';
 
 interface RunButtonProps {
   onOutput: (output: string) => void;
@@ -15,6 +16,7 @@ interface RunButtonProps {
 const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedLabel }: RunButtonProps) => {
   const nodes = useNodes();
   const edges = useEdges();
+  const { apiKeys } = useConfig();
 
   const handleRun = useCallback(() => {
     try {
@@ -28,9 +30,12 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
           throw new Error('Node type is undefined');
         }
         
-        // For GET nodes, process string inputs
+        // For GET nodes, process string inputs and add API key
         if (node.type === 'GET') {
           const parameters: any = node.data?.parameters || {};
+          // Add Helius API key to parameters
+          parameters.apiKey = apiKeys['helius'] || '';
+          
           // Find all string nodes connected to this GET node's parameters
           edges.forEach(edge => {
             if (edge.target === node.id && edge.targetHandle?.startsWith('param-')) {
@@ -182,7 +187,7 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
     } catch (error: any) {
       onOutput(`Compilation Error: ${error.message}`);
     }
-  }, [nodes, edges, selectedLabel, onOutput, onCodeGenerated, onDebugGenerated]);
+  }, [nodes, edges, selectedLabel, onOutput, onCodeGenerated, onDebugGenerated, apiKeys]);
 
   return (
     <button

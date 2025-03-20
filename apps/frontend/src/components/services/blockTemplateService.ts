@@ -44,11 +44,7 @@ export class BlockTemplateService {
         description: backendTemplate.metadata.description,
         blockType: backendTemplate.metadata.blockType,
         blockCategory: backendTemplate.metadata.blockCategory,
-        parameters: backendTemplate.metadata.parameters ? Object.entries(backendTemplate.metadata.parameters).map(([name, param]) => ({
-          name,
-          type: param.type,
-          description: param.description
-        })) : [],
+        parameters: backendTemplate.metadata.parameters || [], // Parameters are already in array format
         requiredKeys: backendTemplate.metadata.requiredKeys,
         output: {
           type: 'any', // We could add this to backend template if needed
