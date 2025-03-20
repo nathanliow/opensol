@@ -33,16 +33,23 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   const secondaryColor = nodeType?.secondaryColor || 'blue-700';
   const textColor = nodeType?.textColor || 'text-gray-200';
 
-  const getConnectedStringValue = useCallback((paramName: string) => {
+  const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
       e.target === id && 
-      e.targetHandle === `param-${paramName}` &&
-      nodes.find(n => n.id === e.source)?.type === 'STRING'
+      e.targetHandle === `param-${paramName}`
     );
     
     if (!edge) return null;
     const sourceNode = nodes.find(n => n.id === edge.source);
-    return sourceNode?.data.value || null;
+    if (!sourceNode) return null;
+    
+    // Support both STRING and CONST nodes
+    if (sourceNode.type === 'STRING') {
+      return sourceNode.data.value || null;
+    } else if (sourceNode.type === 'CONST') {
+      return sourceNode.data.value !== undefined ? sourceNode.data.value : null;
+    }
+    return null;
   }, [edges, id, nodes]);
 
   const handleFunctionChange = useCallback((value: string) => {
@@ -118,14 +125,14 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
           type: 'text' as const,
           defaultValue: parameters[param.name] || '',
           description: param.description,
-          getConnectedValue: () => getConnectedStringValue(param.name),
+          getConnectedValue: () => getConnectedValue(param.name),
           handleId: `param-${param.name}`,
         }));
       return [...baseInputs, ...paramInputs];
     }
     
     return baseInputs;
-  }, [currentTemplate, functionOptions, parameters, selectedFunction, getConnectedStringValue]);
+  }, [currentTemplate, functionOptions, parameters, selectedFunction, getConnectedValue]);
 
   const handleInputChange = useCallback((inputId: string, value: any) => {
     if (inputId === 'function') {

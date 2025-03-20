@@ -58,6 +58,19 @@ export class FlowCompiler {
     return functionName;
   }
 
+  private getNodeInputs(nodeId: string): Record<string, string> {
+    const inputs: Record<string, string> = {};
+    this.edges
+      .filter(edge => edge.target === nodeId)
+      .forEach(edge => {
+        const sourceOutput = this.nodeOutputs.get(edge.source);
+        if (sourceOutput) {
+          inputs[edge.targetHandle || 'flow'] = sourceOutput;
+        }
+      });
+    return inputs;
+  }
+
   private generateNodeCode(node: FlowNode): string {
     const varName = `result_${this.varCounter++}`;
     this.nodeOutputs.set(node.id, varName);
@@ -66,13 +79,8 @@ export class FlowCompiler {
       case 'GET': {
         const functionName = this.generateGetFunction(node);
         const parameters = node.data.parameters || {};
-        const templateName = node.data.selectedFunction || '';
-        const template = this.templates[templateName];
+        const inputs = this.getNodeInputs(node.id);
         
-        if (!template || !template.metadata || !template.metadata.parameters) {
-          throw new Error(`Invalid template or missing metadata for function: ${templateName}`);
-        }
-
         // Create parameters object including apiKey
         const paramsObj: Record<string, any> = {
           apiKey: 'HELIUS_API_KEY',
@@ -80,23 +88,37 @@ export class FlowCompiler {
         };
 
         // Map numeric parameters to their correct names based on metadata
-        const parameterMetadata = template.metadata.parameters;
-        Object.entries(parameters).forEach(([key, value]) => {
-          if (!isNaN(Number(key))) {
-            const paramIndex = Number(key);
-            if (paramIndex < parameterMetadata.length) {
-              const paramName = parameterMetadata[paramIndex].name;
-              paramsObj[paramName] = value;
+        const templateName = node.data.selectedFunction || '';
+        const template = this.templates[templateName];
+        if (template?.metadata?.parameters) {
+          const parameterMetadata = template.metadata.parameters;
+          Object.entries(parameters).forEach(([key, value]) => {
+            if (!isNaN(Number(key))) {
+              const paramIndex = Number(key);
+              if (paramIndex < parameterMetadata.length) {
+                const paramName = parameterMetadata[paramIndex].name;
+                paramsObj[paramName] = value;
+              }
+            } else {
+              paramsObj[key] = value;
             }
-          } else {
-            paramsObj[key] = value;
+          });
+        }
+
+        // Add connected inputs to parameters
+        Object.entries(inputs).forEach(([handle, value]) => {
+          if (handle.startsWith('param-')) {
+            const paramName = handle.replace('param-', '');
+            paramsObj[paramName] = value;
           }
         });
         
-        // Convert parameters to a string representation
         const paramsString = Object.entries(paramsObj)
           .map(([key, value]) => {
             if (value === 'HELIUS_API_KEY') {
+              return `${key}: ${value}`;
+            }
+            if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
               return `${key}: ${value}`;
             }
             return `${key}: ${JSON.stringify(value)}`;
@@ -111,7 +133,6 @@ export class FlowCompiler {
         const parameters = node.data.parameters || {};
         const inputs = this.getNodeInputs(node.id);
         
-        // Create parameters object using connected inputs
         const paramsObj = { ...parameters };
         Object.entries(inputs).forEach(([handle, value]) => {
           if (handle.startsWith('param-')) {
@@ -120,10 +141,8 @@ export class FlowCompiler {
           }
         });
         
-        // Convert parameters to a string representation
         const paramsString = Object.entries(paramsObj)
           .map(([key, value]) => {
-            // If value is a result variable from another node, use it directly
             if (typeof value === 'string' && value.startsWith('result_')) {
               return `${key}: ${value}`;
             }
@@ -145,12 +164,10 @@ export class FlowCompiler {
           throw new Error(`Print node ${node.id} has no input`);
         }
         
-        // Get template from node data or use default
         const template = node.data.template || '$output$';
         
-        // Add to print outputs array with template
         const formattedTemplate = template.replace(/\$output\$/g, '${' + inputVar + '}');
-        this.printOutputs.push(`printOutput += \`${formattedTemplate}\n\`;`);
+        this.printOutputs.push(`printOutput += \`${formattedTemplate}\\n\`;`);
         
         return `const ${varName} = ${inputVar};`;
       }
@@ -161,22 +178,30 @@ export class FlowCompiler {
         return inputVar ? `const ${varName} = ${inputVar};` : `const ${varName} = null;`;
       }
 
+      case 'CONST': {
+        const value = node.data.value;
+        const dataType = node.data.dataType || 'string';
+        
+        let formattedValue;
+        switch (dataType) {
+          case 'number':
+            formattedValue = Number(value);
+            break;
+          case 'boolean':
+            formattedValue = value === 'true' || value === true;
+            break;
+          default: 
+            formattedValue = String(value);
+        }
+
+        const constName = `const_${this.varCounter}`;
+        this.nodeOutputs.set(node.id, constName);
+        return `const ${constName} = ${JSON.stringify(formattedValue)};`;
+      }
+
       default:
         return '';
     }
-  }
-
-  private getNodeInputs(nodeId: string): Record<string, string> {
-    const inputs: Record<string, string> = {};
-    this.edges
-      .filter(edge => edge.target === nodeId)
-      .forEach(edge => {
-        const sourceOutput = this.nodeOutputs.get(edge.source);
-        if (sourceOutput) {
-          inputs[edge.targetHandle || 'flow'] = sourceOutput;
-        }
-      });
-    return inputs;
   }
 
   compile(): { execute: () => Promise<any>, functionCode: string, displayCode: string } {

@@ -36,17 +36,6 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
           // Add Helius API key to parameters
           parameters.apiKey = apiKeys['helius'] || '';
           
-          // Find all string nodes connected to this GET node's parameters
-          edges.forEach(edge => {
-            if (edge.target === node.id && edge.targetHandle?.startsWith('param-')) {
-              const sourceNode = nodes.find(n => n.id === edge.source);
-              if (sourceNode?.type === 'STRING') {
-                const paramName = edge.targetHandle.replace('param-', '');
-                parameters[paramName] = sourceNode.data?.value || '';
-              }
-            }
-          });
-
           return {
             id: node.id,
             type: node.type,
@@ -54,6 +43,19 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
             data: {
               ...node.data,
               parameters
+            }
+          };
+        }
+
+        // For CONST nodes, ensure proper data structure
+        if (node.type === 'CONST') {
+          return {
+            id: node.id,
+            type: node.type,
+            position: node.position,
+            data: {
+              dataType: node.data?.dataType || 'string',
+              value: node.data?.value
             }
           };
         }
@@ -79,12 +81,6 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
         targetHandle: edge.targetHandle || ''
       }));
 
-      // Filter out STRING nodes since we've already processed their values
-      const nodesWithoutStrings = transformedNodes.filter(node => node.type !== 'STRING');
-      const relevantEdges = transformedEdges.filter(edge => 
-        nodesWithoutStrings.find(node => node.id === edge.source) && nodesWithoutStrings.find(node => node.id === edge.target)
-      );
-
       // Get all nodes connected to the selected function
       const connectedNodes = new Set<string>();
       const nodesToProcess = [selectedFunction];
@@ -93,7 +89,16 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
         const currentId = nodesToProcess.pop()!;
         connectedNodes.add(currentId);
         
-        relevantEdges.forEach(edge => {
+        // Add source nodes (nodes that provide input)
+        transformedEdges.forEach(edge => {
+          if (edge.target === currentId && !connectedNodes.has(edge.source)) {
+            connectedNodes.add(edge.source);
+            nodesToProcess.push(edge.source);
+          }
+        });
+
+        // Add target nodes (nodes that receive output)
+        transformedEdges.forEach(edge => {
           if (edge.source === currentId && !connectedNodes.has(edge.target)) {
             connectedNodes.add(edge.target);
             nodesToProcess.push(edge.target);
@@ -101,8 +106,11 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
         });
       }
 
-      // Filter nodes to only include connected ones
-      const relevantNodes: FlowNode[] = transformedNodes.filter(node => connectedNodes.has(node.id)) as FlowNode[];
+      // Filter nodes and edges to only include connected ones
+      const relevantNodes = transformedNodes.filter(node => connectedNodes.has(node.id));
+      const relevantEdges = transformedEdges.filter(edge => 
+        connectedNodes.has(edge.source) && connectedNodes.has(edge.target)
+      );
 
       // Generate debug info
       const debugInfo = {
@@ -116,14 +124,14 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
               .filter(e => e.target === node.id)
               .map(e => ({
                 from: e.source,
-                type: nodesWithoutStrings.find(n => n.id === e.source)?.type,
+                type: relevantNodes.find(n => n.id === e.source)?.type,
                 handleId: e.targetHandle
               })),
             outputs: relevantEdges
               .filter(e => e.source === node.id)
               .map(e => ({
                 to: e.target,
-                type: nodesWithoutStrings.find(n => n.id === e.target)?.type,
+                type: relevantNodes.find(n => n.id === e.target)?.type,
                 handleId: e.sourceHandle
               }))
           }
@@ -131,11 +139,11 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
         edges: relevantEdges.map(edge => ({
           from: {
             id: edge.source,
-            type: nodesWithoutStrings.find(node => node.id === edge.source)?.type
+            type: relevantNodes.find(node => node.id === edge.source)?.type
           },
           to: {
             id: edge.target,
-            type: nodesWithoutStrings.find(node => node.id === edge.target)?.type
+            type: relevantNodes.find(node => node.id === edge.target)?.type
           },
           sourceHandle: edge.sourceHandle,
           targetHandle: edge.targetHandle
@@ -163,6 +171,8 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
       }, {} as Record<string, BlockTemplate>);
 
       // Compile and execute the flow
+      console.log('relevantNodes', relevantNodes);
+      console.log('relevantEdges', relevantEdges);
       const compiler = new FlowCompiler(relevantNodes, relevantEdges, templates);
       const { execute, functionCode, displayCode } = compiler.compile();
       
