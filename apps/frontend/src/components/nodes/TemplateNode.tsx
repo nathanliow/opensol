@@ -117,13 +117,28 @@ export default function TemplateNode({
             type="text"
             value={displayValue || ''}
             onChange={(e) => handleInputChange(input.id, e.target.value)}
-            placeholder={input.description}
+            placeholder={input.placeholder}
             disabled={isConnected}
             className={`h-5 w-full ${
               isConnected
                 ? 'bg-[#2D2D2D]/50 border-pink-800/50 text-pink-300/70 cursor-not-allowed'
                 : `${backgroundColor} border-${borderColor}`
             } rounded border text-sm px-1 ${textColor}`}
+          />
+        );
+      case 'textarea':
+        return (
+          <textarea
+            value={displayValue || ''}
+            onChange={(e) => handleInputChange(input.id, e.target.value)}
+            placeholder={input.placeholder}
+            disabled={isConnected}
+            rows={input.rows || 3}
+            className={`w-full resize-none ${
+              isConnected
+                ? 'bg-[#2D2D2D]/50 border-pink-800/50 text-pink-300/70 cursor-not-allowed'
+                : `${backgroundColor} border-${borderColor}`
+            } rounded border text-sm px-1 py-1 ${textColor}`}
           />
         );
       case 'number':

@@ -45,16 +45,11 @@ const PrintNode = memo(({ id, data }: PrintNodeProps) => {
     {
       id: 'template',
       label: 'Template',
-      type: 'text',
+      type: 'textarea',
       defaultValue: data.template || '',
       placeholder: 'Enter template (use $output$ for value)',
-      description: 'Template text, use $output$ to insert the input value'
-    },
-    {
-      id: 'display',
-      label: 'Preview',
-      type: 'display',
-      defaultValue: data.template || '',
+      description: 'Template text, use $output$ to insert the input value',
+      rows: 3
     }
   ], [data.template]);
 
