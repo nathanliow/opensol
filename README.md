@@ -1,8 +1,8 @@
 [![OpenSOL](./images/cover.jpg)]()
 <p align="center">
-  <a href="https://docs.opensol.dev">Documentation</a> |
-  <a href="https://opensol.dev">Website</a> |
-  <a href="https://github.com/OpenSOL-devs/OpenSOL">GitHub Repository</a>
+  <a href="https://github.com/nathanliow/opensol/wiki">Documentation</a> |
+  <a href="https://opensol.dev">Website (WIP)</a> |
+  <a href="https://github.com/nathanliow/opensol">GitHub Repository</a>
 </p>
 Welcome! OpenSOL is a visual programming platform designed to democratize Solana blockchain development through a no-code interface. It combines the accessibility of visual programming with the power of blockchain technology.
 
