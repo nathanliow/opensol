@@ -84,7 +84,7 @@ export default function Toolbar({
                       draggable
                       onDragStart={(event) => onDragStart(event, type.id)}
                     >
-                      <div className={`w-[60px] h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}>
+                      <div className={`w-[70px] h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}>
                         <span className={`text-xs ${type.textColor} font-medium`}>{type.label}</span>
                       </div>
                     </div>

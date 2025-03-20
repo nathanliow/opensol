@@ -30,7 +30,6 @@ function Flow() {
   const [debug, setDebug] = useState<string>('');
   const [output, setOutput] = useState<string>('');
   const [code, setCode] = useState<string>('');
-  const [selectedLabel, setSelectedLabel] = useState<string>('');
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   
@@ -58,8 +57,8 @@ function Flow() {
       id: `${type.toLowerCase()}-${Date.now()}`,
       type,
       position: nodePosition || { x: 0, y: 0 },
-      data: type === 'LABEL' 
-        ? { name: 'Untitled Logic', label: 'LABEL' }
+      data: type === 'FUNCTION' 
+        ? { name: 'Untitled Function', label: 'FUNCTION' }
         : { label: type, selectedFunction: '', parameters: {} }
     };
   
