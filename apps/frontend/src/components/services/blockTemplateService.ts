@@ -11,12 +11,12 @@ export interface BlockTemplate {
     blockCategory: NodeCategory;
     parameters: {
       name: string;
-      type: string;
+      type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
       description: string;
     }[];
     requiredKeys: ApiKeyType[];
     output: {
-      type: string;
+      type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
       description: string;
     };
   };

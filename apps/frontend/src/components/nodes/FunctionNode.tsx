@@ -15,11 +15,11 @@ interface LabelNodeProps {
 export default function FunctionNode({ id, data }: LabelNodeProps) {
   const { setNodes } = useReactFlow();
   const nodeType = nodeTypesData['FUNCTION'];
-  const backgroundColor = nodeType?.backgroundColor || 'bg-[#059669]';
-  const borderColor = nodeType?.borderColor || 'border-gray-700';
-  const primaryColor = nodeType?.primaryColor || 'emerald-700';
-  const secondaryColor = nodeType?.secondaryColor || 'emerald-800';
-  const textColor = nodeType?.textColor || 'text-white';
+  const backgroundColor = nodeType?.backgroundColor;
+  const borderColor = nodeType?.borderColor;
+  const primaryColor = nodeType?.primaryColor;
+  const secondaryColor = nodeType?.secondaryColor;
+  const textColor = nodeType?.textColor;
 
   const handleNameChange = useCallback((value: string) => {
     setNodes((nodes) =>

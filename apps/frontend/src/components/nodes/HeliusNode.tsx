@@ -7,26 +7,26 @@ import blockTemplateService from '../services/blockTemplateService';
 import { CustomHandle } from '../../types/HandleTypes';
 import { useConfig } from '../../contexts/ConfigContext';
 
-interface GetNodeData {
+interface HeliusNodeData {
   label: string;
   selectedFunction?: string;
   parameters?: Record<string, string>;
 }
 
-interface GetNodeProps {
+interface HeliusNodeProps {
   id: string;
-  data: GetNodeData;
+  data: HeliusNodeData;
 }
 
-const GetNode = memo(({ id, data }: GetNodeProps) => {
+const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
   const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
-  const blockTemplates = blockTemplateService.getTemplatesByType('GET');
+  const blockTemplates = blockTemplateService.getTemplatesByType('HELIUS');
   const edges = useEdges();
   const nodes = useNodes();
   const { network, getApiKey } = useConfig();
   
-  const nodeType = nodeTypesData['GET'];
+  const nodeType = nodeTypesData['HELIUS'];
   const backgroundColor = nodeType?.backgroundColor;
   const borderColor = nodeType?.borderColor;
   const primaryColor = nodeType?.primaryColor;
@@ -144,7 +144,7 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   return (
     <TemplateNode
       id={id}
-      title="GET"
+      title="HELIUS"
       backgroundColor={backgroundColor}
       borderColor={borderColor}
       primaryColor={primaryColor}
@@ -158,6 +158,6 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   );
 });
 
-GetNode.displayName = 'GetNode';
+HeliusNode.displayName = 'HeliusNode';
 
-export default GetNode;
+export default HeliusNode;
