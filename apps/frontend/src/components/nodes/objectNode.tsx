@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import TemplateNode from './TemplateNode';
-import { InputDefinition } from '../../types/inputTypes';
+import { InputDefinition } from '../../types/InputTypes';
 import { nodeTypesData } from '../../types/NodeTypes';
 
 interface ObjectNodeProps {

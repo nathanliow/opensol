@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
-import { InputDefinition } from '../../types/inputTypes';
+import { InputDefinition } from '../../types/InputTypes';
 import { nodeTypesData } from '../../types/NodeTypes';
 
 interface PrintNodeData {
