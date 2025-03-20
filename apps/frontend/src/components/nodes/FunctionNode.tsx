@@ -3,7 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/inputTypes';
 import { nodeTypesData } from '../../types/NodeTypes';
-import { CustomHandle } from '../../types/handleTypes';
+import { CustomHandle } from '../../types/HandleTypes';
 
 interface LabelNodeProps {
   id: string;

@@ -1,10 +1,10 @@
 import { memo, useCallback, useState, useMemo } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
-import { InputDefinition } from '../../types/inputTypes';
+import { InputDefinition } from '../../types/InputTypes';
 import { nodeTypesData } from '../../types/NodeTypes';
 import blockTemplateService from '../services/blockTemplateService';
-import { CustomHandle } from '../../types/handleTypes';
+import { CustomHandle } from '../../types/HandleTypes';
 import { useConfig } from '../../contexts/ConfigContext';
 
 interface GetNodeData {

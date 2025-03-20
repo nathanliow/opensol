@@ -1,8 +1,8 @@
 import { NodeTypes } from "@xyflow/react";
-import GetNode from "../components/nodes/getNode";
-import ObjectNode from "../components/nodes/objectNode";
-import MintNode from "../components/nodes/mintNode";
-import ConstNode from "../components/nodes/constNode";
+import GetNode from "../components/nodes/GetNode";
+import ObjectNode from "../components/nodes/ObjectNode";
+import MintNode from "../components/nodes/MintNode";
+import ConstNode from "../components/nodes/ConstNode";
 import FunctionNode from "../components/nodes/FunctionNode";
 import PrintNode from "../components/nodes/PrintNode";
 

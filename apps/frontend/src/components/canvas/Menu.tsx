@@ -79,7 +79,7 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
       </button>
 
       {isOpen && (
-        <div className="absolute top-12 right-0 w-80 max-h-[calc(35vh)] bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg overflow-hidden overflow-y-auto">
+        <div className="absolute top-12 right-0 w-60 max-h-[calc(35vh)] bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg overflow-hidden overflow-y-auto">
           {user && (
             <div className="p-3 border-b border-[#333333]">
               <span className="block text-sm text-gray-300 truncate text-center">
@@ -208,7 +208,7 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
                   logout();
                   setIsOpen(false);
                 }}
-                className="w-full text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md"
+                className="w-full text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md"
               >
                 Logout
               </button>

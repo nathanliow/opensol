@@ -1,6 +1,6 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/NodeTypes';
-import { ApiKeyType } from '../../types/keyTypes';
+import { ApiKeyType } from '../../types/KeyTypes';
 
 // Frontend block template format
 export interface BlockTemplate {
