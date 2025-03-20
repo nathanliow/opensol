@@ -148,7 +148,11 @@ export default function TemplateNode({
             value={displayValue || 0}
             onChange={(e) => handleInputChange(input.id, parseFloat(e.target.value))}
             disabled={isConnected}
-            className={`h-5 w-full ${backgroundColor} rounded border border-${borderColor} text-sm px-1 ${textColor}`}
+            className={`h-5 w-full ${
+              isConnected
+                ? 'bg-[#2D2D2D]/50 border-pink-800/50 text-pink-300/70 cursor-not-allowed'
+                : `${backgroundColor} border-${borderColor}`
+            } rounded border text-sm px-1 ${textColor}`}
           />
         );
       case 'display':
