@@ -155,7 +155,7 @@ export class FlowCompiler {
         return `const ${varName} = ${inputVar};`;
       }
 
-      case 'LABEL': {
+      case 'FUNCTION': {
         const inputs = this.getNodeInputs(node.id);
         const inputVar = inputs['flow'] || Object.values(inputs)[0];
         return inputVar ? `const ${varName} = ${inputVar};` : `const ${varName} = null;`;

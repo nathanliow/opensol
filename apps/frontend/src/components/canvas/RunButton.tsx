@@ -10,18 +10,18 @@ interface RunButtonProps {
   onOutput: (output: string) => void;
   onCodeGenerated: (code: string) => void;
   onDebugGenerated: (debug: string) => void;
-  selectedLabel: string;
+  selectedFunction: string;
 }
 
-const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedLabel }: RunButtonProps) => {
+const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedFunction }: RunButtonProps) => {
   const nodes = useNodes();
   const edges = useEdges();
   const { apiKeys } = useConfig();
 
   const handleRun = useCallback(() => {
     try {
-      if (!selectedLabel) {
-        onOutput('Error: Please select a label to run');
+      if (!selectedFunction) {
+        onOutput('Error: Please select a function to run');
         return;
       }
       // Transform nodes to the format expected by FlowCompiler
@@ -85,9 +85,9 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
         nodesWithoutStrings.find(node => node.id === edge.source) && nodesWithoutStrings.find(node => node.id === edge.target)
       );
 
-      // Get all nodes connected to the selected label
+      // Get all nodes connected to the selected function
       const connectedNodes = new Set<string>();
-      const nodesToProcess = [selectedLabel];
+      const nodesToProcess = [selectedFunction];
 
       while (nodesToProcess.length > 0) {
         const currentId = nodesToProcess.pop()!;
@@ -106,7 +106,7 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
 
       // Generate debug info
       const debugInfo = {
-        selectedLabel,
+        selectedFunction,
         nodes: relevantNodes.map(node => ({
           id: node.id,
           type: node.type,
@@ -187,14 +187,14 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
     } catch (error: any) {
       onOutput(`Compilation Error: ${error.message}`);
     }
-  }, [nodes, edges, selectedLabel, onOutput, onCodeGenerated, onDebugGenerated, apiKeys]);
+  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys]);
 
   return (
     <button
       onClick={handleRun}
-      disabled={!selectedLabel}
+      disabled={!selectedFunction}
       className={`flex items-center gap-2 px-4 py-2 text-white rounded-lg shadow-lg border transition-colors ${
-        selectedLabel
+        selectedFunction
           ? 'bg-[#1E1E1E] hover:bg-[#2D2D2D] border-[#333333]'
           : 'bg-[#1E1E1E] border-[#333333] opacity-50 cursor-not-allowed'
       }`}
@@ -208,8 +208,8 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedL
       >
         <path
           d="M4 2L12 8L4 14V2Z"
-          fill={selectedLabel ? "#10B981" : "#6B7280"}
-          stroke={selectedLabel ? "#10B981" : "#6B7280"}
+          fill={selectedFunction ? "#10B981" : "#6B7280"}
+          stroke={selectedFunction ? "#10B981" : "#6B7280"}
           strokeWidth="1.5"
           strokeLinejoin="round"
         />

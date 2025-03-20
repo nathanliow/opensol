@@ -3,7 +3,7 @@ import GetNode from "../components/nodes/GetNode";
 import ObjectNode from "../components/nodes/ObjectNode";
 import MintNode from "../components/nodes/MintNode";
 import ConstNode from "../components/nodes/ConstNode";
-import LabelNode from "../components/nodes/LabelNode";
+import FunctionNode from "../components/nodes/FunctionNode";
 import PrintNode from "../components/nodes/PrintNode";
 
 export type NodeCategory = 'Default' | 'DeFi' | 'Misc';
@@ -26,7 +26,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   GET: GetNode,
   OBJECT: ObjectNode,
   CONST: ConstNode,
-  LABEL: LabelNode,
+  FUNCTION: FunctionNode,
   PRINT: PrintNode,
 
   // DeFi
@@ -73,9 +73,9 @@ export const nodeTypesData: Record<string, NodeType> = {
     secondaryColor: 'white',
     textColor: 'text-black'
   },
-  LABEL: {
-    id: 'LABEL',
-    label: 'LABEL',
+  FUNCTION: {
+    id: 'FUNCTION',
+    label: 'FUNCTION',
     category: 'Default',
     backgroundColor: 'bg-white',
     borderColor: 'border-black',

@@ -37,12 +37,12 @@ const Console = memo(({
   }, []);
 
   const [activeTab, setActiveTab] = useState<'debug' | 'output' | 'code'>('output');
-  const [selectedLabel, setSelectedLabel] = useState<string>('');
+  const [selectedFunction, setSelectedFunction] = useState<string>('');
   const nodes = useNodes();
   const edges = useEdges();
 
-  // Get all label nodes
-  const labelNodes = nodes.filter(n => n.type === 'LABEL');
+  // Get all function nodes
+  const functionNodes = nodes.filter(n => n.type === 'FUNCTION');
 
   const handleClear = useCallback(() => {
     if (onClear) {
@@ -50,8 +50,8 @@ const Console = memo(({
     }
   }, [onClear]);
 
-  const handleLabelSelect = useCallback((labelId: string) => {
-    setSelectedLabel(labelId);
+  const handleFunctionSelect = useCallback((functionId: string) => {
+    setSelectedFunction(functionId);
     handleClear();
   }, [handleClear]);
 
@@ -83,10 +83,10 @@ const Console = memo(({
     document.addEventListener('mouseup', handleResizeEnd);
   }, [size]);
 
-  // Get all nodes connected to a label
-  const getConnectedNodes = useCallback((labelId: string) => {
+  // Get all nodes connected to a function
+  const getConnectedNodes = useCallback((functionId: string) => {
     const connectedNodes = new Set<string>();
-    const nodesToProcess = [labelId];
+    const nodesToProcess = [functionId];
 
     while (nodesToProcess.length > 0) {
       const currentId = nodesToProcess.pop()!;
@@ -148,16 +148,16 @@ const Console = memo(({
                 </div>
 
                 <select
-                  value={selectedLabel}
-                  onChange={(e) => handleLabelSelect(e.target.value)}
+                  value={selectedFunction}
+                  onChange={(e) => handleFunctionSelect(e.target.value)}
                   className="px-2 py-1 bg-[#333333] text-sm rounded border border-[#4B5563] min-w-[150px] flex-shrink-0"
                 >
-                  <option value="">Select Label</option>
-                  {labelNodes.map((node) => (
+                  <option value="">Select Function</option>
+                  {functionNodes.map((node) => (
                     <option key={node.id} value={node.id}>
                       {node.data && typeof node.data === 'object' && 'name' in node.data 
                         ? String(node.data.name) 
-                        : 'Untitled Label'}
+                        : 'Untitled Function'}
                     </option>
                   ))}
                 </select>
@@ -166,7 +166,7 @@ const Console = memo(({
                   onOutput={onOutput}
                   onCodeGenerated={onCodeGenerated}
                   onDebugGenerated={onDebugGenerated}
-                  selectedLabel={selectedLabel}
+                  selectedFunction={selectedFunction}
                 />
 
                 <button
