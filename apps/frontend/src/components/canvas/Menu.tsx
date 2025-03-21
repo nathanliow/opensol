@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useConfig, Network } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
+import { Info } from 'lucide-react';
 
 interface MenuProps {
   onExport: () => any;
@@ -142,9 +143,20 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
             
             <div className="flex flex-col gap-4 p-4">
               <div className="flex flex-col gap-2">
-                <label htmlFor="helius-api-key" className="text-sm font-medium text-gray-300">
-                  Helius API Key
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="helius-api-key" className="text-sm font-medium text-gray-300">
+                    Helius API Key
+                  </label>
+                  <a 
+                    href="https://dev.helius.xyz/dashboard/app" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-gray-300"
+                    title="Get Helius API Key"
+                  >
+                    <Info className="w-4 h-4" />
+                  </a>
+                </div>
                 <input
                   id="helius-api-key"
                   type="password"
@@ -155,9 +167,20 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label htmlFor="openai-api-key" className="text-sm font-medium text-gray-300">
-                  OpenAI API Key
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="openai-api-key" className="text-sm font-medium text-gray-300">
+                    OpenAI API Key
+                  </label>
+                  <a 
+                    href="https://platform.openai.com/api-keys" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-gray-300"
+                    title="Get OpenAI API Key"
+                  >
+                    <Info className="w-4 h-4" />
+                  </a>
+                </div>
                 <input
                   id="openai-api-key"
                   type="password"
@@ -168,9 +191,20 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label htmlFor="birdeye-api-key" className="text-sm font-medium text-gray-300">
-                  Birdeye API Key
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="birdeye-api-key" className="text-sm font-medium text-gray-300">
+                    Birdeye API Key
+                  </label>
+                  <a 
+                    href="https://docs.birdeye.so/docs/authentication-api-keys" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-gray-400 hover:text-gray-300"
+                    title="Get Birdeye API Key"
+                  >
+                    <Info className="w-4 h-4" />
+                  </a>
+                </div>
                 <input
                   id="birdeye-api-key"
                   type="password"
