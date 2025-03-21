@@ -3,6 +3,7 @@ import { Handle, useUpdateNodeInternals } from '@xyflow/react';
 import { Position } from '@xyflow/system';
 import { InputDefinition } from '../../types/InputTypes';
 import { CustomHandle, HandlePosition } from '@/types/HandleTypes';
+import SearchableDropdown from '../ui/SearchableDropdown';
 
 export interface NodeOutput {
   type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
@@ -103,18 +104,16 @@ export default function TemplateNode({
     switch (input.type) {
       case 'dropdown':
         return (
-          <select
+          <SearchableDropdown
+            options={input.options || []}
             value={inputValues[input.id] || ''}
-            onChange={(e) => handleInputChange(input.id, e.target.value)}
+            onChange={(value) => handleInputChange(input.id, value)}
             disabled={isConnected}
-            className={`w-full p-1 text-xs rounded border ${isConnected ? 'bg-gray-100' : 'bg-white'} text-black`}
-          >
-            {input.options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            backgroundColor={isConnected ? 'bg-gray-100' : 'bg-white'}
+            placeholder={input.placeholder || 'Select an option'}
+            textColor="text-black"
+            maxHeight="200px"
+          />
         );
       case 'checkbox':
         return (
