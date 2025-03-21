@@ -5,6 +5,7 @@ import MintNode from "../components/nodes/MintNode";
 import ConstNode from "../components/nodes/ConstNode";
 import FunctionNode from "../components/nodes/FunctionNode";
 import PrintNode from "../components/nodes/PrintNode";
+import HeliusNode from "../components/nodes/HeliusNode";
 
 export type NodeCategory = 'Default' | 'DeFi' | 'Misc';
 
@@ -28,6 +29,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   CONST: ConstNode,
   FUNCTION: FunctionNode,
   PRINT: PrintNode,
+  HELIUS: HeliusNode,
 
   // DeFi
   MINT: MintNode,
@@ -67,10 +69,10 @@ export const nodeTypesData: Record<string, NodeType> = {
     id: 'CONST',
     label: 'CONST',
     category: 'Default',
-    backgroundColor: 'bg-white',
-    borderColor: 'border-black',
-    primaryColor: 'white',
-    secondaryColor: 'white',
+    backgroundColor: 'bg-blue-400',
+    borderColor: 'border-blue-600',
+    primaryColor: 'blue-400',
+    secondaryColor: 'blue-600',
     textColor: 'text-black'
   },
   FUNCTION: {
@@ -87,10 +89,20 @@ export const nodeTypesData: Record<string, NodeType> = {
     id: 'PRINT',
     label: 'PRINT',
     category: 'Default',
-    backgroundColor: 'bg-white',
-    borderColor: 'border-black',
-    primaryColor: 'white',
-    secondaryColor: 'white',
+    backgroundColor: 'bg-yellow-200',
+    borderColor: 'border-yellow-400',
+    primaryColor: 'yellow-200',
+    secondaryColor: 'yellow-400',
+    textColor: 'text-black'
+  },
+  HELIUS: {
+    id: 'HELIUS',
+    label: 'HELIUS',
+    category: 'Default',
+    backgroundColor: 'bg-[#E84125]',
+    borderColor: 'border-[#E84125]',
+    primaryColor: '[#E84125]',
+    secondaryColor: '[#E84125]',
     textColor: 'text-black'
   },
 

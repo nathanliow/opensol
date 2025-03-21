@@ -33,7 +33,7 @@ export const getUserSolBalance: BlockTemplate = {
   execute: async (params: { address: string; apiKey?: string; network?: string }) => {
     try {
       // Extract parameters
-      const { address, apiKey, network = 'mainnet' } = params;
+      const { address, apiKey, network = 'devnet' } = params;
       
       if (!address) {
         throw new Error('Wallet address is required.');

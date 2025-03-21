@@ -18,11 +18,11 @@ interface PrintNodeProps {
 const PrintNode = memo(({ id, data }: PrintNodeProps) => {
   const { setNodes } = useReactFlow();
   const nodeType = nodeTypesData['PRINT'];
-  const backgroundColor = nodeType?.backgroundColor || 'bg-white';
-  const borderColor = nodeType?.borderColor || 'border-black';
-  const primaryColor = nodeType?.primaryColor || 'white';
-  const secondaryColor = nodeType?.secondaryColor || 'white';
-  const textColor = nodeType?.textColor || 'text-black';
+  const backgroundColor = nodeType?.backgroundColor;
+  const borderColor = nodeType?.borderColor;
+  const primaryColor = nodeType?.primaryColor;
+  const secondaryColor = nodeType?.secondaryColor;
+  const textColor = nodeType?.textColor;
 
   const handleTemplateChange = useCallback((value: string) => {
     setNodes((nodes) =>

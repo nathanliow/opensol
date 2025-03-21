@@ -7,49 +7,42 @@ import blockTemplateService from '../services/blockTemplateService';
 import { CustomHandle } from '../../types/HandleTypes';
 import { useConfig } from '../../contexts/ConfigContext';
 
-interface GetNodeData {
+interface HeliusNodeData {
   label: string;
   selectedFunction?: string;
   parameters?: Record<string, string>;
 }
 
-interface GetNodeProps {
+interface HeliusNodeProps {
   id: string;
-  data: GetNodeData;
+  data: HeliusNodeData;
 }
 
-const GetNode = memo(({ id, data }: GetNodeProps) => {
+const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
   const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
-  const blockTemplates = blockTemplateService.getTemplatesByType('GET');
+  const blockTemplates = blockTemplateService.getTemplatesByType('HELIUS');
   const edges = useEdges();
   const nodes = useNodes();
   const { network, getApiKey } = useConfig();
   
-  const nodeType = nodeTypesData['GET'];
+  const nodeType = nodeTypesData['HELIUS'];
   const backgroundColor = nodeType?.backgroundColor;
   const borderColor = nodeType?.borderColor;
   const primaryColor = nodeType?.primaryColor;
   const secondaryColor = nodeType?.secondaryColor;
   const textColor = nodeType?.textColor;
 
-  const getConnectedValue = useCallback((paramName: string) => {
+  const getConnectedStringValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
       e.target === id && 
-      e.targetHandle === `param-${paramName}`
+      e.targetHandle === `param-${paramName}` &&
+      nodes.find(n => n.id === e.source)?.type === 'STRING'
     );
     
     if (!edge) return null;
     const sourceNode = nodes.find(n => n.id === edge.source);
-    if (!sourceNode) return null;
-    
-    // Support both STRING and CONST nodes
-    if (sourceNode.type === 'STRING') {
-      return sourceNode.data.value || null;
-    } else if (sourceNode.type === 'CONST') {
-      return sourceNode.data.value !== undefined ? sourceNode.data.value : null;
-    }
-    return null;
+    return sourceNode?.data.value || null;
   }, [edges, id, nodes]);
 
   const handleFunctionChange = useCallback((value: string) => {
@@ -125,14 +118,14 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
           type: 'text' as const,
           defaultValue: parameters[param.name] || '',
           description: param.description,
-          getConnectedValue: () => getConnectedValue(param.name),
+          getConnectedValue: () => getConnectedStringValue(param.name),
           handleId: `param-${param.name}`,
         }));
       return [...baseInputs, ...paramInputs];
     }
     
     return baseInputs;
-  }, [currentTemplate, functionOptions, parameters, selectedFunction, getConnectedValue]);
+  }, [currentTemplate, functionOptions, parameters, selectedFunction, getConnectedStringValue]);
 
   const handleInputChange = useCallback((inputId: string, value: any) => {
     if (inputId === 'function') {
@@ -151,7 +144,7 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   return (
     <TemplateNode
       id={id}
-      title="GET"
+      title="HELIUS"
       backgroundColor={backgroundColor}
       borderColor={borderColor}
       primaryColor={primaryColor}
@@ -165,6 +158,6 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   );
 });
 
-GetNode.displayName = 'GetNode';
+HeliusNode.displayName = 'HeliusNode';
 
-export default GetNode;
+export default HeliusNode;
