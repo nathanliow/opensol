@@ -100,6 +100,9 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           - Nodes like CONST will be placed upper left of the blocks being connected.
           - Sparse the nodes so that they don't overlap.
           - Output of a block only comes out from right side of the block and input only comes in from left side of the block
+          - don't connect output of a block to a top of a block
+          - everything must be connected with edges
+          - if asked to perform an action, print the result using print node
 
           If you are asked to perform an action that goes beyond the capabilities of the given nodes and functions, 
           return error as true otherwise false.
