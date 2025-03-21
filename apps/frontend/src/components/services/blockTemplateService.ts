@@ -1,7 +1,6 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/NodeTypes';
 import { ApiKeyType } from '../../types/KeyTypes';
-import { BlockTemplate } from '@/types/BlockTemplate';
 
 // Frontend block template format
 export interface BlockTemplateMetadata {
@@ -22,14 +21,14 @@ export interface BlockTemplateMetadata {
   };
 }
 
-export interface TransformedTemplate {
+export interface BlockTemplate {
   metadata: BlockTemplateMetadata;
   execute: (params: Record<string, any>) => Promise<any>;
 }
 
 export class BlockTemplateService {
   private static instance: BlockTemplateService;
-  private templates: Record<string, TransformedTemplate>;
+  private templates: Record<string, BlockTemplate>;
 
   private constructor() {
     // Load and transform backend templates
@@ -37,7 +36,7 @@ export class BlockTemplateService {
     this.templates = Object.entries(backendTemplates).reduce((acc, [name, template]) => {
       acc[name] = transformTemplate(template);
       return acc;
-    }, {} as Record<string, TransformedTemplate>);
+    }, {} as Record<string, BlockTemplate>);
   }
 
   static getInstance(): BlockTemplateService {
@@ -47,11 +46,11 @@ export class BlockTemplateService {
     return BlockTemplateService.instance;
   }
 
-  getTemplate(name: string): TransformedTemplate | undefined {
+  getTemplate(name: string): BlockTemplate | undefined {
     return this.templates[name];
   }
 
-  getTemplates(): TransformedTemplate[] {
+  getTemplates(): BlockTemplate[] {
     return Object.values(this.templates);
   }
 
@@ -60,7 +59,7 @@ export class BlockTemplateService {
   }
 
   // Get templates for a specific block type
-  getTemplatesByType(blockType: string): TransformedTemplate[] {
+  getTemplatesByType(blockType: string): BlockTemplate[] {
     return Object.values(this.templates).filter(
       template => template.metadata.blockType === blockType
     );
@@ -72,7 +71,7 @@ export class BlockTemplateService {
   }
 }
 
-export function transformTemplate(backendTemplate: BlockTemplate): TransformedTemplate {
+export function transformTemplate(backendTemplate: BlockTemplate): BlockTemplate {
   return {
     metadata: {
       name: backendTemplate.metadata.name,

@@ -58,7 +58,7 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
       case 'number':
         return 'number';
       case 'boolean':
-        return 'checkbox';
+        return 'dropdown';
       default:
         return 'text';
     }

@@ -24,14 +24,14 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   const blockTemplates = blockTemplateService.getTemplatesByType('GET');
   const edges = useEdges();
   const nodes = useNodes();
-  const { network, getApiKey } = useConfig();
+  const { network } = useConfig();
   
   const nodeType = nodeTypesData['GET'];
-  const backgroundColor = nodeType?.backgroundColor || 'bg-blue-500';
-  const borderColor = nodeType?.borderColor || 'border-blue-700';
-  const primaryColor = nodeType?.primaryColor || 'text-blue-700';
-  const secondaryColor = nodeType?.secondaryColor || 'text-blue-500';
-  const textColor = nodeType?.textColor || 'text-white';
+  const backgroundColor = nodeType?.backgroundColor;
+  const borderColor = nodeType?.borderColor;
+  const primaryColor = nodeType?.primaryColor;
+  const secondaryColor = nodeType?.secondaryColor;
+  const textColor = nodeType?.textColor;
 
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 

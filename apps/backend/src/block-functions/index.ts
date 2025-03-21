@@ -1,6 +1,6 @@
 import { getUserSolBalance } from './default/get/getUserSolBalance';
-import { usdToSol } from './misc/MATH/usdToSol';
-import { solToUsd } from './misc/MATH/solToUsd';
+import { usdToSol } from './misc/math/usdToSol';
+import { solToUsd } from './misc/math/solToUsd';
 import { BlockTemplate } from '../../../frontend/src/components/services/blockTemplateService';
 import { getAccountInfo } from './default/helius/getAccountInfo';
 import { getAsset } from './default/helius/getAsset';

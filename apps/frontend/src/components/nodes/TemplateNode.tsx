@@ -115,16 +115,6 @@ export default function TemplateNode({
             maxHeight="200px"
           />
         );
-      case 'checkbox':
-        return (
-          <input
-            type="checkbox"
-            checked={inputValues[input.id] || false}
-            onChange={(e) => handleInputChange(input.id, e.target.checked)}
-            disabled={isConnected}
-            className="mt-1"
-          />
-        );
       case 'textarea':
         return (
           <div className="relative">
