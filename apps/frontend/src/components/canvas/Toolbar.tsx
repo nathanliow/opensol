@@ -1,6 +1,6 @@
 import { NodeCategory, NodeType } from "../../types/NodeTypes";
 import { Panel } from "@xyflow/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Icons } from "../icons/icons";
 
 interface ToolbarProps {
@@ -21,6 +21,22 @@ export default function Toolbar({
   toggleSelectionMode,
 }: ToolbarProps) {
   const [activeTab, setActiveTab] = useState<NodeCategory>('Default');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showNodeTypes && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleNodeTypesDropdown();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside, true); 
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [showNodeTypes, toggleNodeTypesDropdown]);
 
   // Filter node types by active category
   const filteredNodeTypes = Object.values(nodeTypesData).filter(type => type.category === activeTab);
@@ -45,7 +61,7 @@ export default function Toolbar({
           <Icons.FiMousePointer size={18} />
         </button>
 
-        <div className="relative">
+        <div className="relative" ref={dropdownRef}>
           <button
             onClick={toggleNodeTypesDropdown}
             className="flex items-center justify-center w-10 h-10 bg-[#1E1E1E] hover:bg-[#2D2D2D] rounded-lg shadow-lg text-white"
