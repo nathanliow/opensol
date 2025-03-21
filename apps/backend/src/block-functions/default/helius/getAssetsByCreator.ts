@@ -1,17 +1,17 @@
 import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getAssetByOwner: BlockTemplate = {
+export const getAssetsByCreator: BlockTemplate = {
   metadata: {
-    name: 'getAssetByOwner',
+    name: 'getAssetsByCreator',
     description:
-      'Get a list of assets with a specific owner',
+      'Get a list of assets with a specific creator',
     blockCategory: 'Default',
     blockType: 'HELIUS',
     parameters: [
       {
-        name: 'ownerAddress',
+        name: 'creatorAddress',
         type: 'string',
-        description: 'Owner Address to get'
+        description: 'Creator Address to get'
       },
       {
         name: 'page',
@@ -47,12 +47,12 @@ export const getAssetByOwner: BlockTemplate = {
     requiredKeys: ['helius'],
     output: {
       type: 'object',
-      description: 'List of assets owned by an address'
+      description: 'List of assets created by an address'
     }
   },
   execute: async (
     params: { 
-      ownerAddress: string; 
+      creatorAddress: string; 
       page: number; 
       limit: number; 
       sortBy: string; 
@@ -64,7 +64,7 @@ export const getAssetByOwner: BlockTemplate = {
     }) => {
     try {
       const { 
-        ownerAddress, 
+        creatorAddress, 
         page, 
         limit, 
         sortBy, 
@@ -75,8 +75,8 @@ export const getAssetByOwner: BlockTemplate = {
         network = 'devnet' 
       } = params;
       
-      if (!ownerAddress) {
-        throw new Error('Owner Address is required.');
+      if (!creatorAddress) {
+        throw new Error('Creator Address is required.');
       }
       
       if (!apiKey) {
@@ -91,9 +91,9 @@ export const getAssetByOwner: BlockTemplate = {
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 'text',
-          method: 'getAssetsByOwner',
+          method: 'getAssetsByCreator',
           params: {
-            ownerAddress: ownerAddress,
+            creatorAddress: creatorAddress,
             page: page,
             limit: limit,
             sortBy: {
@@ -120,7 +120,7 @@ export const getAssetByOwner: BlockTemplate = {
 
       return data;
     } catch (error) {
-      console.error('Error in getAssetByOwner:', error);
+      console.error('Error in getAssetsByCreator:', error);
       throw error;
     }
   }
