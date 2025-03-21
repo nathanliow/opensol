@@ -3,6 +3,10 @@ import { useNodes, useEdges, Panel } from '@xyflow/react';
 import CodeDisplay from '../code/CodeDisplay';
 import RunButton from '../canvas/RunButton';
 import { Icons } from '../icons/icons';
+import LLMInput from '../llm/LLMInput';
+import LoadingDots from '../common/LoadingDots';
+import { callLLM } from '../../services/llmService';
+import { useConfig } from '../../contexts/ConfigContext';
 
 interface ConsoleProps {
   className?: string;
@@ -13,6 +17,22 @@ interface ConsoleProps {
   onCodeGenerated: (code: string) => void;
   onDebugGenerated: (debug: string) => void;
   onClear?: () => void;
+  onRestoreFlow?: (nodes: any[], edges: any[]) => void;
+}
+
+interface RestorePoint {
+  timestamp: string;
+  nodes: any[];
+  edges: any[];
+  messageIndex: number;
+}
+
+interface Message {
+  type: 'user' | 'ai';
+  content: string;
+  timestamp: string;
+  id: string;
+  error?: boolean;
 }
 
 const Console = memo(({ 
@@ -23,23 +43,29 @@ const Console = memo(({
   onOutput,
   onCodeGenerated,
   onDebugGenerated,
-  onClear 
+  onClear,
+  onRestoreFlow 
 }: ConsoleProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [size, setSize] = useState({ width: 600, height: 400 });
+  const [restorePoints, setRestorePoints] = useState<RestorePoint[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [messageIdCounter, setMessageIdCounter] = useState(0);
+  const nodes = useNodes();
+  const edges = useEdges();
+  const { apiKeys } = useConfig();
 
   // Set initial size based on viewport after mount
   useEffect(() => {
     setSize({
-      width: Math.min(window.innerWidth / 2, 600),
+      width: window.innerWidth / 2,
       height: Math.min(window.innerHeight / 2, 400)
     });
   }, []);
 
-  const [activeTab, setActiveTab] = useState<'debug' | 'output' | 'code'>('output');
+  const [activeTab, setActiveTab] = useState<'debug' | 'output' | 'code' | 'ai'>('output');
   const [selectedFunction, setSelectedFunction] = useState<string>('');
-  const nodes = useNodes();
-  const edges = useEdges();
 
   // Get all function nodes
   const functionNodes = nodes.filter(n => n.type === 'FUNCTION');
@@ -208,6 +234,16 @@ const Console = memo(({
                   >
                     Code
                   </button>
+                  <button
+                    onClick={() => setActiveTab('ai')}
+                    className={`px-3 py-1 rounded ${
+                      activeTab === 'ai'
+                        ? 'bg-[#2D2D2D] text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    AI
+                  </button>
                 </div>
               </div>
             </div>
@@ -242,6 +278,117 @@ const Console = memo(({
               )}
               {activeTab === 'code' && (
                 <CodeDisplay code={code.replace(/const HELIUS_API_KEY = ".*";/, 'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;')} />
+              )}
+              {activeTab === 'ai' && (
+                <div className="flex flex-col h-full">
+                  <div className="flex-1 overflow-y-auto">
+                    {messages.map((message) => (
+                      <div key={message.id} className="mb-4">
+                        <div className={`flex gap-2 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`px-4 py-2 rounded-lg max-w-[80%] ${
+                            message.type === 'user' 
+                              ? 'bg-[#2563EB] text-white' 
+                              : message.error 
+                                ? 'bg-[#2D2D2D] text-red-400'
+                                : 'bg-[#2D2D2D] text-white'
+                          }`}>
+                            {message.content}
+                            {message.type === 'ai' && message.content === 'Processing...' && (
+                              <div className="mt-1">
+                                <LoadingDots />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        {message.type === 'ai' && message.content !== 'Processing...' && !message.error && (
+                          <div className="mt-2 ml-2">
+                            <button
+                              onClick={() => {
+                                const messageIndex = messages.indexOf(message);
+                                const point = restorePoints.find(p => p.messageIndex === messageIndex);
+                                console.log('messageIndex', messageIndex, 'restorePoints', restorePoints);
+                                if (point && onRestoreFlow) {
+                                  onRestoreFlow(point.nodes, point.edges);
+                                  setMessages(prev => prev.slice(0, messageIndex + 1));
+                                  setRestorePoints(prev => prev.filter(p => p.messageIndex <= messageIndex));
+                                }
+                              }}
+                              className="px-2 py-1 text-xs bg-[#2D2D2D] text-gray-400 rounded border border-[#333333] hover:bg-[#3D3D3D] hover:text-white transition-colors"
+                            >
+                              Restore {new Date(message.timestamp).toLocaleTimeString()}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <LLMInput
+                    disabled={isProcessing}
+                    onSubmit={async (prompt) => {
+                      setIsProcessing(true);
+                      const timestamp = new Date().toISOString();
+                      const currentMessageIndex = messages.length;
+                      
+                      const userMessageId = `message-${messageIdCounter}`;
+                      setMessageIdCounter(prev => prev + 1);
+                      setMessages(prev => [...prev, {
+                        type: 'user',
+                        content: prompt,
+                        timestamp,
+                        id: userMessageId
+                      }]);
+
+                      const aiMessageId = `message-${messageIdCounter + 1}`;
+                      setMessageIdCounter(prev => prev + 2);
+                      setMessages(prev => [...prev, {
+                        type: 'ai',
+                        content: 'Processing...',
+                        timestamp: new Date().toISOString(),
+                        id: aiMessageId
+                      }]);
+
+                      try {
+                        const result = await callLLM(prompt, nodes, edges, apiKeys['openai'] || '');
+
+                        setMessages(prev => [
+                          ...prev.slice(0, -1),
+                          {
+                            type: 'ai',
+                            content: result.success ? 'Done! Flow has been updated.' : result.message,
+                            timestamp: new Date().toISOString(),
+                            id: aiMessageId,
+                            error: !result.success
+                          }
+                        ]);
+
+                        if (result.success && result.nodes && result.edges && onRestoreFlow) {
+                          onRestoreFlow(result.nodes, result.edges);
+                          
+                          const newRestorePoint: RestorePoint = {
+                            timestamp: new Date().toISOString(),
+                            nodes: [...result.nodes],
+                            edges: [...result.edges],
+                            messageIndex: currentMessageIndex + 1
+                          };
+                          setRestorePoints(prev => [...prev, newRestorePoint]);
+                        }
+                      } catch (error) {
+                        setMessages(prev => [
+                          ...prev.slice(0, -1),
+                          {
+                            type: 'ai',
+                            content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+                            timestamp: new Date().toISOString(),
+                            id: aiMessageId,
+                            error: true
+                          }
+                        ]);
+                      } finally {
+                        setIsProcessing(false);
+                      }
+                    }}
+                  />
+                </div>
               )}
             </div>
           </div>
