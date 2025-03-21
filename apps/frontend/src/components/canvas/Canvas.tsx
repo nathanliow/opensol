@@ -24,8 +24,8 @@ import Menu from "./Menu";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showNodeTypes, setShowNodeTypes] = useState(false);
   const [debug, setDebug] = useState<string>('');
   const [output, setOutput] = useState<string>('');
@@ -159,6 +159,12 @@ function Flow() {
           onCodeGenerated={setCode}
           onDebugGenerated={setDebug}
           onClear={handleClear}
+          onRestoreFlow={(restoredNodes, restoredEdges) => {
+            console.log('restoredNodes', restoredNodes);
+            
+            setNodes(restoredNodes);
+            setEdges(restoredEdges);
+          }}
         />
       </ReactFlow>
     </div>

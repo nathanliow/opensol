@@ -140,65 +140,45 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
               </div>
             </div>
             
-            <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-300 mb-2">API Keys</h3>
-              <div className="flex flex-col gap-3">
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Helius API Key</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={heliusApiKey} 
-                      onChange={(e) => setHeliusApiKey(e.target.value)}
-                      className="text-xs p-2 bg-[#2D2D2D] border border-[#333333] rounded-md text-white flex-1"
-                      placeholder="Enter Helius API key"
-                    />
-                    <button 
-                      onClick={() => handleApiKeySave('helius', heliusApiKey)}
-                      className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">OpenAI API Key</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={openaiApiKey} 
-                      onChange={(e) => setOpenaiApiKey(e.target.value)}
-                      className="text-xs p-2 bg-[#2D2D2D] border border-[#333333] rounded-md text-white flex-1"
-                      placeholder="Enter OpenAI API key"
-                    />
-                    <button 
-                      onClick={() => handleApiKeySave('openai', openaiApiKey)}
-                      className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Birdeye API Key</label>
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={birdeyeApiKey} 
-                      onChange={(e) => setBirdeyeApiKey(e.target.value)}
-                      className="text-xs p-2 bg-[#2D2D2D] border border-[#333333] rounded-md text-white flex-1"
-                      placeholder="Enter Birdeye API key"
-                    />
-                    <button 
-                      onClick={() => handleApiKeySave('birdeye', birdeyeApiKey)}
-                      className="text-xs bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded-md"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
+            <div className="flex flex-col gap-4 p-4">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="helius-api-key" className="text-sm font-medium text-gray-300">
+                  Helius API Key
+                </label>
+                <input
+                  id="helius-api-key"
+                  type="password"
+                  value={heliusApiKey}
+                  onChange={(e) => setHeliusApiKey(e.target.value)}
+                  onBlur={() => handleApiKeySave('helius', heliusApiKey)}
+                  className="px-3 py-2 bg-[#1E1E1E] text-white rounded border border-[#333333] focus:outline-none focus:border-[#4B5563]"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="openai-api-key" className="text-sm font-medium text-gray-300">
+                  OpenAI API Key
+                </label>
+                <input
+                  id="openai-api-key"
+                  type="password"
+                  value={openaiApiKey}
+                  onChange={(e) => setOpenaiApiKey(e.target.value)}
+                  onBlur={() => handleApiKeySave('openai', openaiApiKey)}
+                  className="px-3 py-2 bg-[#1E1E1E] text-white rounded border border-[#333333] focus:outline-none focus:border-[#4B5563]"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="birdeye-api-key" className="text-sm font-medium text-gray-300">
+                  Birdeye API Key
+                </label>
+                <input
+                  id="birdeye-api-key"
+                  type="password"
+                  value={birdeyeApiKey}
+                  onChange={(e) => setBirdeyeApiKey(e.target.value)}
+                  onBlur={() => handleApiKeySave('birdeye', birdeyeApiKey)}
+                  className="px-3 py-2 bg-[#1E1E1E] text-white rounded border border-[#333333] focus:outline-none focus:border-[#4B5563]"
+                />
               </div>
             </div>
             
