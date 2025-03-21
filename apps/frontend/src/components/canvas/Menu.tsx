@@ -13,7 +13,7 @@ interface MenuProps {
 }
 
 const Menu = ({ onExport, onImport }: MenuProps) => {
-  const { user, logout } = usePrivy();
+  const { user, login, logout } = usePrivy();
   const router = useRouter();
   const { network, setNetwork, apiKeys, setApiKey } = useConfig();
   const [isOpen, setIsOpen] = useState(false);
@@ -182,15 +182,25 @@ const Menu = ({ onExport, onImport }: MenuProps) => {
               </div>
             </div>
             
-            {user && (
+            {user ? (
               <button
                 onClick={() => {
                   logout();
                   setIsOpen(false);
                 }}
-                className="w-full text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md"
+                className="w-full text-xs bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md mt-4"
               >
                 Logout
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  login();
+                  setIsOpen(false);
+                }}
+                className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md mt-4"
+              >
+                Connect Wallet
               </button>
             )}
           </div>
