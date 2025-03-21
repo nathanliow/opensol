@@ -6,6 +6,7 @@ import ConstNode from "../components/nodes/ConstNode";
 import FunctionNode from "../components/nodes/FunctionNode";
 import PrintNode from "../components/nodes/PrintNode";
 import HeliusNode from "../components/nodes/HeliusNode";
+import MathNode from "../components/nodes/MathNode";
 
 export type NodeCategory = 'Default' | 'DeFi' | 'Misc';
 
@@ -35,6 +36,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   MINT: MintNode,
 
   // Misc
+  MATH: MathNode,
   
 } satisfies NodeTypes);
 
@@ -118,6 +120,21 @@ export const nodeTypesData: Record<string, NodeType> = {
     borderColor: 'border-red-400',
     primaryColor: 'red',
     secondaryColor: 'red',
+    textColor: 'text-black'
+  },
+
+  /* ------------------------------------------------------------ */
+  /* -------------------------- MISC ---------------------------- */
+  /* ------------------------------------------------------------ */
+
+  MATH: {
+    id: 'MATH',
+    label: 'MATH',
+    category: 'Misc',
+    backgroundColor: 'bg-purple-200',
+    borderColor: 'border-purple-400',
+    primaryColor: 'purple-700',
+    secondaryColor: 'purple-400',
     textColor: 'text-black'
   },
 };

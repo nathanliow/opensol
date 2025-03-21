@@ -43,10 +43,6 @@ export class FlowCompiler {
     const functionCode = `async function ${functionName}(params) {
       try {
         const { address, apiKey, network } = params;
-        console.log('Received params:', params);
-        console.log('Extracted address:', address);
-        console.log('Extracted apiKey:', apiKey);
-        console.log('Extracted network:', network);
         ${functionBody.replace(/const\s*{\s*address\s*,\s*apiKey\s*,\s*network\s*}\s*=\s*params\s*;/, '')}
       } catch (error) {
         console.error('Error in ${templateName}:', error);
@@ -103,13 +99,16 @@ export class FlowCompiler {
     const inputs: Record<string, string> = {};
     const edges = this.edges.filter(e => e.target === nodeId);
     
+    
     edges.forEach(edge => {
       const sourceVar = this.nodeOutputs.get(edge.source);
+      
       if (sourceVar) {
         // Handle both param-* handles and regular handles like 'flow'
         const paramName = edge.targetHandle?.startsWith('param-') 
           ? edge.targetHandle.replace('param-', '')
           : (edge.targetHandle || 'flow');
+        
         inputs[paramName] = sourceVar;
       }
     });
@@ -197,17 +196,18 @@ export class FlowCompiler {
         const parameters = node.data.parameters || {};
         const inputs = this.getNodeInputs(node.id);
         
+        // Debug Math inputs
+        
         const paramsObj = { ...parameters };
         Object.entries(inputs).forEach(([handle, value]) => {
-          if (handle.startsWith('param-')) {
-            const paramName = handle.replace('param-', '');
-            paramsObj[paramName] = value;
-          }
+          // Extract param name from handle or use handle directly
+          const paramName = handle.startsWith('param-') ? handle.replace('param-', '') : handle;
+          paramsObj[paramName] = value;
         });
         
         const paramsString = Object.entries(paramsObj)
           .map(([key, value]) => {
-            if (typeof value === 'string' && value.startsWith('result_')) {
+            if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
               return `${key}: ${value}`;
             }
             return `${key}: ${JSON.stringify(value)}`;
@@ -230,7 +230,6 @@ export class FlowCompiler {
         
         const template = node.data.template || '$output$';
 
-        console.log('template',template);
         
         const printCode = this.generatePrintCode(node, inputVar);
         this.printOutputs.push(printCode);

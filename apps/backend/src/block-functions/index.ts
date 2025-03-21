@@ -1,6 +1,6 @@
 import { getUserSolBalance } from './default/get/getUserSolBalance';
-import { usdToSol } from './misc/usdToSol';
-import { solToUsd } from './misc/solToUsd';
+import { usdToSol } from './misc/MATH/usdToSol';
+import { solToUsd } from './misc/MATH/solToUsd';
 import { BlockTemplate } from '../../../frontend/src/components/services/blockTemplateService';
 import { getAccountInfo } from './default/helius/getAccountInfo';
 import { getAsset } from './default/helius/getAsset';
@@ -108,7 +108,7 @@ export const templates: Record<string, Record<string, BlockTemplate>> = {
     isBlockhashValid,
     minimumLedgerSlot
   },
-  MISC: {
+  MATH: {
     solToUsd,
     usdToSol
   }
