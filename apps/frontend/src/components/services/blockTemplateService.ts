@@ -1,58 +1,43 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/NodeTypes';
 import { ApiKeyType } from '../../types/KeyTypes';
+import { BlockTemplate } from '@/types/BlockTemplate';
 
 // Frontend block template format
-export interface BlockTemplate {
-  metadata: {
+export interface BlockTemplateMetadata {
+  name: string;
+  description: string;
+  blockType: string;
+  blockCategory?: NodeCategory;
+  parameters: {
     name: string;
     description: string;
-    blockType: string;
-    blockCategory: NodeCategory;
-    parameters: {
-      name: string;
-      type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
-      description: string;
-    }[];
-    requiredKeys: ApiKeyType[];
-    output: {
-      type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
-      description: string;
-    };
+    type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
+    defaultValue?: any;
+  }[];
+  requiredKeys?: ApiKeyType[];
+  output?: {
+    type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
+    description: string;
   };
-  execute: (params: any) => Promise<any>;
+}
+
+export interface TransformedTemplate {
+  metadata: BlockTemplateMetadata;
+  execute: (params: Record<string, any>) => Promise<any>;
 }
 
 export class BlockTemplateService {
   private static instance: BlockTemplateService;
-  private templates: Record<string, BlockTemplate>;
+  private templates: Record<string, TransformedTemplate>;
 
   private constructor() {
     // Load and transform backend templates
     const backendTemplates = getFlattenedTemplates();
     this.templates = Object.entries(backendTemplates).reduce((acc, [name, template]) => {
-      acc[name] = this.transformTemplate(template);
+      acc[name] = transformTemplate(template);
       return acc;
-    }, {} as Record<string, BlockTemplate>);
-  }
-
-  private transformTemplate(backendTemplate: BlockTemplate): BlockTemplate {
-    // Transform backend template format to frontend format
-    return {
-      metadata: {
-        name: backendTemplate.metadata.name,
-        description: backendTemplate.metadata.description,
-        blockType: backendTemplate.metadata.blockType,
-        blockCategory: backendTemplate.metadata.blockCategory,
-        parameters: backendTemplate.metadata.parameters || [], // Parameters are already in array format
-        requiredKeys: backendTemplate.metadata.requiredKeys,
-        output: {
-          type: 'any', // We could add this to backend template if needed
-          description: 'Function output'
-        }
-      },
-      execute: backendTemplate.execute,
-    };
+    }, {} as Record<string, TransformedTemplate>);
   }
 
   static getInstance(): BlockTemplateService {
@@ -62,11 +47,11 @@ export class BlockTemplateService {
     return BlockTemplateService.instance;
   }
 
-  getTemplate(name: string): BlockTemplate | undefined {
+  getTemplate(name: string): TransformedTemplate | undefined {
     return this.templates[name];
   }
 
-  getTemplates(): BlockTemplate[] {
+  getTemplates(): TransformedTemplate[] {
     return Object.values(this.templates);
   }
 
@@ -75,7 +60,7 @@ export class BlockTemplateService {
   }
 
   // Get templates for a specific block type
-  getTemplatesByType(blockType: string): BlockTemplate[] {
+  getTemplatesByType(blockType: string): TransformedTemplate[] {
     return Object.values(this.templates).filter(
       template => template.metadata.blockType === blockType
     );
@@ -85,6 +70,21 @@ export class BlockTemplateService {
   getBlockTypes(): string[] {
     return [...new Set(Object.values(this.templates).map(t => t.metadata.blockType))];
   }
+}
+
+export function transformTemplate(backendTemplate: BlockTemplate): TransformedTemplate {
+  return {
+    metadata: {
+      name: backendTemplate.metadata.name,
+      description: backendTemplate.metadata.description,
+      blockType: backendTemplate.metadata.blockType,
+      blockCategory: backendTemplate.metadata.blockCategory,
+      parameters: backendTemplate.metadata.parameters || [],
+      requiredKeys: backendTemplate.metadata.requiredKeys,
+      output: backendTemplate.metadata.output || undefined
+    },
+    execute: backendTemplate.execute
+  };
 }
 
 export default BlockTemplateService.getInstance();

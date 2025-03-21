@@ -269,9 +269,11 @@ const Console = memo(({
 
           {/* Content */}
           <div className="flex flex-col h-[calc(100%-40px)]">
-            <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
+            <div className="flex-1 overflow-y-auto p-4 font-mono text-sm whitespace-pre">
               {activeTab === 'output' && (
-                <pre className="whitespace-pre-wrap">{output}</pre>
+                <div className="flex-1 overflow-y-auto p-4 font-mono text-sm whitespace-pre">
+                  {output}
+                </div>
               )}
               {activeTab === 'debug' && (
                 <pre className="whitespace-pre-wrap">{debug}</pre>

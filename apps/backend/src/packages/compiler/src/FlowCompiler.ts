@@ -42,11 +42,12 @@ export class FlowCompiler {
     // Generate function code that uses params directly
     const functionCode = `async function ${functionName}(params) {
       try {
-        const { address, apiKey } = params;
+        const { address, apiKey, network } = params;
         console.log('Received params:', params);
         console.log('Extracted address:', address);
         console.log('Extracted apiKey:', apiKey);
-        ${functionBody.replace(/const\s*{\s*address\s*,\s*apiKey\s*}\s*=\s*params\s*;/, '')}
+        console.log('Extracted network:', network);
+        ${functionBody.replace(/const\s*{\s*address\s*,\s*apiKey\s*,\s*network\s*}\s*=\s*params\s*;/, '')}
       } catch (error) {
         console.error('Error in ${templateName}:', error);
         throw error;
@@ -58,17 +59,100 @@ export class FlowCompiler {
     return functionName;
   }
 
+  private getNodeOutputType(nodeId: string): string {
+    const node = this.nodes.find(n => n.id === nodeId);
+    if (!node) return 'any';
+
+    switch (node.type) {
+      case 'GET':
+      case 'HELIUS': {
+        const template = this.templates[node.data.selectedFunction];
+        return template?.metadata.output?.type || 'any';
+      }
+      case 'CONST': {
+        return node.data.dataType || 'string';
+      }
+      case 'STRING': {
+        return 'string';
+      }
+      default:
+        return 'any';
+    }
+  }
+
+  private validateNodeConnection(sourceId: string, targetId: string, targetParam: string): void {
+    const sourceType = this.getNodeOutputType(sourceId);
+    const targetNode = this.nodes.find(n => n.id === targetId);
+    
+    if (!targetNode) return;
+
+    if (targetNode.type === 'GET' || targetNode.type === 'HELIUS') {
+      const template = this.templates[targetNode.data.selectedFunction];
+      if (!template) return;
+
+      const param = template.metadata.parameters.find(p => p.name === targetParam);
+      if (!param) return;
+
+      if (sourceType !== param.type && sourceType !== 'any' && param.type !== 'any') {
+        throw new Error(`Type mismatch: ${targetNode.type} node parameter '${targetParam}' expects ${param.type} but got ${sourceType} from source node`);
+      }
+    }
+  }
+
   private getNodeInputs(nodeId: string): Record<string, string> {
     const inputs: Record<string, string> = {};
-    this.edges
-      .filter(edge => edge.target === nodeId)
-      .forEach(edge => {
-        const sourceOutput = this.nodeOutputs.get(edge.source);
-        if (sourceOutput) {
-          inputs[edge.targetHandle || 'flow'] = sourceOutput;
-        }
-      });
+    const edges = this.edges.filter(e => e.target === nodeId);
+    
+    edges.forEach(edge => {
+      const sourceVar = this.nodeOutputs.get(edge.source);
+      if (sourceVar) {
+        // Handle both param-* handles and regular handles like 'flow'
+        const paramName = edge.targetHandle?.startsWith('param-') 
+          ? edge.targetHandle.replace('param-', '')
+          : (edge.targetHandle || 'flow');
+        inputs[paramName] = sourceVar;
+      }
+    });
+    
     return inputs;
+  }
+
+  private generatePrintCode(node: FlowNode, inputVar: string): string {
+    const sourceNodeId = this.edges.find(e => e.target === node.id)?.source;
+    if (!sourceNodeId) return '';  // Don't print anything if no input
+
+    const sourceType = this.getNodeOutputType(sourceNodeId);
+    let outputExpr = '';
+    
+    switch (sourceType) {
+      case 'object':
+        outputExpr = `JSON.stringify(${inputVar}, null, 2)`;
+        break;
+      case 'string':
+      case 'number':
+      case 'boolean':
+        outputExpr = `String(${inputVar})`;
+        break;
+      case 'string[]':
+      case 'number[]':
+      case 'boolean[]':
+        outputExpr = `JSON.stringify(${inputVar})`;
+        break;
+      default:
+        outputExpr = `(typeof ${inputVar} === 'object' ? JSON.stringify(${inputVar}, null, 2) : String(${inputVar}))`;
+    }
+
+    // Get template, default to empty string if not set
+    const template = node.data.template || '';
+    
+    // Only output if template contains $output$
+    if (!template.includes('$output$')) {
+      return `printOutput += \`${template}\\n\`;\n`;
+    }
+    
+    // Replace $output$ in template with the actual output expression
+    const formattedTemplate = template.replace(/\$output\$/g, '${' + outputExpr + '}');
+    return `printOutput += \`${formattedTemplate}\\n\`;\n`;
   }
 
   private generateNodeCode(node: FlowNode): string {
@@ -76,46 +160,26 @@ export class FlowCompiler {
     this.nodeOutputs.set(node.id, varName);
 
     switch (node.type) {
-      case 'GET': {
+      case 'GET':
+      case 'HELIUS': {
         const functionName = this.generateGetFunction(node);
-        const parameters = node.data.parameters || {};
+        const parameters = { ...node.data.parameters };
         const inputs = this.getNodeInputs(node.id);
         
-        // Create parameters object including apiKey
-        const paramsObj: Record<string, any> = {
-          apiKey: 'HELIUS_API_KEY',
-          network: parameters.network || 'devnet'
-        };
-
-        // Map numeric parameters to their correct names based on metadata
-        const templateName = node.data.selectedFunction || '';
-        const template = this.templates[templateName];
-        if (template?.metadata?.parameters) {
-          const parameterMetadata = template.metadata.parameters;
-          Object.entries(parameters).forEach(([key, value]) => {
-            if (!isNaN(Number(key))) {
-              const paramIndex = Number(key);
-              if (paramIndex < parameterMetadata.length) {
-                const paramName = parameterMetadata[paramIndex].name;
-                paramsObj[paramName] = value;
-              }
-            } else {
-              paramsObj[key] = value;
-            }
-          });
-        }
-
-        // Add connected inputs to parameters
-        Object.entries(inputs).forEach(([handle, value]) => {
-          if (handle.startsWith('param-')) {
-            const paramName = handle.replace('param-', '');
+        const paramsObj = { ...parameters };
+        Object.entries(inputs).forEach(([paramName, value]) => {
+          // Only include param-* inputs, skip custom handles like top-target and flow
+          if (paramName !== 'top-target' && paramName !== 'flow' && paramName !== 'bottom-source') {
             paramsObj[paramName] = value;
           }
         });
+
+        // Add API key from constant
+        paramsObj['apiKey'] = 'HELIUS_API_KEY';
         
         const paramsString = Object.entries(paramsObj)
           .map(([key, value]) => {
-            if (value === 'HELIUS_API_KEY') {
+            if (key === 'apiKey') {
               return `${key}: ${value}`;
             }
             if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
@@ -165,9 +229,11 @@ export class FlowCompiler {
         }
         
         const template = node.data.template || '$output$';
+
+        console.log('template',template);
         
-        const formattedTemplate = template.replace(/\$output\$/g, '${' + inputVar + '}');
-        this.printOutputs.push(`printOutput += \`${formattedTemplate}\\n\`;`);
+        const printCode = this.generatePrintCode(node, inputVar);
+        this.printOutputs.push(printCode);
         
         return `const ${varName} = ${inputVar};`;
       }
@@ -226,10 +292,14 @@ export class FlowCompiler {
 
     // Extract API keys from GET nodes
     this.nodes.forEach(node => {
-      if (node.type === 'GET' && node.data?.parameters?.apiKey) {
-        constants['HELIUS_API_KEY'] = JSON.stringify(node.data.parameters.apiKey);
-        displayConstants['HELIUS_API_KEY'] = 'process.env.HELIUS_API_KEY';
-        delete node.data.parameters.apiKey;
+      if ((node.type === 'GET' || node.type === 'HELIUS') && node.data?.parameters?.apiKey) {
+        // Only store the API key if it's not already stored
+        if (!constants['HELIUS_API_KEY']) {
+          constants['HELIUS_API_KEY'] = JSON.stringify(node.data.parameters.apiKey);
+          displayConstants['HELIUS_API_KEY'] = 'process.env.HELIUS_API_KEY';
+          delete node.data.parameters.apiKey;
+        }
+        // Keep the apiKey in parameters since we need it for execution
       }
     });
 

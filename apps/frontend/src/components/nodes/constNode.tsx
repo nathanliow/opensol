@@ -34,6 +34,12 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
   const dataType = data.dataType || 'string';
   const value = data.value !== undefined ? data.value : '';
   
+  // Define output type based on data type
+  const output = useMemo(() => ({
+    type: dataType as 'string' | 'number' | 'boolean',
+    description: `Constant ${dataType} value`
+  }), [dataType]);
+  
   // Define custom handle (output at bottom)
   const customHandles: CustomHandle[] = useMemo(() => [
     {
@@ -45,20 +51,60 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
       }
     }
   ], []);
-  
+
   // Determine input type based on selected data type
   const getInputType = useMemo(() => {
     switch (dataType) {
       case 'number':
         return 'number';
       case 'boolean':
-        return 'dropdown';
+        return 'checkbox';
       default:
         return 'text';
     }
   }, [dataType]);
-  
-  // Define inputs for constant configuration
+
+  const handleInputChange = useCallback((inputId: string, newValue: any) => {
+    if (inputId === 'dataType') {
+      // Reset value when changing type
+      setNodes(nodes => nodes.map(node => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              dataType: newValue,
+              value: ''
+            }
+          };
+        }
+        return node;
+      }));
+    } else if (inputId === 'value') {
+      let processedValue = newValue;
+      
+      // Convert value based on data type
+      if (dataType === 'number') {
+        processedValue = Number(newValue);
+      } else if (dataType === 'boolean') {
+        processedValue = Boolean(newValue);
+      }
+      
+      setNodes(nodes => nodes.map(node => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              value: processedValue
+            }
+          };
+        }
+        return node;
+      }));
+    }
+  }, [id, setNodes, dataType]);
+
   const inputs: InputDefinition[] = useMemo(() => [
     {
       id: 'dataType',
@@ -71,34 +117,10 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
       id: 'value',
       label: 'Value',
       type: getInputType,
-      options: dataType === 'boolean' ? [
-        { value: 'true', label: 'True' },
-        { value: 'false', label: 'False' }
-      ] : undefined,
-      defaultValue: String(value)
+      defaultValue: value
     }
   ], [dataType, value, getInputType]);
-  
-  const handleInputChange = useCallback((inputId: string, newValue: any) => {
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                [inputId]: inputId === 'value' 
-                  ? (dataType === 'number' ? Number(newValue)
-                    : dataType === 'boolean' ? newValue === 'true'
-                    : newValue)
-                  : newValue
-              }
-            }
-          : node
-      )
-    );
-  }, [id, setNodes, dataType]);
-  
+
   return (
     <TemplateNode
       id={id}
@@ -111,8 +133,8 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
       inputs={inputs}
       data={data}
       onInputChange={handleInputChange}
-      hideInputHandles={true}
       customHandles={customHandles}
+      output={output}
     />
   );
 }
