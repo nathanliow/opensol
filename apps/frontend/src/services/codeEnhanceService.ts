@@ -12,7 +12,7 @@ export async function enhanceCode(code: string, apiKey: string): Promise<string>
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4.5-preview",
+      model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
@@ -22,6 +22,7 @@ export async function enhanceCode(code: string, apiKey: string): Promise<string>
           3. Maintaining the same basic structure
           4. Only renaming variables, do not modify the logic or add comments
           5. Keep import statements unchanged
+          6. Don't perform any other changes besides renaming variables
           
           Example input:
           const result_0 = await getUserBalance({ address });
