@@ -10,6 +10,7 @@ export class FlowCompiler {
   private printOutputs: string[] = [];
   private getFunctions: Map<string, string> = new Map();
   private templateToFunctionName: Map<string, string> = new Map();
+  private functionCode: string | undefined;
 
   constructor(nodes: FlowNode[], edges: FlowEdge[], templates: Record<string, BlockTemplate>) {
     this.nodes = nodes;
@@ -286,18 +287,29 @@ export class FlowCompiler {
       `import { ${fn} } from '@opensol/templates';`
     ).join('\n');
 
-    const functionNode = this.nodes.find(n => n.type === 'FUNCTION');
-    const functionName = functionNode?.data?.name || 'execute';
-    const formattedFunctionName = functionName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    // Extract just the execute function from the full code
+    let executeFunction = this.functionCode?.split('\n\nasync function execute')[1];
+    if (!executeFunction) return '';
 
-    const executeFunction = this.generateExecuteFunction().replace(
-      'async function execute()',
-      `async function ${formattedFunctionName}()`
+    executeFunction = 'async function execute' + executeFunction;
+
+    // Replace API key with env var
+    executeFunction = executeFunction.replace(
+      /const HELIUS_API_KEY = "[^"]+";/,
+      'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;'
     );
 
-    return `${importStatements}
+    // Replace function name if needed
+    const functionNode = this.nodes.find(n => n.type === 'FUNCTION');
+    if (functionNode?.data?.name) {
+      const formattedFunctionName = functionNode.data.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      executeFunction = executeFunction.replace(
+        'async function execute',
+        `async function ${formattedFunctionName}`
+      );
+    }
 
-${executeFunction}`;
+    return `${importStatements}\n\n${executeFunction}`;
   }
 
   private generateExecuteFunction(): string {
@@ -393,18 +405,6 @@ ${executeFunction}`;
 
     const visited = new Set<string>();
     const codeLines: string[] = [];
-    const constants: Record<string, string> = {};
-    const displayConstants: Record<string, string> = {};
-
-    this.nodes.forEach(node => {
-      if ((node.type === 'GET' || node.type === 'HELIUS') && node.data?.parameters?.apiKey) {
-        if (!constants['HELIUS_API_KEY']) {
-          constants['HELIUS_API_KEY'] = JSON.stringify(node.data.parameters.apiKey);
-          displayConstants['HELIUS_API_KEY'] = 'process.env.HELIUS_API_KEY';
-          delete node.data.parameters.apiKey;
-        }
-      }
-    });
 
     const processNode = (nodeId: string) => {
       if (visited.has(nodeId)) return;
@@ -429,35 +429,17 @@ ${executeFunction}`;
 
     rootNodes.forEach(node => processNode(node.id));
 
-    const constantsSection = Object.entries(constants)
-      .map(([key, value]) => `const ${key} = ${value};`)
-      .join('\n  ');
+    const getFunctionsSection = Array.from(this.getFunctions.values()).join('\n\n');
 
-    const displayConstantsSection = Object.entries(displayConstants)
-      .map(([key, value]) => `const ${key} = ${value};`)
-      .join('\n  ');
-
-    const printSection = `let printOutput = '';
-  ${this.printOutputs.join('\n  ')}`;
-
-    const getFunctionsSection = Array.from(this.getFunctions.values()).join('\n\n  ');
-
-    const functionCode = `${getFunctionsSection}
-
-async function execute() {
-  ${constantsSection}
-  ${codeLines.join('\n  ')}
-  ${printSection}
-  return { output: printOutput };
-}`;
-
+    // Store function code for use in display code generation
+    this.functionCode = `${getFunctionsSection}\n\n${this.generateExecuteFunction()}`;
+    
+    const fn = new Function(`return ${this.functionCode}`)();
     const displayCode = this.generateDisplayCode();
-    console.log(functionCode)
-    const fn = new Function(`return ${functionCode}`)();
     
     return { 
       execute: fn,
-      functionCode,
+      functionCode: this.functionCode,
       displayCode
     };
   }
