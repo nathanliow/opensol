@@ -228,8 +228,11 @@ export class FlowCompiler {
           throw new Error(`Print node ${node.id} has no input`);
         }
         
-        const template = node.data.template || '$output$';
-
+        const template = node.data.template || '';
+        
+        if (!template.includes('$output$')) {
+          return `printOutput += \`${template}\\n\`;\n`;
+        }
         
         const printCode = this.generatePrintCode(node, inputVar);
         this.printOutputs.push(printCode);
@@ -269,6 +272,104 @@ export class FlowCompiler {
     }
   }
 
+  private generateDisplayCode(): string {
+    const imports = new Set<string>();
+    const functionNames = new Set<string>();
+
+    this.nodes.forEach(node => {
+      if (node.type === 'GET' || node.type === 'HELIUS' || node.type === 'MATH') {
+        const functionName = this.generateGetFunction(node);
+        functionNames.add(functionName);
+      }
+    });
+
+    const importStatements = Array.from(functionNames).map(fn => 
+      `import { ${fn} } from '@opensol/templates';`
+    ).join('\n');
+
+    const executeBody = this.generateExecuteFunction();
+
+    return `${importStatements}
+
+${executeBody}`;
+  }
+
+  private generateExecuteFunction(): string {
+    const lines: string[] = [];
+    lines.push('async function execute() {');
+    lines.push('  const HELIUS_API_KEY = process.env.HELIUS_API_KEY;');
+
+    this.nodes.forEach(node => {
+      const varName = `result_${this.varCounter++}`;
+      this.nodeOutputs.set(node.id, varName);
+
+      switch (node.type) {
+        case 'GET':
+        case 'HELIUS':
+        case 'MATH': {
+          const functionName = this.generateGetFunction(node);
+          const parameters = node.data.parameters || {};
+          const inputs = this.getNodeInputs(node.id);
+          
+          const paramsObj = { ...parameters };
+          Object.entries(inputs).forEach(([handle, value]) => {
+            const paramName = handle.startsWith('param-') ? handle.replace('param-', '') : handle;
+            paramsObj[paramName] = value;
+          });
+          
+          if (node.type === 'GET' || node.type === 'HELIUS') {
+            paramsObj['apiKey'] = 'HELIUS_API_KEY';
+          }
+          
+          const paramsString = Object.entries(paramsObj)
+            .map(([key, value]) => {
+              if (key === 'apiKey') {
+                return `${key}: ${value}`;
+              }
+              if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
+                return `${key}: ${value}`;
+              }
+              return `${key}: ${JSON.stringify(value)}`;
+            })
+            .join(', ');
+
+          lines.push(`  const ${varName} = await ${functionName}({ ${paramsString} });`);
+          break;
+        }
+
+        case 'STRING':
+          lines.push(`  const ${varName} = ${JSON.stringify(node.data.value)};`);
+          break;
+
+        case 'CONST':
+          lines.push(`  const ${varName} = ${JSON.stringify(node.data.value)};`);
+          break;
+
+        case 'PRINT':
+          const inputVar = this.getNodeInputs(node.id)['flow'] || 'null';
+          const template = node.data.template || '$output$';
+          this.printOutputs.push(this.generatePrintCode(node, inputVar));
+          lines.push(`  const ${varName} = ${inputVar};`);
+          break;
+
+        default:
+          lines.push(`  const ${varName} = null;`);
+      }
+    });
+
+    if (this.printOutputs.length > 0) {
+      lines.push('  let printOutput = \'\';');
+      this.printOutputs.forEach(output => {
+        lines.push(`  ${output}`);
+      });
+    }
+
+    lines.push('\n  return { output: printOutput };');
+    lines.push('}');
+
+    return lines.join('\n');
+  }
+
   compile(): { execute: () => Promise<any>, functionCode: string, displayCode: string } {
     this.nodeOutputs.clear();
     this.varCounter = 0;
@@ -289,16 +390,13 @@ export class FlowCompiler {
     const constants: Record<string, string> = {};
     const displayConstants: Record<string, string> = {};
 
-    // Extract API keys from GET nodes
     this.nodes.forEach(node => {
       if ((node.type === 'GET' || node.type === 'HELIUS') && node.data?.parameters?.apiKey) {
-        // Only store the API key if it's not already stored
         if (!constants['HELIUS_API_KEY']) {
           constants['HELIUS_API_KEY'] = JSON.stringify(node.data.parameters.apiKey);
           displayConstants['HELIUS_API_KEY'] = 'process.env.HELIUS_API_KEY';
           delete node.data.parameters.apiKey;
         }
-        // Keep the apiKey in parameters since we need it for execution
       }
     });
 
@@ -325,7 +423,6 @@ export class FlowCompiler {
 
     rootNodes.forEach(node => processNode(node.id));
 
-    // Generate constants section
     const constantsSection = Object.entries(constants)
       .map(([key, value]) => `const ${key} = ${value};`)
       .join('\n  ');
@@ -334,11 +431,9 @@ export class FlowCompiler {
       .map(([key, value]) => `const ${key} = ${value};`)
       .join('\n  ');
 
-    // Add print output collection
     const printSection = `let printOutput = '';
   ${this.printOutputs.join('\n  ')}`;
 
-    // Combine all GET functions
     const getFunctionsSection = Array.from(this.getFunctions.values()).join('\n\n  ');
 
     const functionCode = `${getFunctionsSection}
@@ -350,14 +445,7 @@ async function execute() {
   return { output: printOutput };
 }`;
 
-    const displayCode = `${getFunctionsSection}
-
-async function execute() {
-  ${displayConstantsSection}
-  ${codeLines.join('\n  ')}
-  ${printSection}
-  return { output: printOutput };
-}`;
+    const displayCode = this.generateDisplayCode();
     console.log(functionCode)
     const fn = new Function(`return ${functionCode}`)();
     
