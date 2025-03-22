@@ -81,10 +81,10 @@ export const nodeTypesData: Record<string, NodeType> = {
     id: 'FUNCTION',
     label: 'FUNCTION',
     category: 'Default',
-    backgroundColor: 'bg-white',
-    borderColor: 'border-black',
-    primaryColor: 'white',
-    secondaryColor: 'white',
+    backgroundColor: 'bg-gray-200',
+    borderColor: 'border-gray-400',
+    primaryColor: 'gray-200',
+    secondaryColor: 'gray-400',
     textColor: 'text-black'
   },
   PRINT: {
