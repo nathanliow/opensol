@@ -10,7 +10,6 @@ export class FlowCompiler {
   private printOutputs: string[] = [];
   private getFunctions: Map<string, string> = new Map();
   private templateToFunctionName: Map<string, string> = new Map();
-  private functionCode: string | undefined;
 
   constructor(nodes: FlowNode[], edges: FlowEdge[], templates: Record<string, BlockTemplate>) {
     this.nodes = nodes;
@@ -18,29 +17,52 @@ export class FlowCompiler {
     this.templates = templates;
   }
 
-  private generateGetFunction(node: FlowNode): string {
-    const templateName = node.data.selectedFunction || '';
-    const template = this.templates[templateName];
-    if (!template) {
-      throw new Error(`Template not found for function: ${templateName}`);
+  /**
+   * Helper function that formats parameters for code generation.
+   * If the parameter is for "apiKey" and its value is exactly "HELIUS_API_KEY",
+   * then output a variable reference (without quotes).
+   */
+  private formatParam(key: string, value: any): string {
+    if (key === 'apiKey' && value === "HELIUS_API_KEY") {
+      return `${key}: HELIUS_API_KEY`;
     }
+    if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
+      return `${key}: ${value}`;
+    }
+    return `${key}: ${JSON.stringify(value)}`;
+  }
 
-    // Check if we already have a function for this template
+  private generateGetFunctionName(templateName: string): string {
     let functionName = this.templateToFunctionName.get(templateName);
     if (functionName) {
       return functionName;
     }
+    functionName = templateName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    this.templateToFunctionName.set(templateName, functionName);
+    return functionName;
+  }
 
-    // Create new function name based on template name
-    functionName = `${templateName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-    
-    // Extract the function body
-    const functionBody = template.execute.toString()
+  /**
+   * Generates the helper function body from the template's execute method.
+   * When inlineFunctions is true, the function body is generated; otherwise, it is omitted.
+   */
+  private maybeGenerateFunctionBody(templateName: string, inlineFunctions: boolean): string {
+    if (!inlineFunctions) {
+      return '';
+    }
+    if (this.getFunctions.has(templateName)) {
+      return '';
+    }
+    const template = this.templates[templateName];
+    if (!template) {
+      throw new Error(`Template not found for function: ${templateName}`);
+    }
+    const functionName = this.generateGetFunctionName(templateName);
+    const functionBody = template.execute
+      .toString()
       .split('\n')
       .slice(1, -1)
       .join('\n');
-
-    // Generate function code that uses params directly
     const functionCode = `async function ${functionName}(params) {
       try {
         const { address, apiKey, network } = params;
@@ -50,10 +72,8 @@ export class FlowCompiler {
         throw error;
       }
     }`;
-
-    this.getFunctions.set(functionName, functionCode);
-    this.templateToFunctionName.set(templateName, functionName);
-    return functionName;
+    this.getFunctions.set(templateName, functionCode);
+    return functionCode;
   }
 
   private getNodeOutputType(nodeId: string): string {
@@ -64,7 +84,7 @@ export class FlowCompiler {
       case 'GET':
       case 'HELIUS': {
         const template = this.templates[node.data.selectedFunction];
-        return template?.metadata.output?.type || 'any';
+        return template?.metadata?.output?.type ?? 'any';
       }
       case 'CONST': {
         return node.data.dataType || 'string';
@@ -80,7 +100,6 @@ export class FlowCompiler {
   private validateNodeConnection(sourceId: string, targetId: string, targetParam: string): void {
     const sourceType = this.getNodeOutputType(sourceId);
     const targetNode = this.nodes.find(n => n.id === targetId);
-    
     if (!targetNode) return;
 
     if (targetNode.type === 'GET' || targetNode.type === 'HELIUS') {
@@ -98,32 +117,29 @@ export class FlowCompiler {
 
   private getNodeInputs(nodeId: string): Record<string, string> {
     const inputs: Record<string, string> = {};
-    const edges = this.edges.filter(e => e.target === nodeId);
-    
-    
-    edges.forEach(edge => {
+    const incoming = this.edges.filter(e => e.target === nodeId);
+
+    incoming.forEach(edge => {
       const sourceVar = this.nodeOutputs.get(edge.source);
-      
       if (sourceVar) {
-        // Handle both param-* handles and regular handles like 'flow'
-        const paramName = edge.targetHandle?.startsWith('param-') 
+        const paramName = edge.targetHandle?.startsWith('param-')
           ? edge.targetHandle.replace('param-', '')
-          : (edge.targetHandle || 'flow');
-        
+          : edge.targetHandle || 'flow';
         inputs[paramName] = sourceVar;
       }
     });
-    
+
     return inputs;
   }
 
   private generatePrintCode(node: FlowNode, inputVar: string): string {
+    if (!inputVar) return '';
     const sourceNodeId = this.edges.find(e => e.target === node.id)?.source;
-    if (!sourceNodeId) return '';  // Don't print anything if no input
+    if (!sourceNodeId) return '';
 
     const sourceType = this.getNodeOutputType(sourceNodeId);
     let outputExpr = '';
-    
+
     switch (sourceType) {
       case 'object':
         outputExpr = `JSON.stringify(${inputVar}, null, 2)`;
@@ -142,17 +158,13 @@ export class FlowCompiler {
         outputExpr = `(typeof ${inputVar} === 'object' ? JSON.stringify(${inputVar}, null, 2) : String(${inputVar}))`;
     }
 
-    // Get template, default to empty string if not set
     const template = node.data.template || '';
-    
-    // Only output if template contains $output$
     if (!template.includes('$output$')) {
-      return `printOutput += \`${template}\\n\`;\n`;
+      return `printOutput += \`${template}\\n\`;`;
     }
-    
-    // Replace $output$ in template with the actual output expression
-    const formattedTemplate = template.replace(/\$output\$/g, '${' + outputExpr + '}');
-    return `printOutput += \`${formattedTemplate}\\n\`;\n`;
+
+    const formattedTemplate = template.replace(/\$output\$/g, `\${${outputExpr}}`);
+    return `printOutput += \`${formattedTemplate}\\n\`;`;
   }
 
   private generateNodeCode(node: FlowNode): string {
@@ -161,58 +173,28 @@ export class FlowCompiler {
 
     switch (node.type) {
       case 'GET':
-      case 'HELIUS': {
-        const functionName = this.generateGetFunction(node);
+      case 'HELIUS':
+      case 'MATH': {
+        const templateName = node.data.selectedFunction || '';
+        const functionName = this.generateGetFunctionName(templateName);
+        // Generate function body if needed (for inlining)
+        this.maybeGenerateFunctionBody(templateName, true);
+
         const parameters = { ...node.data.parameters };
         const inputs = this.getNodeInputs(node.id);
-        
-        const paramsObj = { ...parameters };
-        Object.entries(inputs).forEach(([paramName, value]) => {
-          // Only include param-* inputs, skip custom handles like top-target and flow
-          if (paramName !== 'top-target' && paramName !== 'flow' && paramName !== 'bottom-source') {
-            paramsObj[paramName] = value;
+        Object.entries(inputs).forEach(([handle, value]) => {
+          if (handle !== 'flow' && handle !== 'top-target' && handle !== 'bottom-source') {
+            parameters[handle] = value;
           }
         });
 
-        // Add API key from constant
-        paramsObj['apiKey'] = 'HELIUS_API_KEY';
-        
-        const paramsString = Object.entries(paramsObj)
-          .map(([key, value]) => {
-            if (key === 'apiKey') {
-              return `${key}: ${value}`;
-            }
-            if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
-              return `${key}: ${value}`;
-            }
-            return `${key}: ${JSON.stringify(value)}`;
-          })
-          .join(', ');
+        // For GET/HELIUS nodes, ensure the apiKey parameter is set.
+        if (node.type === 'GET' || node.type === 'HELIUS') {
+          parameters['apiKey'] = "HELIUS_API_KEY";
+        }
 
-        return `const ${varName} = await ${functionName}({ ${paramsString} });`;
-      }
-
-      case 'MATH': {
-        const functionName = this.generateGetFunction(node);
-        const parameters = node.data.parameters || {};
-        const inputs = this.getNodeInputs(node.id);
-        
-        // Debug Math inputs
-        
-        const paramsObj = { ...parameters };
-        Object.entries(inputs).forEach(([handle, value]) => {
-          // Extract param name from handle or use handle directly
-          const paramName = handle.startsWith('param-') ? handle.replace('param-', '') : handle;
-          paramsObj[paramName] = value;
-        });
-        
-        const paramsString = Object.entries(paramsObj)
-          .map(([key, value]) => {
-            if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
-              return `${key}: ${value}`;
-            }
-            return `${key}: ${JSON.stringify(value)}`;
-          })
+        const paramsString = Object.entries(parameters)
+          .map(([key, value]) => this.formatParam(key, value))
           .join(', ');
 
         return `const ${varName} = await ${functionName}({ ${paramsString} });`;
@@ -228,16 +210,8 @@ export class FlowCompiler {
         if (!inputVar) {
           throw new Error(`Print node ${node.id} has no input`);
         }
-        
-        const template = node.data.template || '';
-        
-        if (!template.includes('$output$')) {
-          return `printOutput += \`${template}\\n\`;\n`;
-        }
-        
         const printCode = this.generatePrintCode(node, inputVar);
         this.printOutputs.push(printCode);
-        
         return `const ${varName} = ${inputVar};`;
       }
 
@@ -248,198 +222,154 @@ export class FlowCompiler {
       }
 
       case 'CONST': {
-        const value = node.data.value;
         const dataType = node.data.dataType || 'string';
-        
         let formattedValue;
-        switch (dataType) {
-          case 'number':
-            formattedValue = Number(value);
-            break;
-          case 'boolean':
-            formattedValue = value === 'true' || value === true;
-            break;
-          default: 
-            formattedValue = String(value);
+        if (dataType === 'number') {
+          formattedValue = Number(node.data.value);
+        } else if (dataType === 'boolean') {
+          formattedValue = node.data.value === 'true' || node.data.value === true;
+        } else {
+          formattedValue = String(node.data.value);
         }
-
-        const constName = `const_${this.varCounter}`;
+        const constName = `const_${this.varCounter++}`;
         this.nodeOutputs.set(node.id, constName);
         return `const ${constName} = ${JSON.stringify(formattedValue)};`;
       }
 
       default:
-        return '';
+        return `// Node type ${node.type} is not handled yet.`;
     }
   }
 
-  private generateDisplayCode(): string {
-    const functionNames = new Set<string>();
-
-    this.nodes.forEach(node => {
-      if (node.type === 'GET' || node.type === 'HELIUS' || node.type === 'MATH') {
-        const functionName = this.generateGetFunction(node);
-        functionNames.add(functionName);
-      }
-    });
-
-    const importStatements = Array.from(functionNames).map(fn => 
-      `import { ${fn} } from '@opensol/templates';`
-    ).join('\n');
-
-    // Extract just the execute function from the full code
-    let executeFunction = this.functionCode?.split('\n\nasync function execute')[1];
-    if (!executeFunction) return '';
-
-    executeFunction = 'async function execute' + executeFunction;
-
-    // Replace API key with env var
-    executeFunction = executeFunction.replace(
-      /const HELIUS_API_KEY = "[^"]+";/,
-      'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;'
-    );
-
-    // Replace function name if needed
-    const functionNode = this.nodes.find(n => n.type === 'FUNCTION');
-    if (functionNode?.data?.name) {
-      const formattedFunctionName = functionNode.data.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-      executeFunction = executeFunction.replace(
-        'async function execute',
-        `async function ${formattedFunctionName}`
-      );
+  /**
+   * Generates the final code as a string.
+   * The inlineFunctions flag controls whether helper functions are inlined or imported.
+   * The hideApiKey flag determines whether to show the actual API key or reference process.env.
+   */
+  private generateFinalCode(inlineFunctions: boolean, hideApiKey: boolean): string {
+    let functionBodies = '';
+    if (inlineFunctions) {
+      functionBodies = Array.from(this.getFunctions.values()).join('\n\n');
     }
 
-    return `${importStatements}\n\n${executeFunction}`;
-  }
+    const functionImports = !inlineFunctions
+      ? Array.from(this.templateToFunctionName.values())
+          .map(fn => `import { ${fn} } from '@opensol/templates';`)
+          .join('\n')
+      : '';
 
-  private generateExecuteFunction(): string {
-    const lines: string[] = [];
-    lines.push('async function execute() {');
-    lines.push('  const HELIUS_API_KEY = process.env.HELIUS_API_KEY;');
-
-    this.nodes.forEach(node => {
-      const varName = `result_${this.varCounter++}`;
-      this.nodeOutputs.set(node.id, varName);
-
-      switch (node.type) {
-        case 'GET':
-        case 'HELIUS':
-        case 'MATH': {
-          const functionName = this.generateGetFunction(node);
-          const parameters = node.data.parameters || {};
-          const inputs = this.getNodeInputs(node.id);
-          
-          const paramsObj = { ...parameters };
-          Object.entries(inputs).forEach(([handle, value]) => {
-            const paramName = handle.startsWith('param-') ? handle.replace('param-', '') : handle;
-            paramsObj[paramName] = value;
-          });
-          
-          if (node.type === 'GET' || node.type === 'HELIUS') {
-            paramsObj['apiKey'] = 'HELIUS_API_KEY';
-          }
-          
-          const paramsString = Object.entries(paramsObj)
-            .map(([key, value]) => {
-              if (key === 'apiKey') {
-                return `${key}: ${value}`;
-              }
-              if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
-                return `${key}: ${value}`;
-              }
-              return `${key}: ${JSON.stringify(value)}`;
-            })
-            .join(', ');
-
-          lines.push(`  const ${varName} = await ${functionName}({ ${paramsString} });`);
-          break;
+    let defineApiKey = '';
+    if (hideApiKey) {
+      defineApiKey = `const HELIUS_API_KEY = process.env.HELIUS_API_KEY;`;
+    } else {
+      const userKeyNode = this.nodes.find(n => {
+        if ((n.type === 'GET' || n.type === 'HELIUS') && n.data?.parameters?.apiKey) {
+          return true;
         }
-
-        case 'STRING':
-          lines.push(`  const ${varName} = ${JSON.stringify(node.data.value)};`);
-          break;
-
-        case 'CONST':
-          lines.push(`  const ${varName} = ${JSON.stringify(node.data.value)};`);
-          break;
-
-        case 'PRINT':
-          const inputVar = this.getNodeInputs(node.id)['flow'] || 'null';
-          const template = node.data.template || '$output$';
-          this.printOutputs.push(this.generatePrintCode(node, inputVar));
-          lines.push(`  const ${varName} = ${inputVar};`);
-          break;
-
-        default:
-          lines.push(`  const ${varName} = null;`);
-      }
-    });
-
-    if (this.printOutputs.length > 0) {
-      lines.push('  let printOutput = \'\';');
-      this.printOutputs.forEach(output => {
-        lines.push(`  ${output}`);
+        return false;
       });
+      if (userKeyNode) {
+        const providedKey = userKeyNode.data.parameters.apiKey;
+        defineApiKey = `const HELIUS_API_KEY = ${JSON.stringify(providedKey)};`;
+      } else {
+        defineApiKey = `const HELIUS_API_KEY = process.env.HELIUS_API_KEY;`;
+      }
     }
 
-    lines.push('\n  return { output: printOutput };');
-    lines.push('}');
+    let codeBlock = '';
+    codeBlock += `async function execute() {\n`;
+    codeBlock += `  ${defineApiKey}\n`;
+    codeBlock += `
+  NODE_CODE_HERE
 
-    return lines.join('\n');
+  let printOutput = '';
+  PRINT_OUTPUT_HERE
+
+  return { output: printOutput };
+}
+`;
+
+    const finalCode = `
+${functionImports}
+
+${inlineFunctions ? functionBodies : ''}
+
+${codeBlock}
+`;
+    return finalCode.trim();
   }
 
-  compile(): { execute: () => Promise<any>, functionCode: string, displayCode: string } {
+  /**
+   * Compiles the flow by traversing the nodes in topological order,
+   * generating code for each node and splicing in print statements.
+   * Returns an object containing the executable function,
+   * the full inline function code ("functionCode"), and a version for display ("displayCode").
+   */
+  compile(): { execute: () => Promise<any>; functionCode: string; displayCode: string } {
     this.nodeOutputs.clear();
     this.varCounter = 0;
     this.printOutputs = [];
     this.getFunctions.clear();
     this.templateToFunctionName.clear();
 
-    const rootNodes = this.nodes.filter(node => 
-      !this.edges.some(edge => edge.target === node.id)
-    );
-
+    const rootNodes = this.nodes.filter(node => !this.edges.some(edge => edge.target === node.id));
     if (rootNodes.length === 0) {
       throw new Error('No root nodes found in flow');
     }
 
+    const nodeCodeLines: string[] = [];
     const visited = new Set<string>();
-    const codeLines: string[] = [];
 
-    const processNode = (nodeId: string) => {
+    const visitNode = (nodeId: string) => {
       if (visited.has(nodeId)) return;
       visited.add(nodeId);
 
-      this.edges
-        .filter(edge => edge.target === nodeId)
-        .forEach(edge => processNode(edge.source));
+      // Visit dependencies first
+      this.edges.filter(e => e.target === nodeId).forEach(e => visitNode(e.source));
 
       const node = this.nodes.find(n => n.id === nodeId);
-      if (!node) throw new Error(`Node ${nodeId} not found`);
-      
+      if (!node) {
+        throw new Error(`Node ${nodeId} not found.`);
+      }
       const code = this.generateNodeCode(node);
       if (code) {
-        codeLines.push(code);
+        nodeCodeLines.push(`  ${code}`);
       }
 
-      this.edges
-        .filter(edge => edge.source === nodeId)
-        .forEach(edge => processNode(edge.target));
+      // Visit child nodes
+      this.edges.filter(e => e.source === nodeId).forEach(e => visitNode(e.target));
     };
 
-    rootNodes.forEach(node => processNode(node.id));
+    rootNodes.forEach(n => visitNode(n.id));
 
-    const getFunctionsSection = Array.from(this.getFunctions.values()).join('\n\n');
+    const nodeCodeJoined = nodeCodeLines.join('\n');
+    const printLinesJoined = this.printOutputs.map(line => `  ${line}`).join('\n');
 
-    // Store function code for use in display code generation
-    this.functionCode = `${getFunctionsSection}\n\n${this.generateExecuteFunction()}`;
-    
-    const fn = new Function(`return ${this.functionCode}`)();
-    const displayCode = this.generateDisplayCode();
-    
-    return { 
-      execute: fn,
-      functionCode: this.functionCode,
+    // Generate inline function code (actual key shown)
+    const functionCodeRaw = this.generateFinalCode(true, false);
+    const functionCode = functionCodeRaw
+      .replace('NODE_CODE_HERE', nodeCodeJoined)
+      .replace('PRINT_OUTPUT_HERE', printLinesJoined);
+
+    // Generate display code (helper functions imported, API key hidden)
+    const displayCodeRaw = this.generateFinalCode(false, true);
+    const displayCode = displayCodeRaw
+      .replace('NODE_CODE_HERE', nodeCodeJoined)
+      .replace('PRINT_OUTPUT_HERE', printLinesJoined);
+
+    // Wrap the function code to build a real executable function.
+    const wrappedFunctionCode = `
+${functionCode}
+return { execute, FlowCompilerOutput: execute };
+`;
+    const runtimeFn = new Function(wrappedFunctionCode)() as {
+      execute: () => Promise<any>;
+      FlowCompilerOutput: () => Promise<any>;
+    };
+    console.log('functionCode', functionCode);
+    return {
+      execute: runtimeFn.execute,
+      functionCode,
       displayCode
     };
   }
