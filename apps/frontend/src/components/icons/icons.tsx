@@ -64,13 +64,11 @@ const ClearIcon = () => {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M12.5 3.5L3.5 12.5M3.5 3.5L12.5 12.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
+      <path d="M2 4H14M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M12 4V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4" 
+        stroke="#6B7280" 
+        strokeWidth="1.5" 
         strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+        strokeLinejoin="round"/>
     </svg>
   );
 };
