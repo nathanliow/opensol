@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useMemo } from 'react';
+ import { memo, useCallback, useState, useMemo } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/InputTypes';
@@ -24,7 +24,7 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   const blockTemplates = blockTemplateService.getTemplatesByType('GET');
   const edges = useEdges();
   const nodes = useNodes();
-  const { network, getApiKey } = useConfig();
+  const { network } = useConfig();
   
   const nodeType = nodeTypesData['GET'];
   const backgroundColor = nodeType?.backgroundColor;
@@ -43,57 +43,27 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
     const sourceNode = nodes.find(n => n.id === edge.source);
     if (!sourceNode) return null;
     
-    // Support both STRING and CONST nodes
-    if (sourceNode.type === 'STRING') {
-      return sourceNode.data.value || null;
-    } else if (sourceNode.type === 'CONST') {
-      return sourceNode.data.value !== undefined ? sourceNode.data.value : null;
-    }
-    return null;
+    return sourceNode.data.value;
   }, [edges, id, nodes]);
 
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);
-    
-    // Initialize parameters
-    const newParameters: Record<string, string> = {};
-    
-    // // Add Helius API key if this is getUserSolBalance
-    // if (value === 'getUserSolBalance') {
-    //   const apiKey = getApiKey('helius');
-    //   if (apiKey) {
-    //     newParameters['apiKey'] = apiKey;
-    //   }
-    //   // Also set the network parameter
-    //   newParameters['network'] = network;
-    // }
-    
-    setParameters(newParameters);
-    // Update node data
+    const newParameters = { 
+      network: network || 'devnet'  // Default to devnet if network is empty
+    }; 
     data.selectedFunction = value;
     data.parameters = newParameters;
-  }, [data, getApiKey, network]);
+  }, [network, data]);
 
   const handleParameterChange = useCallback((paramName: string, value: string) => {
-    const newParameters = { ...parameters };
-    
-    // // Add Helius API key if this is a GET node that requires it
-    // if (selectedFunction === 'getUserSolBalance' && paramName === 'address') {
-    //   const apiKey = getApiKey('helius');
-    //   if (apiKey) {
-    //     newParameters['apiKey'] = apiKey;
-    //   }
-    //   // Also ensure network is set
-    //   newParameters['network'] = network;
-    // }
-    
+    const newParameters = { 
+      ...parameters, 
+      network: network || 'devnet'  // Default to devnet if network is empty
+    };
     newParameters[paramName] = value;
     setParameters(newParameters);
-    // Update node data
     data.parameters = newParameters;
-  }, [parameters, data, selectedFunction, getApiKey, network]);
-
-  const currentTemplate = selectedFunction ? blockTemplates.find(t => t.metadata.name === selectedFunction) : null;
+  }, [parameters, network, data]);
 
   // Convert function options into dropdown options
   const functionOptions = useMemo(() => {
@@ -116,35 +86,44 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
       defaultValue: selectedFunction
     }];
     
-    if (currentTemplate) {
-      const paramInputs = currentTemplate.metadata.parameters
-        .filter(param => param.name !== 'apiKey') // Skip API key parameter
-        .map(param => ({
-          id: param.name,
-          label: param.name,
-          type: 'text' as const,
-          defaultValue: parameters[param.name] || '',
-          description: param.description,
-          getConnectedValue: () => getConnectedValue(param.name),
-          handleId: `param-${param.name}`,
-        }));
-      return [...baseInputs, ...paramInputs];
+    if (selectedFunction) {
+      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
+      if (template) {
+        const paramInputs = template.metadata.parameters
+          .filter(param => param.name !== 'apiKey' && param.name !== 'network')
+          .map(param => ({
+            id: param.name,
+            label: param.name,
+            type: 'text' as const,
+            defaultValue: parameters[param.name] || '',
+            description: param.description,
+            getConnectedValue: () => getConnectedValue(param.name),
+            handleId: `param-${param.name}`,
+          }));
+        return [...baseInputs, ...paramInputs];
+      }
     }
     
     return baseInputs;
-  }, [currentTemplate, functionOptions, parameters, selectedFunction, getConnectedValue]);
+  }, [blockTemplates, selectedFunction, parameters, getConnectedValue, functionOptions]);
 
-  const handleInputChange = useCallback((inputId: string, value: any) => {
-    if (inputId === 'function') {
-      handleFunctionChange(value);
-    } else {
-      handleParameterChange(inputId, value);
+  // Get output type from selected template
+  const output = useMemo(() => {
+    if (selectedFunction) {
+      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
+      if (template?.metadata.output) {
+        return {
+          type: template.metadata.output.type,
+          description: template.metadata.output.description
+        };
+      }
     }
-  }, [handleFunctionChange, handleParameterChange]);
+    return undefined;
+  }, [selectedFunction, blockTemplates]);
 
   // Define custom handles
   const customHandles: CustomHandle[] = useMemo(() => ([
-    { type: 'target', position: 'top', id: 'top-target' },
+    { type: 'target', position: 'top', id: 'flow' },
     { type: 'source', position: 'bottom', id: 'bottom-source' }
   ]), []);
 
@@ -159,8 +138,15 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
       textColor={textColor}
       inputs={inputs}
       data={data}
-      onInputChange={handleInputChange}
+      onInputChange={(inputId, value) => {
+        if (inputId === 'function') {
+          handleFunctionChange(value);
+        } else {
+          handleParameterChange(inputId, value);
+        }
+      }}
       customHandles={customHandles}
+      output={output}
     />
   );
 });

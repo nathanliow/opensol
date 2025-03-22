@@ -16,7 +16,7 @@ interface RunButtonProps {
 const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedFunction }: RunButtonProps) => {
   const nodes = useNodes();
   const edges = useEdges();
-  const { apiKeys } = useConfig();
+  const { apiKeys, network } = useConfig();
 
   const handleRun = useCallback(() => {
     try {
@@ -30,16 +30,21 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
           throw new Error('Node type is undefined');
         }
         
-        // For GET nodes, process string inputs and add API key
-        if (node.type === 'GET') {
+        // For GET and HELIUS nodes, process string inputs and add API key
+        if (node.type === 'GET' || node.type === 'HELIUS') {
           const parameters: any = node.data?.parameters || {};
-          // Add Helius API key to parameters
-          parameters.apiKey = apiKeys['helius'] || '';
+          // Add appropriate API key and network to parameters
+          if (node.type === 'GET') {
+            parameters.apiKey = apiKeys['helius'] || '';
+            parameters.network = network;
+          } else if (node.type === 'HELIUS') {
+            parameters.apiKey = apiKeys['helius'] || '';
+            parameters.network = network; // Use network from ConfigContext
+          }
           
           return {
             id: node.id,
             type: node.type,
-            position: node.position,
             data: {
               ...node.data,
               parameters
@@ -189,7 +194,15 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
 
       executeWithContext()
         .then((result: any) => {
-          onOutput(`Result: ${JSON.stringify(result.output, null, 2)}`);
+          // Format the output by parsing and re-stringifying with proper spacing
+          let formattedOutput;
+          try {
+            const parsed = JSON.parse(result.output);
+            formattedOutput = JSON.stringify(parsed, null, 2);
+          } catch {
+            formattedOutput = result.output;
+          }
+          onOutput(formattedOutput);
         })
         .catch((error: any) => {
           onOutput(`Execution Error: ${error.message}`);
@@ -197,7 +210,7 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
     } catch (error: any) {
       onOutput(`Compilation Error: ${error.message}`);
     }
-  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys]);
+  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network]);
 
   return (
     <button

@@ -1,37 +1,35 @@
-import { memo, useCallback, useState, useMemo } from 'react';
+import { memo, useCallback, useState, useMemo, useEffect } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from './TemplateNode';
 import { InputDefinition } from '../../types/InputTypes';
 import { nodeTypesData } from '../../types/NodeTypes';
 import blockTemplateService from '../services/blockTemplateService';
 import { CustomHandle } from '../../types/HandleTypes';
-import { useConfig } from '../../contexts/ConfigContext';
 
-interface HeliusNodeData {
+interface MathNodeData {
   label: string;
   selectedFunction?: string;
-  parameters?: Record<string, string>;
+  parameters?: Record<string, string | number>;
 }
 
-interface HeliusNodeProps {
+interface MathNodeProps {
   id: string;
-  data: HeliusNodeData;
+  data: MathNodeData;
 }
 
-const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
+const MathNode = memo(({ id, data }: MathNodeProps) => {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
-  const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
-  const blockTemplates = blockTemplateService.getTemplatesByType('HELIUS');
+  const [parameters, setParameters] = useState<Record<string, string | number>>(data.parameters || {});
+  const blockTemplates = blockTemplateService.getTemplatesByType('MATH');
   const edges = useEdges();
   const nodes = useNodes();
-  const { network, getApiKey } = useConfig();
   
-  const nodeType = nodeTypesData['HELIUS'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
+  const nodeType = nodeTypesData['MATH'];
+  const backgroundColor = nodeType?.backgroundColor || 'bg-purple-200';
+  const borderColor = nodeType?.borderColor || 'border-purple-400';
+  const primaryColor = nodeType?.primaryColor || 'text-purple-700';
+  const secondaryColor = nodeType?.secondaryColor || 'text-purple-500';
+  const textColor = nodeType?.textColor || 'text-black';
 
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
@@ -46,24 +44,58 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
     return sourceNode.data.value;
   }, [edges, id, nodes]);
 
+  // Check for connected inputs and update parameters
+  useEffect(() => {
+    if (selectedFunction) {
+      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
+      if (template) {
+        // Create a copy of the current parameters
+        const newParameters = { ...parameters };
+        
+        // Check each parameter for connections
+        template.metadata.parameters.forEach(param => {
+          const connectedValue = getConnectedValue(param.name);
+          
+          // If there's a connected value, update the parameter
+          if (connectedValue !== null && connectedValue !== undefined) {
+            // Convert string numbers to actual numbers if necessary
+            if (param.type === 'number' && typeof connectedValue === 'string' && !isNaN(Number(connectedValue))) {
+              newParameters[param.name] = Number(connectedValue);
+            } else {
+              newParameters[param.name] = connectedValue;
+            }
+          }
+        });
+        
+        // Update the state and data if parameters have changed
+        if (JSON.stringify(newParameters) !== JSON.stringify(parameters)) {
+          setParameters(newParameters);
+          data.parameters = newParameters;
+        }
+      }
+    }
+  }, [selectedFunction, blockTemplates, parameters, getConnectedValue, data, edges, nodes]);
+
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);
-    const newParameters = { 
-      network: network || 'devnet'  // Default to devnet if network is empty
-    }; 
+    const newParameters = {}; 
     data.selectedFunction = value;
     data.parameters = newParameters;
-  }, [network, data]);
+  }, [data]);
 
-  const handleParameterChange = useCallback((paramName: string, value: string) => {
-    const newParameters = { 
-      ...parameters, 
-      network: network || 'devnet'  // Default to devnet if network is empty
-    };
-    newParameters[paramName] = value;
+  const handleParameterChange = useCallback((paramName: string, value: string | number) => {
+    const newParameters = { ...parameters };
+    
+    // Convert string numbers to actual numbers
+    if (typeof value === 'string' && !isNaN(Number(value))) {
+      newParameters[paramName] = Number(value);
+    } else {
+      newParameters[paramName] = value;
+    }
+    
     setParameters(newParameters);
     data.parameters = newParameters;
-  }, [parameters, network, data]);
+  }, [parameters, data]);
 
   // Convert function options into dropdown options
   const functionOptions = useMemo(() => {
@@ -89,17 +121,15 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
     if (selectedFunction) {
       const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
       if (template) {
-        const paramInputs = template.metadata.parameters
-          .filter(param => param.name !== 'apiKey' && param.name !== 'network')
-          .map(param => ({
-            id: param.name,
-            label: param.name,
-            type: 'text' as const,
-            defaultValue: parameters[param.name] || '',
-            description: param.description,
-            getConnectedValue: () => getConnectedValue(param.name),
-            handleId: `param-${param.name}`,
-          }));
+        const paramInputs = template.metadata.parameters.map(param => ({
+          id: param.name,
+          label: param.name,
+          type: param.type === 'number' ? 'number' : 'text',
+          defaultValue: parameters[param.name] || '',
+          description: param.description,
+          getConnectedValue: () => getConnectedValue(param.name),
+          handleId: `param-${param.name}`,
+        }));
         return [...baseInputs, ...paramInputs];
       }
     }
@@ -110,8 +140,6 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
   // Get output type from selected template
   const output = useMemo(() => {
     if (selectedFunction) {
-      
-
       const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
       if (template?.metadata.output) {
         return {
@@ -132,7 +160,7 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
   return (
     <TemplateNode
       id={id}
-      title="HELIUS"
+      title="MATH"
       backgroundColor={backgroundColor}
       borderColor={borderColor}
       primaryColor={primaryColor}
@@ -153,6 +181,6 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
   );
 });
 
-HeliusNode.displayName = 'HeliusNode';
+MathNode.displayName = 'MathNode';
 
-export default HeliusNode;
+export default MathNode;

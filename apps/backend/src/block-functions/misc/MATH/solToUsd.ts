@@ -1,11 +1,11 @@
-import { BlockTemplate } from "../../../../frontend/src/components/services/blockTemplateService";
+import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
 export const solToUsd: BlockTemplate = {
   metadata: {
     name: 'solToUsd',
     description: 'Convert SOL amount to USD using current price',
     blockCategory: 'Misc',
-    blockType: 'MISC',
+    blockType: 'MATH',
     parameters: [
       {
         name: 'solAmount',
@@ -13,14 +13,17 @@ export const solToUsd: BlockTemplate = {
         description: 'Amount of SOL to convert',
       }
     ],
-    requiredKeys: ['helius'],
+    requiredKeys: [],
     output: {
       type: 'number',
       description: 'USD amount'
     }
   },
   execute: async (params: { solAmount: number }): Promise<number> => {
-    const mockSolPrice = 100; 
-    return params.solAmount * mockSolPrice;
+    // For demonstration purposes using a fixed rate
+    // In a real application, this would call a price API
+    const mockSolPrice = 140; 
+    return Number((params.solAmount * mockSolPrice).toFixed(2));
+
   }
 };

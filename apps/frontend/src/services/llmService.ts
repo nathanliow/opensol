@@ -41,9 +41,49 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           You must preserve the structure and validity of the flow while making requested modifications.
           Return only valid JSON in the format: { "nodes": [...], "edges": [...] }
           
-          The nodes concist of GET, FUNCTION, PRINT, CONST
+          The nodes consist of GET, HELIUS, FUNCTION, PRINT, CONST
           GET: consists of functions retrieving and processing data from the blockchain
             - getUserSolBalance, parameters: address, apiKey, network
+          HELIUS: consists of functions using the Helius API for Solana operations, grouped by category:
+            NFT and Asset Operations:
+            - getAsset: parameters: assetId, apiKey, network
+            - getAssetProof: parameters: assetId, apiKey, network
+            - getAssetsByAuthority: parameters: authorityAddress, page, limit, apiKey, network
+            - getAssetsByCreator: parameters: creatorAddress, page, limit, apiKey, network
+            - getAssetsByGroup: parameters: groupKey, groupValue, page, limit, apiKey, network
+            - getAssetsByOwner: parameters: ownerAddress, page, limit, apiKey, network
+            - getNftEditions: parameters: mint, page, limit, apiKey, network
+            - getSignaturesForAsset: parameters: assetId, before, until, limit, apiKey, network
+
+            Account and Token Operations:
+            - getAccountInfo: parameters: address, apiKey, network
+            - getBalance: parameters: address, apiKey, network
+            - getProgramAccounts: parameters: programId, apiKey, network
+            - getTokenAccountBalance: parameters: account, apiKey, network
+            - getTokenAccounts: parameters: address, apiKey, network
+            - getTokenLargestAccounts: parameters: mint, apiKey, network
+            - getTokenSupply: parameters: mint, apiKey, network
+
+            Block and Transaction Operations:
+            - getBlockHeight: parameters: apiKey, network
+            - getBlockProduction: parameters: apiKey, network
+            - getBlocks: parameters: start, end, apiKey, network
+            - getBlockTime: parameters: block, apiKey, network
+            - getTransaction: parameters: signature, apiKey, network
+            - getTransactionCount: parameters: apiKey, network
+            - getLatestBlockhash: parameters: apiKey, network
+            - isBlockhashValid: parameters: blockhash, apiKey, network
+
+            System Information:
+            - getClusterNodes: parameters: apiKey, network
+            - getEpochInfo: parameters: apiKey, network
+            - getEpochSchedule: parameters: apiKey, network
+            - getHealth: parameters: apiKey, network
+            - getIdentity: parameters: apiKey, network
+            - getVersion: parameters: apiKey, network
+            - getVoteAccounts: parameters: apiKey, network
+            - getSupply: parameters: apiKey, network
+
           FUNCTION: indicates a start of a logic, always the root of a logic
             - parameters: label
           PRINT: indicates a print statement
@@ -59,6 +99,10 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           - FUNCTION is always placed above the blocks being connected.
           - Nodes like CONST will be placed upper left of the blocks being connected.
           - Sparse the nodes so that they don't overlap.
+          - Output of a block only comes out from right side of the block and input only comes in from left side of the block
+          - don't connect output of a block to a top of a block
+          - everything must be connected with edges
+          - if asked to perform an action, print the result using print node
 
           If you are asked to perform an action that goes beyond the capabilities of the given nodes and functions, 
           return error as true otherwise false.
@@ -68,32 +112,69 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           {
             "nodes": [
               {
-                "id": "const-1742451986640",
+                "id": "const-1742539084023",
                 "type": "CONST",
                 "position": {
-                  "x": 363.4541156939158,
-                  "y": 432.9031802333745
+                  "x": 236.97474443143057,
+                  "y": 400.48892406634866
                 },
                 "data": {
                   "label": "CONST",
                   "selectedFunction": "",
                   "parameters": {},
-                  "dataType": "string",
-                  "value": "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"
+                  "value": "HAUWqZTnQNhSqC3AG4GYtuoqTZMi3ywvgqWMyKC7pump"
                 },
                 "measured": {
-                  "width": 252,
-                  "height": 124
+                  "width": 227,
+                  "height": 129
                 },
                 "selected": false,
                 "dragging": false
               },
               {
-                "id": "get-1742452568579",
+                "id": "function-1742539096506",
+                "type": "FUNCTION",
+                "position": {
+                  "x": 527.2645960571145,
+                  "y": 196.57017101220296
+                },
+                "data": {
+                  "name": "Untitled Function",
+                  "label": "FUNCTION"
+                },
+                "measured": {
+                  "width": 229,
+                  "height": 96
+                },
+                "selected": false,
+                "dragging": false
+              },
+              {
+                "id": "print-1742539101850",
+                "type": "PRINT",
+                "position": {
+                  "x": 954.9912185103105,
+                  "y": 430.1854897593644
+                },
+                "data": {
+                  "label": "PRINT",
+                  "selectedFunction": "",
+                  "parameters": {},
+                  "template": "$output$"
+                },
+                "measured": {
+                  "width": 232,
+                  "height": 133
+                },
+                "selected": false,
+                "dragging": false
+              },
+              {
+                "id": "get-1742539131042",
                 "type": "GET",
                 "position": {
-                  "x": 773.82632947209,
-                  "y": 465.28970192590305
+                  "x": 559.4537095481018,
+                  "y": 430.02978688528066
                 },
                 "data": {
                   "label": "GET",
@@ -103,78 +184,130 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                   }
                 },
                 "measured": {
-                  "width": 265,
-                  "height": 152
+                  "width": 240,
+                  "height": 129
                 },
                 "selected": false,
                 "dragging": false
               },
               {
-                "id": "function-1742452572163",
-                "type": "FUNCTION",
+                "id": "helius-1742539536871",
+                "type": "HELIUS",
                 "position": {
-                  "x": 785.9323049291177,
-                  "y": 310.63609908585545
+                  "x": 557.6342744378624,
+                  "y": 681.017676175493
                 },
                 "data": {
-                  "name": "Untitled Function",
-                  "label": "FUNCTION"
+                  "label": "HELIUS",
+                  "selectedFunction": "getAsset",
+                  "parameters": {
+                    "network": "mainnet",
+                    "apiKey": "59b22110-9b58-4580-9187-cf1cadeaa27d"
+                  }
                 },
                 "measured": {
-                  "width": 255,
-                  "height": 90
+                  "width": 316,
+                  "height": 129
                 },
                 "selected": false,
                 "dragging": false
               },
               {
-                "id": "print-1742517462582",
+                "id": "const-1742539543785",
+                "type": "CONST",
+                "position": {
+                  "x": 264.64577170165865,
+                  "y": 676.1989686955533
+                },
+                "data": {
+                  "label": "CONST",
+                  "selectedFunction": "",
+                  "parameters": {},
+                  "value": "HAUWqZTnQNhSqC3AG4GYtuoqTZMi3ywvgqWMyKC7pump"
+                },
+                "measured": {
+                  "width": 227,
+                  "height": 129
+                },
+                "selected": false,
+                "dragging": false
+              },
+              {
+                "id": "print-1742539553798",
                 "type": "PRINT",
                 "position": {
-                  "x": 1084.4726093185518,
-                  "y": 712.4915533128282
+                  "x": 1007.2671181274745,
+                  "y": 628.428666449504
                 },
                 "data": {
                   "label": "PRINT",
                   "selectedFunction": "",
                   "parameters": {},
-                  "template": "$output$"
+                  "template": ""
                 },
                 "measured": {
-                  "width": 259,
-                  "height": 143
+                  "width": 232,
+                  "height": 133
                 },
-                "selected": true,
+                "selected": false,
                 "dragging": false
               }
             ],
             "edges": [
               {
-                "source": "function-1742452572163",
+                "source": "function-1742539096506",
                 "sourceHandle": "output",
-                "target": "get-1742452568579",
-                "targetHandle": "top-target",
-                "id": "xy-edge__function-1742452572163output-get-1742452568579top-target"
+                "target": "get-1742539131042",
+                "targetHandle": "flow",
+                "id": "xy-edge__function-1742539096506output-get-1742539131042flow"
               },
               {
-                "source": "const-1742451986640",
-                "sourceHandle": "value",
-                "target": "get-1742452568579",
-                "targetHandle": "param-address",
-                "id": "xy-edge__const-1742451986640value-get-1742452568579param-address"
-              },
-              {
-                "source": "get-1742452568579",
+                "source": "get-1742539131042",
                 "sourceHandle": "bottom-source",
-                "target": "print-1742517462582",
+                "target": "helius-1742539536871",
+                "targetHandle": "flow",
+                "id": "xy-edge__get-1742539131042bottom-source-helius-1742539536871flow"
+              },
+              {
+                "source": "const-1742539543785",
+                "sourceHandle": "output",
+                "target": "helius-1742539536871",
+                "targetHandle": "param-assetId",
+                "id": "xy-edge__const-1742539543785output-helius-1742539536871param-assetId"
+              },
+              {
+                "source": "const-1742539084023",
+                "sourceHandle": "output",
+                "target": "get-1742539131042",
+                "targetHandle": "param-address",
+                "id": "xy-edge__const-1742539084023output-get-1742539131042param-address"
+              },
+              {
+                "source": "helius-1742539536871",
+                "sourceHandle": "output",
+                "target": "print-1742539553798",
+                "targetHandle": "flow",
+                "id": "xy-edge__helius-1742539536871output-print-1742539553798flow"
+              },
+              {
+                "source": "helius-1742539536871",
+                "sourceHandle": "output",
+                "target": "print-1742539553798",
                 "targetHandle": "template",
-                "id": "xy-edge__get-1742452568579bottom-source-print-1742517462582template"
+                "id": "xy-edge__helius-1742539536871output-print-1742539553798template"
+              },
+              {
+                "source": "get-1742539131042",
+                "sourceHandle": "output",
+                "target": "print-1742539101850",
+                "targetHandle": "template",
+                "id": "xy-edge__get-1742539131042output-print-1742539101850template"
               }
             ],
             "viewport": {
-              "x": -675.8832077720012,
-              "y": -473.8523662256637,
-              "zoom": 1.1486983549970349
+              "x": -88.08716153046566,
+              "y": -239.50131790422324,
+              "zoom": 0.8705505632961219
             }
           }
           `
