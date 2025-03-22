@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDownIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Icons } from '../icons/icons';
 
 interface Option {
   label: string;
@@ -84,7 +84,7 @@ export default function SearchableDropdown({
         <div className="truncate">
           {selectedOption ? selectedOption.label : placeholder}
         </div>
-        <ChevronDownIcon className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
+        <Icons.ChevronDownIcon className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
       </div>
 
       {/* Dropdown content */}
@@ -102,7 +102,6 @@ export default function SearchableDropdown({
                 placeholder="Search..."
                 onClick={(e) => e.stopPropagation()}
               />
-              <MagnifyingGlassIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
             </div>
           </div>
           

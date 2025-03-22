@@ -158,7 +158,12 @@ export default function TemplateNode({
   };
 
   return (
-    <div className={`${backgroundColor} p-3 rounded-md shadow-md border ${borderColor} min-w-[180px]`}>
+    <div 
+      className={`${backgroundColor} p-1 rounded-md border ${borderColor}`}
+      style={{ 
+        boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1)'
+      }}
+    >
       <div className={`text-center font-bold ${textColor} mb-2 border-b ${borderColor} pb-1`}>
         {title}
       </div>
@@ -166,12 +171,12 @@ export default function TemplateNode({
       {/* Inputs and handles */}
       <div className="text-xs text-gray-700">
         {inputs.map((input) => (
-          <div key={input.id} className="flex justify-between items-center mb-2 relative">
-            <div className="font-medium mr-2">{input.label}:</div>
-            <div className="flex-1">
+          <div key={input.id} className="flex items-center mb-2 relative">
+            <div className="ml-1 font-medium w-[90px]">{input.label}:</div>
+            <div className="w-full mr-1 max-w-[150px]">
               {renderInput(input)}
             </div>
-            {!hideInputHandles && (
+            {!hideInputHandles && input.type !== 'dropdown' && (
               <Handle
                 id={input.handleId || input.id}
                 type="target"
@@ -179,14 +184,14 @@ export default function TemplateNode({
                 style={{ 
                   left: -8, 
                   top: '50%',
-                  background: `var(--color-${secondaryColor})`,
-                  borderColor: `var(--color-${borderColor})`,
-                  backgroundColor: `var(--color-${secondaryColor})`
+                  background: `var(--color-white)`,
+                  borderColor: `var(--color-black)`,
+                  backgroundColor: `var(--color-white)`
                 }}
-                className={`w-3 h-3 -ml-1 border-2 transition-colors ${
+                className={`w-3 h-3 ml-1 border-2 transition-colors ${
                   input.getConnectedValue && input.getConnectedValue() !== null 
                     ? 'border-pink-500 bg-pink-700' 
-                    : `border-${borderColor} bg-${secondaryColor}`
+                    : `border-${borderColor} bg-${primaryColor}`
                 }`}
               />
             )}
@@ -199,11 +204,12 @@ export default function TemplateNode({
         <Handle
           key={handle.id}
           type={handle.type}
-          position={handle.position}
+          position={positionToReactFlowPosition(handle.position)}
           style={{ 
             [handle.position === Position.Left ? 'left' : 'right']: -8,
-            background: `var(--color-${secondaryColor})`,
-            borderColor: `var(--color-${borderColor})`
+            background: `var(--color-white)`,
+            borderColor: `var(--color-black)`,
+            backgroundColor: `var(--color-white)`
           }}
           id={handle.id}
           isValidConnection={(connection) => {
@@ -221,7 +227,12 @@ export default function TemplateNode({
         <Handle
           type="source"
           position={Position.Right}
-          style={{ right: 6, background: `var(--color-${secondaryColor})` }}
+          style={{ 
+            right: 0, 
+            background: `var(--color-white)`,
+            borderColor: `var(--color-black)`,
+            backgroundColor: `var(--color-white)`
+          }}
           id="output"
           isValidConnection={(connection) => {
             // Allow connections to param-* handles and flow inputs

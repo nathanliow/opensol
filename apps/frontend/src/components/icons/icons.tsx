@@ -1,6 +1,7 @@
 import { FaTerminal } from "react-icons/fa6";
 import { FiMenu, FiMousePointer, FiX } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 const ResizeIcon = () => {
   return (
@@ -42,4 +43,5 @@ export const Icons = {
   FiX,
   FaRegSquare,
   FiMousePointer,
+  ChevronDownIcon
 };
