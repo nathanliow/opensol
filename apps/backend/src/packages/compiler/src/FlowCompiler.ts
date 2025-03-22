@@ -273,7 +273,6 @@ export class FlowCompiler {
   }
 
   private generateDisplayCode(): string {
-    const imports = new Set<string>();
     const functionNames = new Set<string>();
 
     this.nodes.forEach(node => {
@@ -287,11 +286,18 @@ export class FlowCompiler {
       `import { ${fn} } from '@opensol/templates';`
     ).join('\n');
 
-    const executeBody = this.generateExecuteFunction();
+    const functionNode = this.nodes.find(n => n.type === 'FUNCTION');
+    const functionName = functionNode?.data?.name || 'execute';
+    const formattedFunctionName = functionName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    const executeFunction = this.generateExecuteFunction().replace(
+      'async function execute()',
+      `async function ${formattedFunctionName}()`
+    );
 
     return `${importStatements}
 
-${executeBody}`;
+${executeFunction}`;
   }
 
   private generateExecuteFunction(): string {
