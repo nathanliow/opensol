@@ -87,7 +87,15 @@ function Flow() {
   }, [showNodeTypes]);
 
   const onConnect: OnConnect = useCallback(
-    (connection) => setEdges((edges) => addEdge(connection, edges)),
+    (connection) => setEdges((edges) => addEdge({
+      ...connection,
+      type: 'smoothstep',
+      animated: true,
+      style: {
+        strokeWidth: 2,
+        stroke: 'white',
+      },
+    }, edges)),
     [setEdges]
   );
 
