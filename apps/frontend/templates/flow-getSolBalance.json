@@ -1,0 +1,130 @@
+{
+  "nodes": [
+    {
+      "id": "function-1742784695325",
+      "data": {
+        "name": "Untitled Function",
+        "label": "FUNCTION"
+      },
+      "type": "FUNCTION",
+      "dragging": false,
+      "measured": {
+        "width": 258,
+        "height": 80
+      },
+      "position": {
+        "x": 870.5,
+        "y": 163
+      },
+      "selected": false
+    },
+    {
+      "id": "get-1742785990720",
+      "data": {
+        "label": "GET",
+        "parameters": {
+          "network": "mainnet"
+        },
+        "selectedFunction": "getUserSolBalance"
+      },
+      "type": "GET",
+      "dragging": false,
+      "measured": {
+        "width": 257,
+        "height": 113
+      },
+      "position": {
+        "x": 887.4725629201586,
+        "y": 342.55575978392477
+      },
+      "selected": false
+    },
+    {
+      "id": "const-1742786439908",
+      "type": "CONST",
+      "position": {
+        "x": 586.9862814600792,
+        "y": 342.02787989196236
+      },
+      "data": {
+        "label": "CONST",
+        "selectedFunction": "",
+        "parameters": {},
+        "value": "97R4UGhdj7WqXA5AhfQqxM2CGDscJ5meFC8ZJvSoNUBs"
+      },
+      "measured": {
+        "width": 257,
+        "height": 113
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "print-1742786454099",
+      "type": "PRINT",
+      "position": {
+        "x": 1234.4862814600792,
+        "y": 319.02787989196236
+      },
+      "data": {
+        "label": "PRINT",
+        "selectedFunction": "",
+        "parameters": {},
+        "template": "$output$"
+      },
+      "measured": {
+        "width": 255,
+        "height": 115
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "xy-edge__function-1742784695325output-get-1742785990720flow",
+      "type": "smoothstep",
+      "style": {
+        "stroke": "white",
+        "strokeWidth": 2
+      },
+      "source": "function-1742784695325",
+      "target": "get-1742785990720",
+      "animated": true,
+      "sourceHandle": "output",
+      "targetHandle": "flow"
+    },
+    {
+      "source": "const-1742786439908",
+      "sourceHandle": "output",
+      "target": "get-1742785990720",
+      "targetHandle": "param-address",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+        "strokeWidth": 2,
+        "stroke": "white"
+      },
+      "id": "xy-edge__const-1742786439908output-get-1742785990720param-address"
+    },
+    {
+      "source": "get-1742785990720",
+      "sourceHandle": "output",
+      "target": "print-1742786454099",
+      "targetHandle": "template",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+        "strokeWidth": 2,
+        "stroke": "white"
+      },
+      "id": "xy-edge__get-1742785990720output-print-1742786454099template"
+    }
+  ],
+  "viewport": {
+    "x": -1290.9725629201585,
+    "y": -301.0557597839247,
+    "zoom": 2
+  },
+  "name": "Get Sol Balance"
+}

@@ -1,5 +1,5 @@
 import { FaTerminal } from "react-icons/fa6";
-import { FiMenu, FiMousePointer, FiX } from "react-icons/fi";
+import { FiList, FiGrid, FiEdit2, FiTrash2, FiSearch, FiGitMerge, FiBox, FiClock, FiMenu, FiMousePointer, FiX, FiPlusCircle, FiSave, FiFolder, FiDownload, FiUpload, FiLogOut, FiDatabase, FiLayout, FiCheck } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
@@ -75,13 +75,30 @@ const ClearIcon = () => {
 
 export const Icons = {
   FaTerminal,
-  ResizeIcon,
-  ClearIcon,
-  FiMenu,
-  FiX,
   FaRegSquare,
+  FiMenu,
   FiMousePointer,
+  FiX,
+  FiPlusCircle,
+  FiSave,
+  FiFolder,
+  FiDownload,
+  FiUpload,
+  FiLogOut,
   ChevronDownIcon,
+  FiGitMerge,
+  FiBox,
+  FiClock,
+  FiSearch,
+  FiTrash2,
+  FiGrid,
+  FiList,
+  FiEdit2,
+  FiDatabase,
+  FiLayout,
+  ResizeIcon,
   WandIcon,
   CopyIcon,
+  ClearIcon,
+  FiCheck
 };

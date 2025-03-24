@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@privy-io/react-auth": "^2.6.2",
     "@xyflow/react": "^12.4.4",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.483.0",
     "next": "15.2.3",
     "openai": "^4.89.0",
