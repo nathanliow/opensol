@@ -1,6 +1,7 @@
 // Import templates
 import blankTemplate from '../../templates/flow-blank.json';
 import getSolBalanceTemplate from '../../templates/flow-getSolBalance.json';
+import getAssetHelius from '../../templates/flow-getAsset-helius.json'
 
 // Template interface
 export interface FlowTemplate {
@@ -28,6 +29,9 @@ const templatesWithMetadata: FlowTemplate[] = [
     description: 'Get SOL balance for a wallet address',
     category: 'Solana',
   },
+  {
+    ...getAssetHelius
+  }
 ];
 
 // Export all templates

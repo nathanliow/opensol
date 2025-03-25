@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Get the cookies
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   
   try {
     // Create a Supabase client using route handler

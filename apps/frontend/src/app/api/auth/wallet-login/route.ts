@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     // Create a valid email format for authentication
     const email = createEmailFromWallet(wallet);
     const password = createPasswordFromWallet(wallet);
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // Initialize Supabase client (server-side)
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });

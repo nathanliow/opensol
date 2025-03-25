@@ -60,16 +60,10 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
     setIsOpen(prev => !prev);
   };
 
-  const handleAPIKeySave = () => {
-    const newKeys = { ...apiKeys };
-    if (heliusApiKey) newKeys['helius'] = heliusApiKey;
-    if (openaiApiKey) newKeys['openai'] = openaiApiKey;
-    if (birdeyeApiKey) newKeys['birdeye'] = birdeyeApiKey;
-
-    setApiKey(newKeys);
-    setIsOpen(false);
-    alert('API keys saved!');
+  const handleApiKeySave = (provider: string, key: string) => {
+    setApiKey(provider, key);
   };
+
 
   const saveFile = (file: File) => {
     const fileReader = new FileReader();
@@ -300,66 +294,81 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
                   </div>
                 </div>
 
-                <div className="border-t border-[#333333] mt-2 pt-2">
-                  <div className="text-xs text-gray-400 px-3 pb-1">API Keys</div>
-                  <div className="px-3 pb-2">
-                    <div className="mb-1.5 mt-1">
-                      <label className="block text-xs text-gray-400 mb-1" htmlFor="helius">
-                        Helius API Key
-                        <a href="https://dev.helius.xyz/dashboard/app" target="_blank" rel="noopener noreferrer" className="inline-flex ml-1">
-                          <Info size={12} />
-                        </a>
-                      </label>
-                      <input 
-                        id="helius"
-                        type="password" 
-                        className="w-full text-xs px-2 py-1 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-                        value={heliusApiKey}
-                        onChange={(e) => setHeliusApiKey(e.target.value)}
-                        placeholder="Your Helius API key"
-                      />
-                    </div>
-                    <div className="mb-1.5">
-                      <label className="block text-xs text-gray-400 mb-1" htmlFor="openai">
-                        OpenAI API Key
-                        <a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noopener noreferrer" className="inline-flex ml-1">
-                          <Info size={12} />
-                        </a>
-                      </label>
-                      <input 
-                        id="openai"
-                        type="password" 
-                        className="w-full text-xs px-2 py-1 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-                        value={openaiApiKey}
-                        onChange={(e) => setOpenaiApiKey(e.target.value)}
-                        placeholder="Your OpenAI API key"
-                      />
-                    </div>
-                    <div className="mb-1.5">
-                      <label className="block text-xs text-gray-400 mb-1" htmlFor="birdeye">
-                        Birdeye API Key
-                        <a href="https://docs.birdeye.so/reference/overview" target="_blank" rel="noopener noreferrer" className="inline-flex ml-1">
-                          <Info size={12} />
-                        </a>
-                      </label>
-                      <input 
-                        id="birdeye"
-                        type="password" 
-                        className="w-full text-xs px-2 py-1 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-                        value={birdeyeApiKey}
-                        onChange={(e) => setBirdeyeApiKey(e.target.value)}
-                        placeholder="Your Birdeye API key"
-                      />
-                    </div>
-                    <button
-                      onClick={handleAPIKeySave}
-                      className="w-full mt-1 text-xs py-1.5 bg-blue-600 hover:bg-blue-700 rounded-md text-white"
+                <div className="flex flex-col gap-4 p-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="helius-api-key" className="text-sm font-medium text-gray-300">
+                      Helius API Key
+                    </label>
+                    <a 
+                      href="https://dev.helius.xyz/dashboard/app" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-gray-300"
+                      title="Get Helius API Key"
                     >
-                      Save API Keys
-                    </button>
+                      <Info className="w-4 h-4" />
+                    </a>
                   </div>
+                  <input
+                    id="helius-api-key"
+                    type="password"
+                    value={heliusApiKey}
+                    onChange={(e) => {setHeliusApiKey(e.target.value);handleApiKeySave('helius', heliusApiKey);}}
+                    onBlur={() => handleApiKeySave('helius', heliusApiKey)}
+                    className="px-3 py-2 bg-[#1E1E1E] text-white rounded border border-[#333333] focus:outline-none focus:border-[#4B5563]"
+                  />
                 </div>
-
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="openai-api-key" className="text-sm font-medium text-gray-300">
+                      OpenAI API Key
+                    </label>
+                    <a 
+                      href="https://platform.openai.com/api-keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-gray-300"
+                      title="Get OpenAI API Key"
+                    >
+                      <Info className="w-4 h-4" />
+                    </a>
+                  </div>
+                  <input
+                    id="openai-api-key"
+                    type="password"
+                    value={openaiApiKey}
+                    onChange={(e) => {setOpenaiApiKey(e.target.value);handleApiKeySave('openai', openaiApiKey) }}
+                    onBlur={() => handleApiKeySave('openai', openaiApiKey)}
+                    className="px-3 py-2 bg-[#1E1E1E] text-white rounded border border-[#333333] focus:outline-none focus:border-[#4B5563]"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="birdeye-api-key" className="text-sm font-medium text-gray-300">
+                      Birdeye API Key
+                    </label>
+                    <a 
+                      href="https://docs.birdeye.so/docs/authentication-api-keys" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-gray-300"
+                      title="Get Birdeye API Key"
+                    >
+                      <Info className="w-4 h-4" />
+                    </a>
+                  </div>
+                  <input
+                    id="birdeye-api-key"
+                    type="password"
+                    value={birdeyeApiKey}
+                    onChange={(e) => {setBirdeyeApiKey(e.target.value); handleApiKeySave('birdeye', birdeyeApiKey)}}
+                    onBlur={() => handleApiKeySave('birdeye', birdeyeApiKey)}
+                    className="px-3 py-2 bg-[#1E1E1E] text-white rounded border border-[#333333] focus:outline-none focus:border-[#4B5563]"
+                  />
+                </div>
+              </div>
+              
                 <div className="border-t border-[#333333] pt-2">
                   {!supabaseUser && (
                     <button
