@@ -1,17 +1,6 @@
 import { supabase } from './supabase';
 import { Node, Edge } from '@xyflow/react';
-
-// Types for project and saving operations
-export interface Project {
-  id?: string;
-  name: string;
-  description?: string;
-  nodes: Node[];
-  edges: Edge[];
-  user_id: string;
-  created_at?: string;
-  updated_at?: string;
-}
+import { Project } from '@/types/ProjectTypes';
 
 // Create a new project
 export async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) {
@@ -102,4 +91,38 @@ export async function saveCanvasChanges(projectId: string, nodes: Node[], edges:
     nodes,
     edges
   });
+}
+
+// Get top 100 projects by stars
+export async function getTopProjects() {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('stars', { ascending: false })
+    .limit(100);
+
+  console.log("top projects", data);
+
+  if (error) {
+    console.error('Error getting top projects:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+
+// Get number of all projects
+export async function getNumTotalProjects() {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*', { 
+      count: 'exact' 
+    });
+
+  if (error) {
+    console.error('Error getting total number of projects:', error);
+    throw error;
+  }
+
+  return data || [];
 }

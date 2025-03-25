@@ -4,7 +4,7 @@ import CodeDisplay from '../code/CodeDisplay';
 import RunButton from '../canvas/RunButton';
 import { Icons } from '../icons/icons';
 import LLMInput from '../llm/LLMInput';
-import LoadingDots from '../common/LoadingDots';
+import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
 import { enhanceCode } from '../../services/codeEnhanceService';
 import { useConfig } from '../../contexts/ConfigContext';

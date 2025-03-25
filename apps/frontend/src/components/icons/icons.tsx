@@ -1,5 +1,32 @@
 import { FaTerminal } from "react-icons/fa6";
-import { FiList, FiGrid, FiEdit2, FiTrash2, FiSearch, FiGitMerge, FiBox, FiClock, FiMenu, FiMousePointer, FiX, FiPlusCircle, FiSave, FiFolder, FiDownload, FiUpload, FiLogOut, FiDatabase, FiLayout, FiCheck } from "react-icons/fi";
+import { 
+  FiList, 
+  FiGrid, 
+  FiEdit2, 
+  FiTrash2, 
+  FiAlertTriangle,
+  FiSearch, 
+  FiGitMerge, 
+  FiBox, 
+  FiClock, 
+  FiMenu, 
+  FiMousePointer, 
+  FiX, 
+  FiPlusCircle, 
+  FiSave, 
+  FiFolder, 
+  FiDownload, 
+  FiUpload, 
+  FiLogOut, 
+  FiDatabase, 
+  FiLayout, 
+  FiCheck,
+  FiHome,
+  FiPlus,
+  FiInfo,
+  FiStar,
+  FiGlobe,
+} from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
@@ -100,5 +127,11 @@ export const Icons = {
   WandIcon,
   CopyIcon,
   ClearIcon,
-  FiCheck
+  FiCheck,
+  FiAlertTriangle,
+  FiHome,
+  FiPlus,
+  FiInfo,
+  FiStar,
+  FiGlobe,
 };

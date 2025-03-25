@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
-import { FlowTemplate, getTemplateCategories } from '@/templates';
+import { getTemplateCategories } from '../../flow-templates';
 import TemplateCard from './TemplateCard';
 import { Icons } from '../icons/icons';
+import { FlowTemplate } from '../../types/FlowTemplateTypes';
 
-interface TemplateGridProps {
+interface FlowTemplateGridProps {
   templates: FlowTemplate[];
   selectedTemplate: FlowTemplate | null;
   onSelectTemplate: (template: FlowTemplate) => void;
 }
 
-const TemplateGrid: React.FC<TemplateGridProps> = ({
+const FlowTemplateGrid: React.FC<FlowTemplateGridProps> = ({
   templates,
   selectedTemplate,
   onSelectTemplate,
@@ -65,4 +66,4 @@ const TemplateGrid: React.FC<TemplateGridProps> = ({
   );
 };
 
-export default TemplateGrid;
+export default FlowTemplateGrid;

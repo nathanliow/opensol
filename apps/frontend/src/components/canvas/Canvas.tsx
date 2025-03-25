@@ -10,12 +10,9 @@ import {
   useEdgesState,
   type OnConnect,
   useReactFlow,
-  useViewport,
   SelectionMode,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { initialNodes } from "../nodes/InitialNodes";
-import { initialEdges } from "../edges/InitialEdges";
 import { edgeTypes } from "../../types/EdgeTypes";
 import { createNodeTypes, nodeTypesData } from "../../types/NodeTypes";
 import Toolbar from "./Toolbar";

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Icons } from '../icons/icons';
-import { FlowTemplate } from '@/templates';
+import { FlowTemplate } from '../../types/FlowTemplateTypes';
 
 // Colors for template shapes
-const SHAPE_COLORS = [
+const FLOW_TEMPLATE_SHAPE_COLORS = [
   'bg-blue-500',
   'bg-green-500',
   'bg-purple-500',
@@ -15,7 +15,7 @@ const SHAPE_COLORS = [
 ];
 
 // Shapes for templates
-const SHAPE_TYPES = ['circle', 'square', 'triangle', 'diamond', 'hexagon'];
+const FLOW_TEMPLATE_SHAPE_TYPES = ['circle', 'square', 'triangle', 'diamond', 'hexagon'];
 
 // Generate a pseudo-random shape based on the template name
 const getTemplateShape = (name: string) => {
@@ -23,22 +23,22 @@ const getTemplateShape = (name: string) => {
   const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
   
   // Use the hash to select shape and color
-  const colorIndex = hash % SHAPE_COLORS.length;
-  const shapeIndex = hash % SHAPE_TYPES.length;
+  const colorIndex = hash % FLOW_TEMPLATE_SHAPE_COLORS.length;
+  const shapeIndex = hash % FLOW_TEMPLATE_SHAPE_TYPES.length;
   
   return {
-    color: SHAPE_COLORS[colorIndex],
-    shape: SHAPE_TYPES[shapeIndex]
+    color: FLOW_TEMPLATE_SHAPE_COLORS[colorIndex],
+    shape: FLOW_TEMPLATE_SHAPE_TYPES[shapeIndex]
   };
 };
 
-interface TemplateCardProps {
+interface FlowTemplateCardProps {
   template: FlowTemplate;
   selected: boolean;
   onClick: () => void;
 }
 
-const TemplateCard: React.FC<TemplateCardProps> = ({ template, selected, onClick }) => {
+const FlowTemplateCard: React.FC<FlowTemplateCardProps> = ({ template, selected, onClick }) => {
   const { color, shape } = getTemplateShape(template.name);
   
   // Render the appropriate shape component
@@ -161,4 +161,4 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, selected, onClick
   );
 };
 
-export default TemplateCard;
+export default FlowTemplateCard;
