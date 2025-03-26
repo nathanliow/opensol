@@ -32,7 +32,7 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
     };
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4.5-preview",
       messages: [
         {
           role: "system",
@@ -103,6 +103,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           - don't connect output of a block to a top of a block
           - everything must be connected with edges
           - if asked to perform an action, print the result using print node
+          - use smooth step like the example
+          - every node should be connected with edges
 
           If you are asked to perform an action that goes beyond the capabilities of the given nodes and functions, 
           return error as true otherwise false.
@@ -115,8 +117,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "id": "const-1742539084023",
                 "type": "CONST",
                 "position": {
-                  "x": 236.97474443143057,
-                  "y": 400.48892406634866
+                  "x": 129.09340366020075,
+                  "y": 387.7135021329135
                 },
                 "data": {
                   "label": "CONST",
@@ -125,8 +127,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                   "value": "HAUWqZTnQNhSqC3AG4GYtuoqTZMi3ywvgqWMyKC7pump"
                 },
                 "measured": {
-                  "width": 227,
-                  "height": 129
+                  "width": 258,
+                  "height": 114
                 },
                 "selected": false,
                 "dragging": false
@@ -143,8 +145,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                   "label": "FUNCTION"
                 },
                 "measured": {
-                  "width": 229,
-                  "height": 96
+                  "width": 258,
+                  "height": 80
                 },
                 "selected": false,
                 "dragging": false
@@ -153,28 +155,28 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "id": "print-1742539101850",
                 "type": "PRINT",
                 "position": {
-                  "x": 954.9912185103105,
-                  "y": 430.1854897593644
+                  "x": 1007.2758734415817,
+                  "y": 325.85287730297756
                 },
                 "data": {
                   "label": "PRINT",
                   "selectedFunction": "",
                   "parameters": {},
-                  "template": "$output$"
+                  "template": "$output"
                 },
                 "measured": {
-                  "width": 232,
-                  "height": 133
+                  "width": 254,
+                  "height": 117
                 },
-                "selected": false,
+                "selected": true,
                 "dragging": false
               },
               {
                 "id": "get-1742539131042",
                 "type": "GET",
                 "position": {
-                  "x": 559.4537095481018,
-                  "y": 430.02978688528066
+                  "x": 582.1655707630974,
+                  "y": 439.9662261668413
                 },
                 "data": {
                   "label": "GET",
@@ -184,8 +186,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                   }
                 },
                 "measured": {
-                  "width": 240,
-                  "height": 129
+                  "width": 258,
+                  "height": 114
                 },
                 "selected": false,
                 "dragging": false
@@ -194,8 +196,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "id": "helius-1742539536871",
                 "type": "HELIUS",
                 "position": {
-                  "x": 557.6342744378624,
-                  "y": 681.017676175493
+                  "x": 503.69360405224734,
+                  "y": 699.4710634126772
                 },
                 "data": {
                   "label": "HELIUS",
@@ -206,8 +208,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                   }
                 },
                 "measured": {
-                  "width": 316,
-                  "height": 129
+                  "width": 258,
+                  "height": 114
                 },
                 "selected": false,
                 "dragging": false
@@ -216,8 +218,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "id": "const-1742539543785",
                 "type": "CONST",
                 "position": {
-                  "x": 264.64577170165865,
-                  "y": 676.1989686955533
+                  "x": 139.730535019182,
+                  "y": 625.0972809618129
                 },
                 "data": {
                   "label": "CONST",
@@ -226,8 +228,8 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                   "value": "HAUWqZTnQNhSqC3AG4GYtuoqTZMi3ywvgqWMyKC7pump"
                 },
                 "measured": {
-                  "width": 227,
-                  "height": 129
+                  "width": 258,
+                  "height": 114
                 },
                 "selected": false,
                 "dragging": false
@@ -236,52 +238,24 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "id": "print-1742539553798",
                 "type": "PRINT",
                 "position": {
-                  "x": 1007.2671181274745,
-                  "y": 628.428666449504
+                  "x": 1000.1696614977884,
+                  "y": 635.5261230791903
                 },
                 "data": {
                   "label": "PRINT",
                   "selectedFunction": "",
                   "parameters": {},
-                  "template": ""
+                  "template": "$output$"
                 },
                 "measured": {
-                  "width": 232,
-                  "height": 133
+                  "width": 254,
+                  "height": 117
                 },
                 "selected": false,
                 "dragging": false
               }
             ],
             "edges": [
-              {
-                "source": "function-1742539096506",
-                "sourceHandle": "output",
-                "target": "get-1742539131042",
-                "targetHandle": "flow",
-                "id": "xy-edge__function-1742539096506output-get-1742539131042flow"
-              },
-              {
-                "source": "get-1742539131042",
-                "sourceHandle": "bottom-source",
-                "target": "helius-1742539536871",
-                "targetHandle": "flow",
-                "id": "xy-edge__get-1742539131042bottom-source-helius-1742539536871flow"
-              },
-              {
-                "source": "const-1742539543785",
-                "sourceHandle": "output",
-                "target": "helius-1742539536871",
-                "targetHandle": "param-assetId",
-                "id": "xy-edge__const-1742539543785output-helius-1742539536871param-assetId"
-              },
-              {
-                "source": "const-1742539084023",
-                "sourceHandle": "output",
-                "target": "get-1742539131042",
-                "targetHandle": "param-address",
-                "id": "xy-edge__const-1742539084023output-get-1742539131042param-address"
-              },
               {
                 "source": "helius-1742539536871",
                 "sourceHandle": "output",
@@ -290,24 +264,88 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "id": "xy-edge__helius-1742539536871output-print-1742539553798flow"
               },
               {
-                "source": "helius-1742539536871",
+                "source": "function-1742539096506",
                 "sourceHandle": "output",
-                "target": "print-1742539553798",
-                "targetHandle": "template",
-                "id": "xy-edge__helius-1742539536871output-print-1742539553798template"
+                "target": "get-1742539131042",
+                "targetHandle": "flow",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                  "strokeWidth": 2,
+                  "stroke": "white"
+                },
+                "id": "xy-edge__function-1742539096506output-get-1742539131042flow"
+              },
+              {
+                "source": "const-1742539084023",
+                "sourceHandle": "output",
+                "target": "get-1742539131042",
+                "targetHandle": "param-address",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                  "strokeWidth": 2,
+                  "stroke": "white"
+                },
+                "id": "xy-edge__const-1742539084023output-get-1742539131042param-address"
               },
               {
                 "source": "get-1742539131042",
                 "sourceHandle": "output",
                 "target": "print-1742539101850",
                 "targetHandle": "template",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                  "strokeWidth": 2,
+                  "stroke": "white"
+                },
                 "id": "xy-edge__get-1742539131042output-print-1742539101850template"
+              },
+              {
+                "source": "helius-1742539536871",
+                "sourceHandle": "output",
+                "target": "print-1742539553798",
+                "targetHandle": "template",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                  "strokeWidth": 2,
+                  "stroke": "white"
+                },
+                "id": "xy-edge__helius-1742539536871output-print-1742539553798template"
+              },
+              {
+                "source": "const-1742539543785",
+                "sourceHandle": "output",
+                "target": "helius-1742539536871",
+                "targetHandle": "param-assetId",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                  "strokeWidth": 2,
+                  "stroke": "white"
+                },
+                "id": "xy-edge__const-1742539543785output-helius-1742539536871param-assetId"
+              },
+              {
+                "source": "get-1742539131042",
+                "sourceHandle": "bottom-source",
+                "target": "helius-1742539536871",
+                "targetHandle": "flow",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                  "strokeWidth": 2,
+                  "stroke": "white"
+                },
+                "id": "xy-edge__get-1742539131042bottom-source-helius-1742539536871flow"
               }
             ],
             "viewport": {
-              "x": -88.08716153046566,
-              "y": -239.50131790422324,
-              "zoom": 0.8705505632961219
+              "x": 93.66042235105147,
+              "y": 2.0700435540771878,
+              "zoom": 0.7044777109432065
             }
           }
           `

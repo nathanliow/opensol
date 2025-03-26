@@ -4,8 +4,9 @@ import CodeDisplay from '../code/CodeDisplay';
 import RunButton from '../canvas/RunButton';
 import { Icons } from '../icons/icons';
 import LLMInput from '../llm/LLMInput';
-import LoadingDots from '../common/LoadingDots';
+import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
+import { enhanceCode } from '../../services/codeEnhanceService';
 import { useConfig } from '../../contexts/ConfigContext';
 
 interface ConsoleProps {
@@ -52,6 +53,7 @@ const Console = memo(({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [messageIdCounter, setMessageIdCounter] = useState(0);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const nodes = useNodes();
   const edges = useEdges();
   const { apiKeys } = useConfig();
@@ -135,6 +137,20 @@ const Console = memo(({
   }, [edges]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+
+  const handleEnhanceCode = async () => {
+    if (!code || isEnhancing || !apiKeys.openai) return;
+    
+    setIsEnhancing(true);
+    try {
+      const enhancedCode = await enhanceCode(code, apiKeys.openai);
+      onCodeGenerated(enhancedCode);
+    } catch (error) {
+      console.error('Error enhancing code:', error);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   return (
     <Panel position="bottom-right">
@@ -279,7 +295,26 @@ const Console = memo(({
                 <pre className="whitespace-pre-wrap">{debug}</pre>
               )}
               {activeTab === 'code' && (
-                <CodeDisplay code={code.replace(/const HELIUS_API_KEY = ".*";/, 'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;')} />
+                <div className="flex flex-col h-full">
+                  <div className="flex justify-end items-center mb-2 gap-2">
+                    <button
+                      onClick={handleEnhanceCode}
+                      disabled={isEnhancing}
+                      className={`p-2 rounded ${isEnhancing ? 'opacity-50' : 'hover:bg-gray-700'} transition-colors`}
+                      title="Enhance variable names"
+                    >
+                      <Icons.WandIcon className={`w-4 h-4 ${isEnhancing ? 'animate-pulse' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(code)}
+                      className="p-2 rounded hover:bg-gray-700 transition-colors"
+                      title="Copy to clipboard"
+                    >
+                      <Icons.CopyIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <CodeDisplay code={code.replace(/const HELIUS_API_KEY = ".*";/, 'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;')} />
+                </div>
               )}
               {activeTab === 'ai' && (
                 <div className="flex flex-col h-full">
