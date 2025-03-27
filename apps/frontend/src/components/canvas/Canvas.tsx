@@ -28,7 +28,7 @@ function Flow() {
   const [isProjectOwner, setIsProjectOwner] = useState<boolean>(false);
   const [projectData, setProjectData] = useState<any>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [showNodeTypes, setShowNodeTypes] = useState(false);
   const [debug, setDebug] = useState<string>('');
   const [output, setOutput] = useState<string>('');
@@ -84,7 +84,6 @@ function Flow() {
             // Ensure we're setting completely new arrays to trigger React re-renders
             setNodes(projectData.nodes ? [...projectData.nodes] : []);
             setEdges(projectData.edges ? [...projectData.edges] : []);
-            console.log('Project loaded:', projectData.name);
           } else {
             console.warn('User does not have access to this project');
             localStorage.removeItem('currentProjectId');
@@ -137,7 +136,6 @@ function Flow() {
         
         // Only save if user is the owner
         if (projectData?.user_id !== supabaseUser.id) {
-          console.log('Cannot save changes to a project you don\'t own');
           return;
         }
         
@@ -311,9 +309,7 @@ function Flow() {
           onCodeGenerated={setCode}
           onDebugGenerated={setDebug}
           onClear={handleClear}
-          onRestoreFlow={(restoredNodes, restoredEdges) => {
-            console.log('restoredNodes', restoredNodes);
-            
+          onRestoreFlow={(restoredNodes, restoredEdges) => {            
             setNodes(restoredNodes);
             setEdges(restoredEdges);
           }}
