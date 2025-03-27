@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useConfig, Network } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
-import { createProject } from "@/lib/projects";
+import { createProject, copyProject } from "@/lib/projects";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { signOut } from "@/lib/auth";
 import { useReactFlow } from "@xyflow/react";
@@ -14,9 +14,11 @@ interface MenuProps {
   onImport: (flowData: any) => void;
   projectId?: string | null;
   onProjectChange?: () => void;
+  isProjectOwner?: boolean;
+  projectData?: any;
 }
 
-const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => {
+const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner = true, projectData }: MenuProps) => {
   const { login, logout } = usePrivy();
   const { userAddress, supabaseUser } = useUserAccountContext();
   const { network, setNetwork, apiKeys, setApiKey } = useConfig();
@@ -24,6 +26,7 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
   const [heliusApiKey, setHeliusApiKey] = useState(apiKeys['helius'] || '');
   const [openaiApiKey, setOpenaiApiKey] = useState(apiKeys['openai'] || '');
   const [birdeyeApiKey, setBirdeyeApiKey] = useState(apiKeys['birdeye'] || '');
+  const [isPublic, setIsPublic] = useState(projectData?.is_public || false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -33,6 +36,13 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
+
+  useEffect(() => {
+    // Update isPublic when projectData changes
+    if (projectData) {
+      setIsPublic(projectData.is_public || false);
+    }
+  }, [projectData]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -51,6 +61,7 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
     }
   }, [isOpen]);
 
+
   const handleNetworkChange = (newNetwork: Network) => {
     setNetwork(newNetwork);
   };
@@ -63,6 +74,27 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
     setApiKey(provider, key);
   };
 
+  const toggleProjectPublic = async () => {
+    if (!projectId || !supabaseUser) return;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/toggle-public`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isPublic: !isPublic }),
+      });
+
+      if (response.ok) {
+        setIsPublic(!isPublic);
+      } else {
+        console.error('Failed to update project visibility');
+      }
+    } catch (error) {
+      console.error('Error toggling project visibility:', error);
+    }
+  };
 
   const saveFile = (file: File) => {
     const fileReader = new FileReader();
@@ -205,9 +237,26 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
     router.push('/dashboard');
   };
 
-  const loadNewCanvas = () => {
-    setIsOpen(false);
-    setShowNewProjectModal(true);
+  const handleCopyProject = async () => {
+    if (!projectId || !supabaseUser || !projectData) return;
+    
+    try {
+      const newProject = await copyProject(projectId, supabaseUser.id);
+      
+      // Save the new project ID to localStorage
+      localStorage.setItem('currentProjectId', newProject.id);
+      localStorage.setItem('forceProjectReload', 'true');
+      
+      // Trigger project change to reload the canvas
+      if (onProjectChange) {
+        onProjectChange();
+      }
+      
+      // Close the menu
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Failed to copy project:', error);
+    }
   };
 
   return (
@@ -223,7 +272,53 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
           </button>
 
           {isOpen && (
-            <div className="absolute top-12 right-0 w-64 max-h-[calc(35vh)] bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg overflow-hidden overflow-y-auto z-50">
+            <div className="absolute top-12 right-0 w-64 max-h-[calc(100vh-150px)] overflow-y-auto p-4 space-y-4 bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg z-50">
+              {/* Project info section */}
+              {projectId && projectData && (
+                <div className="bg-[#1E1E1E] p-4 rounded-lg border border-[#333333] mb-4">
+                  <h3 className="font-semibold text-lg truncate">{projectData.name}</h3>
+                  {projectData.description && (
+                    <p className="text-gray-400 text-sm mt-1 line-clamp-2">{projectData.description}</p>
+                  )}
+                  <div className="flex items-center mt-2 text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <Icons.FiUser className="mr-1" />
+                      {projectData.user_id === supabaseUser?.id ? 'You' : 'Another User'}
+                    </div>
+                    {projectData.is_public && (
+                      <div className="flex items-center ml-3">
+                        <Icons.FiGlobe className="mr-1" />
+                        Public
+                      </div>
+                    )}
+                  </div>
+                  {!isProjectOwner && (
+                    <div className="mt-3 bg-amber-900/20 border border-amber-900/30 rounded-md p-2 text-xs text-amber-400 flex items-center">
+                      <Icons.FiAlertTriangle className="mr-1 flex-shrink-0" size={14} />
+                      <span>View-only mode</span>
+                    </div>
+                  )}
+                  
+                  {/* Public/Private toggle moved here */}
+                  {isProjectOwner && (
+                    <div className="mt-3 flex items-center justify-between p-2 bg-[#2D2D2D] rounded-md">
+                      <span className="flex items-center text-xs text-gray-300">
+                        <Icons.FiGlobe className="mr-1" />
+                        {isPublic ? 'Public project' : 'Private project'}
+                      </span>
+                      <button
+                        onClick={toggleProjectPublic}
+                        className="flex items-center"
+                        aria-label={isPublic ? 'Make Private' : 'Make Public'}
+                      >
+                        <div className={`w-8 h-4 ${isPublic ? 'bg-green-500' : 'bg-gray-600'} rounded-full relative transition-colors`}>
+                          <div className={`absolute w-3 h-3 bg-white rounded-full top-0.5 transition-transform ${isPublic ? 'right-0.5' : 'left-0.5'}`}></div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               {userAddress && (
                 <div className="p-3 border-b border-[#333333] text-xs">
                   <div className="font-medium text-gray-300">Connected Wallet</div>
@@ -234,18 +329,11 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
                 {supabaseUser && (
                   <>
                     <button
-                      onClick={navigateToDashboard}
+                      onClick={handleCopyProject}
                       className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
                     >
-                      <Icons.FiFolder size={16} />
-                      Go to Dashboard
-                    </button>
-                    <button
-                      onClick={loadNewCanvas}
-                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
-                    >
-                      <Icons.FiPlusCircle size={16} />
-                      New Canvas
+                      <Icons.FiCopy size={16} />
+                      Copy Project
                     </button>
                     <button
                       onClick={handleSaveProject}
@@ -253,6 +341,13 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
                     >
                       <Icons.FiSave size={16} />
                       Save as Project
+                    </button>
+                    <button
+                      onClick={navigateToDashboard}
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    >
+                      <Icons.FiFolder size={16} />
+                      Go to Dashboard
                     </button>
                   </>
                 )}
@@ -363,6 +458,11 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange }: MenuProps) => 
                 </div>
 
                 <div className="border-t border-[#333333] pt-2">
+                  <div className="p-3 bg-neutral-900 rounded-md flex flex-col space-y-2">
+                    
+                    {/* Removed toggle project public/private button as it was moved to the project info section */}
+                  </div>
+
                   {!supabaseUser && (
                     <button
                       onClick={login}

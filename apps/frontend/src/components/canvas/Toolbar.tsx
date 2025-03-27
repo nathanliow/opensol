@@ -10,6 +10,7 @@ interface ToolbarProps {
   addNewNode: (type: any, position?: { x: number; y: number }) => void;
   selectionMode: boolean;
   toggleSelectionMode: () => void;
+  isReadOnly?: boolean; 
 }
 
 export default function Toolbar({
@@ -19,6 +20,7 @@ export default function Toolbar({
   addNewNode,
   selectionMode,
   toggleSelectionMode,
+  isReadOnly = false, 
 }: ToolbarProps) {
   const [activeTab, setActiveTab] = useState<NodeCategory>('Default');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -38,10 +40,13 @@ export default function Toolbar({
     };
   }, [showNodeTypes, toggleNodeTypesDropdown]);
 
-  // Filter node types by active category
   const filteredNodeTypes = Object.values(nodeTypesData).filter(type => type.category === activeTab);
 
   const onDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: string) => {
+    if (isReadOnly) {
+      event.preventDefault();
+      return;
+    }
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -51,28 +56,32 @@ export default function Toolbar({
       <div className="flex bg-[#1E1E1E] rounded-lg items-center py-1 px-4 space-x-4">
         <button
           onClick={toggleSelectionMode}
-          className={`flex items-center justify-center w-10 h-10 ${
-            selectionMode 
-              ? 'bg-[#3D3D3D] text-white' 
-              : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300'
-          } rounded-lg shadow-lg`}
-          title="Selection Tool"
+          className={`flex items-center justify-center w-10 h-10 ${isReadOnly ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : selectionMode ? 'bg-[#3D3D3D] text-white' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300'} rounded-lg shadow-lg`}
+          title={isReadOnly ? "Viewing Only - Cannot Edit" : "Selection Tool"}
+          disabled={isReadOnly}
         >
           <Icons.FiMousePointer size={18} />
         </button>
 
+        {isReadOnly && (
+          <div className="flex items-center bg-amber-700/20 text-amber-400 px-2 py-1 rounded-md text-xs">
+            <Icons.FiEyeOff className="mr-1" size={14} />
+            View Only
+          </div>
+        )}
+
         <div className="relative" ref={dropdownRef}>
           <button
-            onClick={toggleNodeTypesDropdown}
-            className="flex items-center justify-center w-10 h-10 bg-[#1E1E1E] hover:bg-[#2D2D2D] rounded-lg shadow-lg text-white"
-            title="Add Node"
+            onClick={isReadOnly ? undefined : toggleNodeTypesDropdown}
+            className={`flex items-center justify-center w-10 h-10 rounded-lg shadow-lg ${isReadOnly ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-white'}`}
+            title={isReadOnly ? "Cannot add nodes in view mode" : "Add Node"}
+            disabled={isReadOnly}
           >
             <Icons.FaRegSquare size={20} /> 
           </button>
 
-          {showNodeTypes && (
+          {showNodeTypes && !isReadOnly && (
             <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#1e1e1e] rounded shadow-lg z-10 overflow-hidden">
-              {/* Tabs */}
               <div className="flex border-b border-gray-700">
                 {['Default', 'DeFi', 'Misc'].map((tab) => (
                   <button
@@ -89,7 +98,6 @@ export default function Toolbar({
                 ))}
               </div>
 
-              {/* Node grid */}
               <div className="max-h-[300px] overflow-y-auto p-2">
                 <div className="grid grid-cols-3 gap-2">
                   {filteredNodeTypes.map((type) => (

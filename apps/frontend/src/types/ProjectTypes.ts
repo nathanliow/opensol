@@ -11,4 +11,5 @@ export interface Project {
   created_at?: string;
   updated_at?: string;
   stars: number;
+  is_public?: boolean;
 }

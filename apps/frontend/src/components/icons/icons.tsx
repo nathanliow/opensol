@@ -1,5 +1,11 @@
 import { FaTerminal } from "react-icons/fa6";
-import { 
+import {
+  FiCopy,
+  FiGitCommit,
+  FiUser,
+  FiEyeOff,
+  FiArrowRight,
+  FiLayers,
   FiList, 
   FiGrid, 
   FiEdit2, 
@@ -134,4 +140,10 @@ export const Icons = {
   FiInfo,
   FiStar,
   FiGlobe,
+  FiLayers,
+  FiArrowRight,
+  FiEyeOff,
+  FiUser,
+  FiCopy,
+  FiGitCommit
 };

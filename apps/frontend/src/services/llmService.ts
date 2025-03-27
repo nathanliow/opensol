@@ -362,7 +362,6 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
     if (!response.choices[0]?.message?.content) {
       throw new Error("No response from LLM");
     }
-    console.log(response);
     const result = JSON.parse(response.choices[0].message.content);
 
     if (result.error) {
