@@ -30,7 +30,6 @@ export default function NewProjectPage() {
     if (!supabaseUser && !isLoading) {
       const timeoutId = setTimeout(() => {
         if (!supabaseUser) {
-          console.log('No Supabase user available after timeout, redirecting to home');
           navigateTo('/');
         }
       }, 3000);

@@ -126,3 +126,112 @@ export async function getNumTotalProjects() {
 
   return data || [];
 }
+
+// Copy an existing project
+export async function copyProject(projectId: string, userId: string) {
+  // Get the original project
+  const originalProject = await getProject(projectId);
+  if (!originalProject) {
+    throw new Error('Project not found');
+  }
+
+  // Create a copy with modified name and description
+  const projectCopy = {
+    name: `Copy - ${originalProject.name}`,
+    description: originalProject.description,
+    nodes: originalProject.nodes,
+    edges: originalProject.edges,
+    user_id: userId,
+    is_public: false, // Set copy as private by default
+  };
+
+  // Create new project with copied data
+  const newProject = await createProject(projectCopy);
+  return newProject;
+}
+
+// Get starred projects for a user
+export async function getStarredProjects(userId: string): Promise<string[]> {
+  // First check if user profile exists
+  const { data: userProfile, error } = await supabase
+    .from('user_profiles')
+    .select('starred_projects')
+    .eq('user_id', userId)
+    .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no row exists
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error getting starred projects:', error);
+    return [];
+  }
+
+  // If no profile exists, create one
+  if (!userProfile) {
+    try {
+      await supabase.from('user_profiles').insert({
+        user_id: userId,
+        starred_projects: [],
+      });
+    } catch (insertError) {
+      console.error('Error creating user profile:', insertError);
+    }
+    return [];
+  }
+
+  return userProfile?.starred_projects || [];
+}
+
+// Update starred projects for a user
+export async function updateStarredProjects(userId: string, projectId: string, isStarring: boolean) {
+  console.log(`Updating starred projects for user: ${userId} project: ${projectId} isStarring: ${isStarring}`);
+
+  // First check if user profile exists
+  const { data: userProfile, error: fetchError } = await supabase
+    .from('user_profiles')
+    .select('starred_projects')
+    .eq('user_id', userId)
+    .maybeSingle(); // Use maybeSingle instead of single
+
+  if (fetchError && fetchError.code !== 'PGRST116') {
+    console.error('Error fetching starred projects:', fetchError);
+    return false;
+  }
+
+  let currentStarred = userProfile?.starred_projects || [];
+  
+  // If no profile exists, create one
+  if (!userProfile) {
+    try {
+      const { error: insertError } = await supabase.from('user_profiles').insert({
+        user_id: userId,
+        starred_projects: isStarring ? [projectId] : [],
+      });
+      
+      if (insertError) {
+        console.error('Error creating user profile:', insertError);
+        return false;
+      }
+      
+      return true;
+    } catch (insertError) {
+      console.error('Error creating user profile:', insertError);
+      return false;
+    }
+  }
+
+  // Update existing profile
+  const newStarred = isStarring 
+    ? [...new Set([...currentStarred, projectId])]  // Add and deduplicate
+    : currentStarred.filter(id => id !== projectId); // Remove
+
+  const { error: updateError } = await supabase
+    .from('user_profiles')
+    .update({ starred_projects: newStarred })
+    .eq('user_id', userId);
+
+  if (updateError) {
+    console.error('Error updating starred projects:', updateError);
+    return false;
+  }
+
+  return true;
+}

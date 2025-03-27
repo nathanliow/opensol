@@ -41,6 +41,91 @@ interface FlowTemplateCardProps {
 const FlowTemplateCard: React.FC<FlowTemplateCardProps> = ({ template, selected, onClick }) => {
   const { color, shape } = getTemplateShape(template.name);
   
+  // Render visualization of nodes and edges
+  const renderNodesAndEdges = () => {
+    // Only show visualization if there are nodes
+    if (!template.nodes || template.nodes.length === 0) {
+      return renderShape();
+    }
+    
+    return (
+      <div className="relative w-full h-full bg-[#0A0A0A] overflow-hidden flex items-center justify-center">
+        {/* Simple visualization of nodes */}
+        <div className="relative">
+          {template.nodes.slice(0, Math.min(5, template.nodes.length)).map((node: any, index: number) => {
+            // Calculate position to place nodes in a circle
+            const angle = (2 * Math.PI * index) / Math.min(5, template.nodes.length);
+            const radius = 30;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            
+            return (
+              <div 
+                key={`node-${index}`}
+                className={`absolute w-10 h-6 rounded-sm border border-gray-700 flex items-center justify-center ${index === 0 ? 'bg-blue-900/50' : 'bg-gray-900/50'}`}
+                style={{ 
+                  transform: `translate(${x}px, ${y}px)`,
+                  zIndex: 2
+                }}
+              >
+                <span className="text-[8px] text-gray-300 truncate">Node {index+1}</span>
+              </div>
+            );
+          })}
+          
+          {/* Center node representing the flow */}
+          <div className="w-14 h-6 rounded bg-gray-800/80 border border-gray-600 flex items-center justify-center z-10">
+            <span className="text-[10px] text-white font-semibold truncate">Flow</span>
+          </div>
+          
+          {/* Simple visualization of edges */}
+          {template.edges && template.edges.length > 0 && (
+            <div className="absolute inset-0 pointer-events-none">
+              <svg className="w-full h-full" viewBox="-50 -50 100 100">
+                {template.edges.slice(0, Math.min(8, template.edges.length)).map((edge: any, index: number) => {
+                  // Create some lines that connect different nodes
+                  const sourceIndex = index % Math.min(5, template.nodes.length);
+                  const targetIndex = (index + 1) % Math.min(5, template.nodes.length);
+                  
+                  const sourceAngle = (2 * Math.PI * sourceIndex) / Math.min(5, template.nodes.length);
+                  const targetAngle = (2 * Math.PI * targetIndex) / Math.min(5, template.nodes.length);
+                  
+                  const radius = 30;
+                  const sourceX = radius * Math.cos(sourceAngle);
+                  const sourceY = radius * Math.sin(sourceAngle);
+                  const targetX = radius * Math.cos(targetAngle);
+                  const targetY = radius * Math.sin(targetAngle);
+                  
+                  return (
+                    <path 
+                      key={`edge-${index}`}
+                      d={`M ${sourceX} ${sourceY} L ${targetX} ${targetY}`}
+                      stroke="#4A5568"
+                      strokeWidth="1"
+                      fill="none"
+                    />
+                  );
+                })}
+              </svg>
+            </div>
+          )}
+        </div>
+        
+        {/* Show nodes/edges count */}
+        <div className="absolute bottom-1 right-1 flex items-center space-x-2 text-[8px] text-gray-400">
+          <span className="flex items-center">
+            <Icons.FiBox size={8} className="mr-0.5" />
+            {template.nodes?.length || 0}
+          </span>
+          <span className="flex items-center">
+            <Icons.FiGitMerge size={8} className="mr-0.5" />
+            {template.edges?.length || 0}
+          </span>
+        </div>
+      </div>
+    );
+  };
+  
   // Render the appropriate shape component
   const renderShape = () => {
     // Centers the shape in its container
@@ -136,7 +221,7 @@ const FlowTemplateCard: React.FC<FlowTemplateCardProps> = ({ template, selected,
       onClick={onClick}
     >
       <div className="relative flex h-32 items-center justify-center bg-[#121212] p-2">
-        {renderShape()}
+        {renderNodesAndEdges()}
         
         {/* Selection badge */}
         {selected && (
@@ -151,10 +236,20 @@ const FlowTemplateCard: React.FC<FlowTemplateCardProps> = ({ template, selected,
         <p className="text-gray-400 text-xs mt-1 line-clamp-2">
           {template.description || 'No description'}
         </p>
-        <div className="flex items-center mt-2">
+        <div className="flex items-center mt-2 justify-between">
           <span className="text-xs text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded">
             {template.category || 'General'}
           </span>
+          <div className="flex items-center space-x-2 text-xs text-gray-400">
+            <span className="flex items-center">
+              <Icons.FiBox size={10} className="mr-0.5" />
+              {template.nodes?.length || 0}
+            </span>
+            <span className="flex items-center">
+              <Icons.FiGitMerge size={10} className="mr-0.5" />
+              {template.edges?.length || 0}
+            </span>
+          </div>
         </div>
       </div>
     </div>

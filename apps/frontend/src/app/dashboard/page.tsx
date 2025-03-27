@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUserProjects, deleteProject, createProject, updateProject, getNumTotalProjects, getTopProjects } from '@/lib/projects';
+import { getUserProjects, deleteProject, createProject, updateProject, getNumTotalProjects, getTopProjects, getStarredProjects } from '@/lib/projects';
 import { Project } from '@/types/ProjectTypes';
 import { useUserAccountContext } from '@/app/providers/UserAccountContext';
 import { Icons } from '@/components/icons/icons';
@@ -12,23 +12,26 @@ import { flowTemplates } from '@/flow-templates';
 import { FlowTemplate } from '@/types/FlowTemplateTypes';
 import { useTimeAgo } from '@/hooks/useTimeAgo';
 import DashboardMenu from '@/components/dashboard/DashboardMenu';
+import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [publicProjects, setPublicProjects] = useState<Project[]>([]);
   const [numTotalProjects, setNumTotalProjects] = useState<number>(0);
   const [topProjects, setTopProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [starredProjects, setStarredProjects] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12); // Default 12 items for grid view
+  const { supabaseUser, isConnected } = useUserAccountContext();
+  const router = useRouter();
   const [sortConfig, setSortConfig] = useState<{ key: keyof Project; direction: 'ascending' | 'descending' }>({ 
     key: 'updated_at', 
     direction: 'descending' 
   });
   // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12); // Default 12 items for grid view
-  const { supabaseUser, isConnected } = useUserAccountContext();
-  const router = useRouter();
   
   // Navigation state
   const [navigating, setNavigating] = useState(false);
@@ -56,10 +59,10 @@ export default function DashboardPage() {
   const { getTimeAgo } = useTimeAgo();
 
   // New state for active tab
-  const [activeTab, setActiveTab] = useState<'yourProjects' | 'allProjects'>('yourProjects');
+  const [projectsTab, setProjectsTab] = useState<'my' | 'public'>('my');
 
   // Use the selected tab to determine which projects to display
-  const displayProjects = activeTab === 'yourProjects' ? projects : topProjects;
+  const displayProjects = projectsTab === 'my' ? projects : publicProjects;
 
   // Update itemsPerPage when view mode changes
   useEffect(() => {
@@ -69,27 +72,56 @@ export default function DashboardPage() {
   }, [viewMode]);
 
   useEffect(() => {
-    if (!supabaseUser) {
-      setLoading(false);
-      return;
-    }
-
     const fetchProjects = async () => {
       try {
-        const projectData = await getUserProjects(supabaseUser.id);
-        const numTotalProjectsData = await getNumTotalProjects();
-        const topProjectsData = await getTopProjects();
-        setProjects(projectData);
-        setNumTotalProjects(numTotalProjectsData.length);
-        setTopProjects(topProjectsData);
+        setLoading(true);
+        
+        // Only fetch user's projects if the user is logged in
+        if (supabaseUser && supabaseUser.id) {
+          // Fetch user's projects
+          const userProjects = await getUserProjects(supabaseUser.id);
+          setProjects(userProjects);
+          
+          // Get project statistics
+          const numProjects = await getNumTotalProjects();
+          setNumTotalProjects(numProjects);
+          
+          // Get top projects
+          const popularProjects = await getTopProjects();
+          setTopProjects(popularProjects);
+        } else {
+          // Clear projects array if not logged in
+          setProjects([]);
+        }
+        
+        // Fetch public projects (can be done without login)
+        const response = await fetch('/api/projects/public');
+        if (response.ok) {
+          const data = await response.json();
+          setPublicProjects(data);
+        }
       } catch (error) {
-        console.error('Error fetching projects:', error);
+        console.error('Failed to fetch projects:', error);
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchProjects();
+  }, [supabaseUser, isConnected]);
+
+  useEffect(() => {
+    const loadStarredProjects = async () => {
+      if (!supabaseUser) return;
+      try {
+        const starredIds = await getStarredProjects(supabaseUser.id);
+        setStarredProjects(new Set(starredIds));
+      } catch (error) {
+        console.error('Error loading starred projects:', error);
+      }
+    };
+
+    loadStarredProjects();
   }, [supabaseUser]);
 
   const handleOpenProject = (id: string) => {
@@ -341,6 +373,93 @@ export default function DashboardPage() {
     }
   };
 
+  // Handle star toggle
+  const handleStarToggle = async (projectId: string) => {
+    if (!supabaseUser) return;
+
+    try {
+      console.log('Toggling star for project:', projectId);
+      
+      // Optimistically update UI
+      const isCurrentlyStarred = starredProjects.has(projectId);
+      
+      // Update local state immediately for better UX
+      setStarredProjects(prev => {
+        const newSet = new Set(prev);
+        if (isCurrentlyStarred) {
+          newSet.delete(projectId);
+        } else {
+          newSet.add(projectId);
+        }
+        return newSet;
+      });
+
+      // Update UI with optimistic star count
+      setPublicProjects(prev =>
+        prev.map(p =>
+          p.id === projectId
+            ? { ...p, stars: Math.max(0, (p.stars || 0) + (isCurrentlyStarred ? -1 : 1)) }
+            : p
+        )
+      );
+      
+      // Make the API call
+      const response = await fetch(`/api/projects/${projectId}/toggle-star`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const { stars, hasStarred } = await response.json();
+        console.log('Star toggled successfully:', { stars, hasStarred });
+        
+        // Update with actual values from server
+        setPublicProjects(prev =>
+          prev.map(p =>
+            p.id === projectId
+              ? { ...p, stars }
+              : p
+          )
+        );
+        
+        // Also update top projects list if needed
+        setTopProjects(prev =>
+          prev.map(p =>
+            p.id === projectId
+              ? { ...p, stars }
+              : p
+          )
+        );
+      } else {
+        // Revert optimistic update if API call failed
+        console.error('Failed to toggle star:', await response.text());
+        
+        setStarredProjects(prev => {
+          const newSet = new Set(prev);
+          if (isCurrentlyStarred) {
+            newSet.add(projectId);
+          } else {
+            newSet.delete(projectId);
+          }
+          return newSet;
+        });
+        
+        // Revert optimistic star count update
+        setPublicProjects(prev =>
+          prev.map(p =>
+            p.id === projectId
+              ? { ...p, stars: (p.stars || 0) + (isCurrentlyStarred ? 1 : -1) }
+              : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error toggling star:', error);
+    }
+  };
+
   // Project action modal for both edit and delete
   const renderProjectModal = () => {
     if (!editingProject) return null;
@@ -558,7 +677,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#121212] text-white p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">Dashboard</h1>
             </div>
@@ -574,43 +693,26 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Tabs Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div 
-              className={`bg-[#1E1E1E] p-5 rounded-lg border ${activeTab === 'yourProjects' ? 'border-blue-500' : 'border-[#333333]'} shadow-lg cursor-pointer transition-colors hover:border-blue-500`}
-              onClick={() => setActiveTab('yourProjects')}
+          {/* Tabs for my projects vs public projects */}
+          <div className="flex border-b border-gray-800 mb-6">
+            <button
+              className={`px-4 py-2 font-medium ${projectsTab === 'my' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-gray-300'}`}
+              onClick={() => setProjectsTab('my')}
             >
-              <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Icons.FiFolder className="text-blue-500" size={20} />
-                </div>
-                <div className="text-right">
-                  <h2 className="text-3xl font-bold">{userTotalProjects}</h2>
-                  <p className="text-xs text-gray-400 mt-1">Your projects</p>
-                </div>
-              </div>
-            </div>
-
-            <div 
-              className={`bg-[#1E1E1E] p-5 rounded-lg border ${activeTab === 'allProjects' ? 'border-blue-500' : 'border-[#333333]'} shadow-lg cursor-pointer transition-colors hover:border-blue-500`}
-              onClick={() => setActiveTab('allProjects')}
+              My Projects
+            </button>
+            <button
+              className={`px-4 py-2 font-medium ${projectsTab === 'public' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-gray-300'}`}
+              onClick={() => setProjectsTab('public')}
             >
-              <div className="flex items-center justify-between">
-                <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Icons.FiGlobe className="text-blue-500" size={20} />
-                </div>
-                <div className="text-right">
-                  <h2 className="text-3xl font-bold">{numTotalProjects}</h2>
-                  <p className="text-xs text-gray-400 mt-1">Explore all projects</p>
-                </div>
-              </div>
-            </div>
+              Public Projects
+            </button>
           </div>
 
           {/* Tab title */}
           <div className="mb-4">
             <h2 className="text-xl font-semibold text-white/90">
-              {activeTab === 'yourProjects' ? 'Your Projects' : 'Explore Projects'}
+              {projectsTab === 'my' ? 'Your Projects' : 'Public Projects'}
             </h2>
           </div>
 
@@ -660,7 +762,7 @@ export default function DashboardPage() {
                     Clear search
                   </button>
                 </div>
-              ) : activeTab === 'yourProjects' ? (
+              ) : projectsTab === 'my' ? (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Icons.FiFolder className="text-gray-500 mb-4" size={48} />
                   <p className="text-gray-400 mb-4">You don't have any projects yet</p>
@@ -675,7 +777,7 @@ export default function DashboardPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-16">
                   <Icons.FiGlobe className="text-gray-500 mb-4" size={48} />
-                  <p className="text-gray-400 mb-4">No projects available to explore</p>
+                  <p className="text-gray-400 mb-4">No public projects available</p>
                 </div>
               )}
             </div>
@@ -687,30 +789,51 @@ export default function DashboardPage() {
                 return (
                   <div 
                     key={project.id} 
-                    className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#333333] shadow-lg h-full cursor-pointer hover:border-blue-500 transition-colors"
+                    className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#333333] shadow-lg h-full cursor-pointer hover:border-blue-500 transition-colors relative"
                     onClick={() => handleOpenProject(project.id || '')}
                   >
+                    {projectsTab === 'public' && supabaseUser && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleStarToggle(project.id);
+                        }}
+                        className="absolute top-2 right-2 p-2 hover:bg-gray-700 rounded-full transition-colors"
+                      >
+                        <Icons.FiStar
+                          className={`w-5 h-5 ${
+                            starredProjects.has(project.id)
+                              ? 'text-yellow-400 fill-current'
+                              : 'text-gray-400'
+                          }`}
+                        />
+                        <span className="ml-1 text-sm">{project.stars || 0}</span>
+                      </button>
+                    )}
                     <div className="p-5">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                           <h3 className="font-bold truncate text-lg">{project.name}</h3>
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => handleEditProject(e, project)}
-                            className="p-2 text-gray-400 hover:text-white transition-colors"
-                            title="Edit Project Name"
-                          >
-                            <Icons.FiEdit2 size={18} />
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteProject(e, project.id || '')}
-                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                            title="Delete Project"
-                          >
-                            <Icons.FiTrash2 size={18} />
-                          </button>
-                        </div>
+                        {projectsTab === 'my' && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => handleEditProject(e, project)}
+                              className="p-2 text-gray-400 hover:text-white transition-colors"
+                              title="Edit Project Name"
+                            >
+                              <Icons.FiEdit2 size={18} />
+                            </button>
+                            <button
+                              onClick={(e) => handleDeleteProject(e, project.id || '')}
+                              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                              title="Delete Project"
+                            >
+                              <Icons.FiTrash2 size={18} />
+                            </button>
+                          </div>
+                        )}
                       </div>
                       
                       <p className="text-gray-400 text-sm mb-4 line-clamp-2 h-12">
@@ -720,28 +843,28 @@ export default function DashboardPage() {
                       <div className="text-sm text-gray-500">
                         <div className="flex items-center">
                           <Icons.FiClock size={14} className="mr-1" /> 
-                          <span 
-                            className="relative group"
-                          >
+                          <span className="relative group">
                             <span className="group-hover:hidden">Updated {timeAgo}</span>
                             <span className="hidden group-hover:inline">{formattedDate}</span>
                           </span>
                         </div>
                       </div>
-                      
-                      <div className="flex mt-4 gap-3">
-                        <div className="bg-[#252525] py-1.5 px-3 rounded text-sm flex items-center">
-                          <Icons.FiBox size={12} className="text-green-500 mr-2" />
+
+                      <div className="flex items-center gap-4 mt-4 text-sm text-gray-400">
+                        <div className="flex items-center gap-1">
+                          <Icons.FiBox size={14} className="text-green-500" />
                           {project.nodes?.length || 0} Nodes
                         </div>
-                        <div className="bg-[#252525] py-1.5 px-3 rounded text-sm flex items-center">
-                          <Icons.FiGitMerge size={12} className="text-purple-500 mr-2" />
+                        <div className="flex items-center gap-1">
+                          <Icons.FiGitCommit size={14} className="text-purple-500" />
                           {project.edges?.length || 0} Edges
                         </div>
-                        <div className="py-1.5 px-1 rounded text-sm flex items-center ml-auto">
-                          <Icons.FiStar size={12} className="text-yellow-500 mr-2 fill-yellow-500" />
-                          {project.stars || 0}
-                        </div>
+                        {project.is_public && (
+                          <div className="flex items-center gap-1">
+                            <Icons.FiStar size={14} className="text-yellow-500" />
+                            {project.stars || 0} Stars
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -815,7 +938,7 @@ export default function DashboardPage() {
                         </div>
                       </th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        Actions
+                        STAR!
                       </th>
                     </tr>
                   </thead>
@@ -862,24 +985,47 @@ export default function DashboardPage() {
                               <span>{project.stars || 0}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-center gap-2">
+                          {projectsTab === 'my' && (
+                            <td className="px-6 py-4 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex justify-center gap-2">
+                                <button
+                                  onClick={(e) => handleEditProject(e, project)}
+                                  className="text-blue-500 hover:text-blue-400 p-1 rounded-md hover:bg-blue-500 hover:bg-opacity-10 transition-colors"
+                                  title="Edit Project Name"
+                                >
+                                  <Icons.FiEdit2 size={16} />
+                                </button>
+                                <button
+                                  onClick={(e) => handleDeleteProject(e, project.id || '')}
+                                  className="text-red-500 hover:text-red-400 p-1 rounded-md hover:bg-red-500 hover:bg-opacity-10 transition-colors"
+                                  title="Delete Project"
+                                >
+                                  <Icons.FiTrash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                          {projectsTab === 'public' && (
+                            <td className="px-6 py-4 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                               <button
-                                onClick={(e) => handleEditProject(e, project)}
-                                className="text-blue-500 hover:text-blue-400 p-1 rounded-md hover:bg-blue-500 hover:bg-opacity-10 transition-colors"
-                                title="Edit Project Name"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleStarToggle(project.id);
+                                }}
+                                className="p-2 hover:bg-gray-700 rounded-full transition-colors"
                               >
-                                <Icons.FiEdit2 size={16} />
+                                <Icons.FiStar
+                                  className={`w-5 h-5 ${
+                                    starredProjects.has(project.id)
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-400'
+                                  }`}
+                                />
+                                <span className="ml-1 text-sm">{project.stars || 0}</span>
                               </button>
-                              <button
-                                onClick={(e) => handleDeleteProject(e, project.id || '')}
-                                className="text-red-500 hover:text-red-400 p-1 rounded-md hover:bg-red-500 hover:bg-opacity-10 transition-colors"
-                                title="Delete Project"
-                              >
-                                <Icons.FiTrash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

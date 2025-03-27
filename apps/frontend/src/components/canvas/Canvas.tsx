@@ -25,8 +25,10 @@ import LoadingAnimation from "@/components/loading/LoadingAnimation";
 // Internal component that uses ReactFlow hooks
 function Flow() {
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [isProjectOwner, setIsProjectOwner] = useState<boolean>(false);
+  const [projectData, setProjectData] = useState<any>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, onEdgesChange] = useNodesState([]);
   const [showNodeTypes, setShowNodeTypes] = useState(false);
   const [debug, setDebug] = useState<string>('');
   const [output, setOutput] = useState<string>('');
@@ -72,13 +74,17 @@ function Flow() {
           
           // Fetch project data from Supabase
           const projectData = await getProject(storedProjectId);
+          setProjectData(projectData); // Store project data
           
-          // Check if user has access to this project
-          if (projectData?.user_id === supabaseUser.id) {
+          // Check if user has access to this project (either as owner or public project)
+          if (projectData?.user_id === supabaseUser.id || projectData?.is_public === true) {
+            // Set ownership flag
+            setIsProjectOwner(projectData?.user_id === supabaseUser.id);
+            
             // Ensure we're setting completely new arrays to trigger React re-renders
             setNodes(projectData.nodes ? [...projectData.nodes] : []);
             setEdges(projectData.edges ? [...projectData.edges] : []);
-            console.log('Project loaded from localStorage:', storedProjectId);
+            console.log('Project loaded:', projectData.name);
           } else {
             console.warn('User does not have access to this project');
             localStorage.removeItem('currentProjectId');
@@ -90,6 +96,7 @@ function Flow() {
           setNodes([]);
           setEdges([]);
           setProjectId(null);
+          setIsProjectOwner(true); // User can edit new projects
         }
       } catch (error) {
         console.error('Error loading project:', error);
@@ -98,6 +105,7 @@ function Flow() {
         setNodes([]);
         setEdges([]);
         setProjectId(null);
+        setIsProjectOwner(true); // User can edit new projects
       } finally {
         setIsLoading(false);
         projectLoadedRef.current = true; // Mark as loaded even on error to prevent retry loops
@@ -115,16 +123,38 @@ function Flow() {
   // Auto-save changes to Supabase
   useEffect(() => {
     // Only save if we have a project ID and nodes/edges have changed
+    // AND the user owns the project (not just viewing a public one)
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;
     
-    // Debounce saves to prevent too many API calls
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    // Check if user owns this project before saving
+    const storedProjectId = localStorage.getItem('currentProjectId');
+    if (storedProjectId !== projectId) return; // Safety check
     
-    saveTimeoutRef.current = setTimeout(() => {
-      saveCanvasChanges(projectId, nodes, edges).catch(err => {
-        console.error('Failed to save canvas changes:', err);
-      });
-    }, 2000); // 2 second debounce
+    // Get project data to verify ownership
+    const checkProjectOwnership = async () => {
+      try {
+        const projectData = await getProject(projectId);
+        
+        // Only save if user is the owner
+        if (projectData?.user_id !== supabaseUser.id) {
+          console.log('Cannot save changes to a project you don\'t own');
+          return;
+        }
+        
+        // Debounce saves to prevent too many API calls
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        
+        saveTimeoutRef.current = setTimeout(() => {
+          saveCanvasChanges(projectId, nodes, edges).catch(err => {
+            console.error('Failed to save canvas changes:', err);
+          });
+        }, 2000); // 2 second debounce
+      } catch (error) {
+        console.error('Error checking project ownership:', error);
+      }
+    };
+    
+    checkProjectOwnership();
     
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
@@ -154,10 +184,13 @@ function Flow() {
   }, [setNodes, setEdges, reactFlowInstance]);
 
   const toggleSelectionMode = useCallback(() => {
+    if (!isProjectOwner) return; // Prevent mode toggle if not owner
     setSelectionMode(prev => !prev);
-  }, []);
+  }, [isProjectOwner]);
 
   const addNewNode = useCallback((type: string, position?: { x: number; y: number }) => {
+    if (!isProjectOwner) return; // Prevent edits if not owner
+    
     // If position is provided, use it; otherwise use viewport center
     let nodePosition = position;
 
@@ -172,23 +205,26 @@ function Flow() {
   
     setNodes((nds) => [...nds, newNode]);
     setShowNodeTypes(false);
-  }, [setNodes]);
+  }, [setNodes, isProjectOwner]);
 
   const toggleNodeTypesDropdown = useCallback(() => {
     setShowNodeTypes(!showNodeTypes);
   }, [showNodeTypes]);
 
   const onConnect: OnConnect = useCallback(
-    (connection) => setEdges((edges) => addEdge({
-      ...connection,
-      type: 'smoothstep',
-      animated: true,
-      style: {
-        strokeWidth: 2,
-        stroke: 'white',
-      },
-    }, edges)),
-    [setEdges]
+    (connection) => {
+      if (!isProjectOwner) return; // Prevent edits if not owner
+      setEdges((edges) => addEdge({
+        ...connection,
+        type: 'smoothstep',
+        animated: true,
+        style: {
+          strokeWidth: 2,
+          stroke: 'white',
+        },
+      }, edges));
+    },
+    [setEdges, isProjectOwner]
   );
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
@@ -198,6 +234,8 @@ function Flow() {
 
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
+      if (!isProjectOwner || !reactFlowWrapper.current) return;
+
       event.preventDefault();
 
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
@@ -212,10 +250,10 @@ function Flow() {
         y: event.clientY - reactFlowBounds.top
       });
 
-      // Create the new node at the drop position
+      // Add the new node at the drop position
       addNewNode(type, position);
     },
-    [reactFlowInstance, addNewNode]
+    [isProjectOwner, reactFlowInstance, addNewNode]
   );
 
   if (isLoading) {
@@ -232,20 +270,22 @@ function Flow() {
     <div className="w-full h-screen" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
-        onNodesChange={onNodesChange}
         edges={edges}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onDragOver={onDragOver}
-        onDrop={onDrop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        proOptions={proOptions}
-        selectionMode={selectionMode ? SelectionMode.Partial : SelectionMode.Full}
-        selectionOnDrag={selectionMode}
-        panOnDrag={!selectionMode}
+        onNodesChange={isProjectOwner ? onNodesChange : undefined}
+        onEdgesChange={isProjectOwner ? onEdgesChange : undefined}
+        onConnect={isProjectOwner ? onConnect : undefined}
+        onDrop={isProjectOwner ? onDrop : undefined}
+        onDragOver={onDragOver}
+        panOnDrag={true}
+        selectionMode={selectionMode ? SelectionMode.Full : SelectionMode.Partial}
+        proOptions={{
+          hideAttribution: true
+        }}
         fitView
       >
+        <Background />
         <Toolbar
           showNodeTypes={showNodeTypes}
           toggleNodeTypesDropdown={toggleNodeTypesDropdown}
@@ -253,14 +293,16 @@ function Flow() {
           addNewNode={addNewNode}
           selectionMode={selectionMode}
           toggleSelectionMode={toggleSelectionMode}
+          isReadOnly={!isProjectOwner}
         />
-        <Menu 
+        <Menu
           onExport={handleExport}
           onImport={handleImport}
           projectId={projectId}
           onProjectChange={handleProjectChange}
+          isProjectOwner={isProjectOwner}
+          projectData={projectData}
         />
-        <Background />
         <Console 
           output={output} 
           code={code}
