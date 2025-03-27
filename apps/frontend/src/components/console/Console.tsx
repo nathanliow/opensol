@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useEffect } from 'react';
+import { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { useNodes, useEdges, Panel } from '@xyflow/react';
 import CodeDisplay from '../code/CodeDisplay';
 import RunButton from '../canvas/RunButton';
@@ -19,6 +19,7 @@ interface ConsoleProps {
   onDebugGenerated: (debug: string) => void;
   onClear?: () => void;
   onRestoreFlow?: (nodes: any[], edges: any[]) => void;
+  forceCollapse?: boolean;
 }
 
 interface RestorePoint {
@@ -45,7 +46,8 @@ const Console = memo(({
   onCodeGenerated,
   onDebugGenerated,
   onClear,
-  onRestoreFlow 
+  onRestoreFlow,
+  forceCollapse = false
 }: ConsoleProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [size, setSize] = useState({ width: 600, height: 400 });
@@ -57,6 +59,20 @@ const Console = memo(({
   const nodes = useNodes();
   const edges = useEdges();
   const { apiKeys } = useConfig();
+
+  // Track the previous forceCollapse value
+  const prevForceCollapseRef = useRef(forceCollapse);
+  
+  // Update when forceCollapse changes
+  useEffect(() => {
+    // If menu was opened (forceCollapse changed from false to true)
+    if (forceCollapse && !prevForceCollapseRef.current) {
+      setIsCollapsed(true);
+    }
+    
+    // Update the ref with current value for next comparison
+    prevForceCollapseRef.current = forceCollapse;
+  }, [forceCollapse]);
 
   // Set initial size based on viewport after mount
   useEffect(() => {

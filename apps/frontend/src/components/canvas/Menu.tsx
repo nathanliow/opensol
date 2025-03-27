@@ -16,9 +16,10 @@ interface MenuProps {
   onProjectChange?: () => void;
   isProjectOwner?: boolean;
   projectData?: any;
+  onMenuToggle?: (isOpen: boolean) => void;
 }
 
-const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner = true, projectData }: MenuProps) => {
+const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner = true, projectData, onMenuToggle }: MenuProps) => {
   const { login, logout } = usePrivy();
   const { userAddress, supabaseUser } = useUserAccountContext();
   const { network, setNetwork, apiKeys, setApiKey } = useConfig();
@@ -50,6 +51,10 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner =
         event.preventDefault();
         event.stopPropagation();
         setIsOpen(false);
+        
+        if (onMenuToggle) {
+          onMenuToggle(false);
+        }
       }
     };
 
@@ -59,7 +64,7 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner =
         document.removeEventListener('mousedown', handleClickOutside, true);
       };
     }
-  }, [isOpen]);
+  }, [isOpen, onMenuToggle]);
 
 
   const handleNetworkChange = (newNetwork: Network) => {
@@ -67,7 +72,11 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner =
   };
 
   const toggleMenu = () => {
-    setIsOpen(prev => !prev);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    if (onMenuToggle) {
+      onMenuToggle(newIsOpen);
+    }
   };
 
   const handleApiKeySave = (provider: string, key: string) => {
@@ -458,11 +467,6 @@ const Menu = ({ onExport, onImport, projectId, onProjectChange, isProjectOwner =
                 </div>
 
                 <div className="border-t border-[#333333] pt-2">
-                  <div className="p-3 bg-neutral-900 rounded-md flex flex-col space-y-2">
-                    
-                    {/* Removed toggle project public/private button as it was moved to the project info section */}
-                  </div>
-
                   {!supabaseUser && (
                     <button
                       onClick={login}

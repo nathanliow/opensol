@@ -42,6 +42,7 @@ function Flow() {
   
   // Selection mode state
   const [selectionMode, setSelectionMode] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Create node types with setNodes
   const nodeTypes = useMemo(() => createNodeTypes(setNodes), [setNodes]);
@@ -254,6 +255,10 @@ function Flow() {
     [isProjectOwner, reactFlowInstance, addNewNode]
   );
 
+  const handleMenuToggle = useCallback((isOpen: boolean) => {
+    setMenuOpen(isOpen);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -276,8 +281,9 @@ function Flow() {
         onConnect={isProjectOwner ? onConnect : undefined}
         onDrop={isProjectOwner ? onDrop : undefined}
         onDragOver={onDragOver}
-        panOnDrag={true}
         selectionMode={selectionMode ? SelectionMode.Full : SelectionMode.Partial}
+        selectionOnDrag={selectionMode}
+        panOnDrag={!selectionMode}
         proOptions={{
           hideAttribution: true
         }}
@@ -300,6 +306,7 @@ function Flow() {
           onProjectChange={handleProjectChange}
           isProjectOwner={isProjectOwner}
           projectData={projectData}
+          onMenuToggle={handleMenuToggle}
         />
         <Console 
           output={output} 
@@ -313,6 +320,7 @@ function Flow() {
             setNodes(restoredNodes);
             setEdges(restoredEdges);
           }}
+          forceCollapse={menuOpen}
         />
       </ReactFlow>
     </div>
