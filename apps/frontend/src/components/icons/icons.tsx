@@ -32,6 +32,7 @@ import {
   FiInfo,
   FiStar,
   FiGlobe,
+  FiArrowDown,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -142,8 +143,9 @@ export const Icons = {
   FiGlobe,
   FiLayers,
   FiArrowRight,
+  FiArrowDown,
   FiEyeOff,
   FiUser,
   FiCopy,
-  FiGitCommit
+  FiGitCommit,
 };
