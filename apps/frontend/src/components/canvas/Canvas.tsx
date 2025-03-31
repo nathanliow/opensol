@@ -35,7 +35,6 @@ import {
   getProject 
 } from "@/lib/projects";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
-import LoadingAnimation from "@/components/loading/LoadingAnimation";
 import { Icons } from "../icons/icons";
 
 // Internal component that uses ReactFlow hooks
@@ -196,7 +195,6 @@ function Flow() {
   }, [setNodes, setEdges, reactFlowInstance]);
 
   const toggleSelectionMode = useCallback(() => {
-    if (!isProjectOwner) return; 
     setSelectionMode(prev => !prev);
   }, [isProjectOwner]);
 
@@ -311,16 +309,6 @@ function Flow() {
     setProjectMenuOpen(isOpen);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <LoadingAnimation />
-      </div>
-    );
-  }
-
-  const proOptions = { hideAttribution: true };
-
   return (
     <div className="w-full h-screen" ref={reactFlowWrapper}>
       <ReactFlow
@@ -343,7 +331,15 @@ function Flow() {
         }}
         fitView
       >
-        <Background />
+        {isLoading ? (
+          <div className="flex flex-col min-h-screen min-w-screen items-center justify-center text-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+            <p>Loading project...</p>
+          </div>
+        ) : (
+          <Background />
+        )}
+
         {isDragging && isProjectOwner && (
           <Panel position="bottom-center" className="p-[20px]" style={{ zIndex: 1000 }}>
             <div 

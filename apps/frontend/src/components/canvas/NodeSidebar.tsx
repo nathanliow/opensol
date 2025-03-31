@@ -162,7 +162,6 @@ export default function NodeSidebar({
                 {/* Read-Only Notice (if applicable) */}
                 {isReadOnly && (
                   <div className="flex items-center justify-center bg-amber-700/20 text-amber-400 px-2 py-2 mx-2 mb-2 rounded-md text-xs">
-                    <Icons.FiEyeOff className="mr-1" size={14} />
                     View Only - Cannot Add Nodes
                   </div>
                 )}

@@ -197,7 +197,7 @@ const Menu = ({ onMenuToggle }: MenuProps) => {
                   {!supabaseUser && (
                     <button
                       onClick={login}
-                      className="w-full text-left px-3 text-sm text-white hover:bg-[#2D2D2D] rounded-md"
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md"
                     >
                       Connect Wallet
                     </button>

@@ -223,9 +223,7 @@ export default function Toolbar({
       <div className="flex bg-[#1E1E1E] rounded-lg items-center py-1 px-4 space-x-4">
         <button
           onClick={toggleSelectionMode}
-          className={`flex items-center justify-center w-10 h-10 transition-colors ${isReadOnly ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : selectionMode ? 'bg-[#3D3D3D] text-white cursor-pointer' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300 cursor-pointer '} rounded-lg shadow-lg`}
-          title={isReadOnly ? "Viewing Only - Cannot Edit" : "Selection Tool"}
-          disabled={isReadOnly}
+          className={`flex items-center justify-center w-10 h-10 transition-colors ${selectionMode ? 'bg-[#3D3D3D] text-white cursor-pointer' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300 cursor-pointer '} rounded-lg shadow-lg`}
         >
           <Icons.FiMousePointer size={18} />
         </button>

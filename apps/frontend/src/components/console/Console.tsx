@@ -8,6 +8,7 @@ import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
 import { enhanceCode } from '../../services/codeEnhanceService';
 import { useConfig } from '../../contexts/ConfigContext';
+import { CopyButton } from '../ui/CopyButton';
 
 interface ConsoleProps {
   className?: string;
@@ -49,7 +50,7 @@ const Console = memo(({
   onRestoreFlow,
   forceCollapse = false
 }: ConsoleProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [size, setSize] = useState({ width: 600, height: 400 });
   const [restorePoints, setRestorePoints] = useState<RestorePoint[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -304,22 +305,18 @@ const Console = memo(({
               )}
               {activeTab === 'code' && (
                 <div className="flex flex-col h-full">
-                  <div className="flex justify-end items-center mb-2 gap-2">
-                    <button
-                      onClick={handleEnhanceCode}
-                      disabled={isEnhancing}
-                      className={`p-2 rounded ${isEnhancing ? 'opacity-50' : 'hover:bg-gray-700'} transition-colors`}
-                      title="Enhance variable names"
-                    >
-                      <Icons.WandIcon className={`w-4 h-4 ${isEnhancing ? 'animate-pulse' : ''}`} />
-                    </button>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(code)}
-                      className="p-2 rounded hover:bg-gray-700 transition-colors"
-                      title="Copy to clipboard"
-                    >
-                      <Icons.CopyIcon className="w-4 h-4" />
-                    </button>
+                  <div className="absolute top-14 right-4 z-50">
+                    <div className="flex justify-end px-4 items-center gap-4">
+                      <button
+                        onClick={handleEnhanceCode}
+                        disabled={isEnhancing}
+                        className={`p-2 rounded text-gray-500 cursor-pointer ${isEnhancing ? 'opacity-50' : 'hover:text-white'} transition-colors`}
+                        title="Enhance variable names"
+                      >
+                        <Icons.IoMdColorWand size={24} className={`${isEnhancing ? 'animate-pulse' : ''}`}/>
+                      </button>
+                      <CopyButton text={code} />
+                    </div>
                   </div>
                   <CodeDisplay code={code.replace(/const HELIUS_API_KEY = ".*";/, 'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;')} />
                 </div>
