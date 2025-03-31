@@ -98,15 +98,14 @@ const Menu = ({ onMenuToggle }: MenuProps) => {
               )}
               <div>
                 <div className="py-1">
-                  {supabaseUser && (
-                    <button
-                      onClick={navigateToDashboard}
-                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
-                    >
-                      <Icons.FiFolder size={16} />
-                      Go to Dashboard
-                    </button>
-                  )}
+                  <button
+                    onClick={navigateToDashboard}
+                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    disabled={!supabaseUser}
+                  >
+                    <Icons.FiFolder size={16} />
+                    Go to Dashboard
+                  </button>
                 </div>
                 <div className="border-t border-[#333333] py-3">
                   <div className="text-xs text-gray-400 px-3 pb-1">Network</div>

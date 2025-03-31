@@ -106,7 +106,7 @@ export default function NodeSidebar({
             {/* Two-column layout */}
             <div className="flex flex-row flex-1 min-h-0">
               {/* Categories Column - Independently scrollable */}
-              <div className="w-24 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+              <div className="w-20 border-r border-gray-700 overflow-y-auto flex-shrink-0">
                 {categories.map((category) => (
                   <button
                     key={category}
