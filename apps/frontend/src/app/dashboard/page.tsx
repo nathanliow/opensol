@@ -122,6 +122,12 @@ export default function DashboardPage() {
     loadStarredProjects();
   }, [supabaseUser]);
 
+  useEffect(() => {
+    if (!isConnected) {
+      router.push('/');
+    }
+  }, [isConnected, router]);
+
   const handleOpenProject = (id: string) => {    
     // Save project ID to localStorage
     localStorage.setItem('currentProjectId', id);
@@ -631,12 +637,6 @@ export default function DashboardPage() {
       </div>
     );
   };
-
-  if (!isConnected) {
-    // Redirect to home page if not connected
-    router.push('/');
-    return;
-  }
 
   return (
     <>
