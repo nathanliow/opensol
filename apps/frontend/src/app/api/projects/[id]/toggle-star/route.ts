@@ -16,20 +16,16 @@ export async function POST(request: Request, { params }: { params: { id: string 
     // Fix: correctly access the project ID parameter
     const projectId = (await params).id;
     
-    // First check if project exists and is public
+    // First check if project exists
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('stars, is_public')
+      .select('stars')
       .eq('id', projectId)
       .single();
 
     if (projectError) {
       console.error('Project error:', projectError);
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-    
-    if (!project.is_public) {
-      return NextResponse.json({ error: 'Cannot star private projects' }, { status: 403 });
     }
 
     // Check if user already has a profile
@@ -100,9 +96,8 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     // Update user's starred projects
     const newStarred = hasStarred
-      ? currentStarred.filter(id => id !== projectId) // Remove if already starred
+      ? currentStarred.filter((id: string) => id !== projectId) // Remove if already starred
       : [...currentStarred, projectId]; // Add if not starred
-    
     
     const { error: updateProfileError } = await supabase
       .from('user_profiles')

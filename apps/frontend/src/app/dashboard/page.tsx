@@ -6,13 +6,11 @@ import { getUserProjects, deleteProject, createProject, updateProject, getNumTot
 import { Project } from '@/types/ProjectTypes';
 import { useUserAccountContext } from '@/app/providers/UserAccountContext';
 import { Icons } from '@/components/icons/icons';
-import LoadingAnimation from '@/components/loading/LoadingAnimation';
 import TemplateGrid from '@/components/flow-templates/TemplateGrid';
 import { flowTemplates } from '@/flow-templates';
 import { FlowTemplate } from '@/types/FlowTemplateTypes';
 import { useTimeAgo } from '@/hooks/useTimeAgo';
 import DashboardMenu from '@/components/dashboard/DashboardMenu';
-import { supabase } from '@/lib/supabase';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -84,7 +82,7 @@ export default function DashboardPage() {
           
           // Get project statistics
           const numProjects = await getNumTotalProjects();
-          setNumTotalProjects(numProjects);
+          setNumTotalProjects(typeof numProjects === 'number' ? numProjects : 0);
           
           // Get top projects
           const popularProjects = await getTopProjects();
@@ -124,18 +122,17 @@ export default function DashboardPage() {
     loadStarredProjects();
   }, [supabaseUser]);
 
-  const handleOpenProject = (id: string) => {
-    // Show loading animation
-    setNavigating(true);
-    
+  useEffect(() => {
+    if (!isConnected) {
+      router.push('/');
+    }
+  }, [isConnected, router]);
+
+  const handleOpenProject = (id: string) => {    
     // Save project ID to localStorage
     localStorage.setItem('currentProjectId', id);
-    
-    // Use Next.js router instead of window.location
-    // Short delay to allow loading animation to show
-    setTimeout(() => {
-      router.push('/');
-    }, 300);
+
+    router.push('/');
   };
 
   const handleNewProject = () => {
@@ -213,30 +210,6 @@ export default function DashboardPage() {
       alert('Failed to create project. Please try again.');
       setNavigating(false); // Stop loading animation on error
     }
-  };
-
-  // Get project initial letter for avatar
-  const getProjectInitial = (name: string) => {
-    return name ? name.charAt(0).toUpperCase() : '?';
-  };
-
-  // Generate a consistent color for each project
-  const getProjectColor = (id: string) => {
-    // List of tailwind-like colors that stand out well on dark backgrounds
-    const colors = [
-      'bg-blue-500', // blue
-      'bg-green-500', // green
-      'bg-purple-500', // purple
-      'bg-amber-500', // amber/orange
-      'bg-red-500', // red
-      'bg-cyan-500', // cyan
-      'bg-pink-500', // pink
-      'bg-teal-500', // teal
-    ];
-    
-    // Use the first letter of the id to pick a consistent color
-    const index = id ? (id.charCodeAt(0) + (id.charCodeAt(1) || 0)) % colors.length : 0;
-    return colors[index];
   };
 
   // Sort projects based on current sort configuration
@@ -320,14 +293,12 @@ export default function DashboardPage() {
     setShowProjectModal(true);
   };
   
-  const handleDeleteProject = (e: React.MouseEvent, id: string) => {
+  const handleDeleteProject = (e: React.MouseEvent, project: Project) => {
     e.stopPropagation(); // Prevent card click event
-    const project = projects.find(p => p.id === id);
-    if (project) {
-      setEditingProject(project);
-      setModalMode('delete');
-      setShowProjectModal(true);
-    }
+    setEditingProject(project);
+    setEditedProjectName(project.name);
+    setModalMode('delete');
+    setShowProjectModal(true);
   };
   
   const saveProjectName = async () => {
@@ -477,7 +448,7 @@ export default function DashboardPage() {
         >
           <div className="px-6 py-4 border-b border-[#333333] flex items-center justify-between">
             <h3 className="font-bold text-lg">
-              {isEditMode ? 'Edit Project Name' : 'Delete Project'}
+              {isEditMode ? 'Edit Project' : 'Delete Project'}
             </h3>
             <button
               onClick={() => setShowProjectModal(false)}
@@ -498,7 +469,7 @@ export default function DashboardPage() {
                   id="editProjectName"
                   value={editedProjectName}
                   onChange={(e) => setEditedProjectName(e.target.value)}
-                  className="w-full p-2.5 bg-[#252525] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500 text-white"
+                  className="w-full p-2.5 bg-[#252525] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500 text-white mb-4"
                   autoFocus
                 />
               </>
@@ -516,29 +487,41 @@ export default function DashboardPage() {
             )}
           </div>
           
-          <div className="px-6 py-4 border-t border-[#333333] flex items-center justify-end gap-2">
-            <button
-              onClick={() => setShowProjectModal(false)}
-              className="px-4 py-2 bg-[#252525] hover:bg-[#333333] rounded-md text-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-            {isEditMode ? (
+          <div className="px-6 py-4 border-t border-[#333333] flex items-center justify-between">
+            <div>
+              {isEditMode && (
+                <button
+                  onClick={() => setModalMode('delete')}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md text-white transition-colors"
+                >
+                  Delete Project
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
               <button
-                onClick={saveProjectName}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium transition-colors"
-                disabled={!editedProjectName.trim()}
+                onClick={() => setShowProjectModal(false)}
+                className="px-4 py-2 bg-[#252525] hover:bg-[#333333] rounded-md text-gray-300 transition-colors"
               >
-                Save
+                Cancel
               </button>
-            ) : (
-              <button
-                onClick={confirmDeleteProject}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-medium transition-colors"
-              >
-                Delete
-              </button>
-            )}
+              {isEditMode ? (
+                <button
+                  onClick={saveProjectName}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium transition-colors"
+                  disabled={!editedProjectName.trim()}
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  onClick={confirmDeleteProject}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-medium transition-colors"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -655,23 +638,6 @@ export default function DashboardPage() {
     );
   };
 
-  if (navigating) {
-    return <LoadingAnimation message="Loading project..." />;
-  }
-
-  if (!isConnected) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#121212] text-white p-4">
-        <h1 className="text-2xl font-bold mb-4">Please log in</h1>
-        <p className="mb-4">You need to connect your wallet to view your projects.</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <LoadingAnimation message="Loading projects..." />;
-  }
-
   return (
     <>
       <div className="min-h-screen bg-[#121212] text-white p-4 md:p-6">
@@ -749,290 +715,343 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {paginatedProjects.length === 0 ? (
-            <div className="bg-[#1E1E1E] rounded-lg border border-[#333333] p-8 text-center">
-              {searchTerm ? (
-                <div className="py-8">
-                  <Icons.FiSearch className="mx-auto text-gray-500 mb-4" size={48} />
-                  <p className="text-gray-400 mb-2">No projects match your search</p>
-                  <button 
-                    onClick={() => setSearchTerm('')}
-                    className="text-blue-500 hover:text-blue-400"
-                  >
-                    Clear search
-                  </button>
-                </div>
-              ) : projectsTab === 'my' ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <Icons.FiFolder className="text-gray-500 mb-4" size={48} />
-                  <p className="text-gray-400 mb-4">You don't have any projects yet</p>
-                  <button
-                    onClick={handleNewProject}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium flex items-center gap-2"
-                  >
-                    <Icons.FiPlusCircle size={16} />
-                    Create Your First Project
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <Icons.FiGlobe className="text-gray-500 mb-4" size={48} />
-                  <p className="text-gray-400 mb-4">No public projects available</p>
-                </div>
-              )}
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {paginatedProjects.map((project) => {
-                const { timeAgo, formattedDate } = getTimeAgo(project.updated_at);
-                
-                return (
-                  <div 
-                    key={project.id} 
-                    className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#333333] shadow-lg h-full cursor-pointer hover:border-blue-500 transition-colors relative"
-                    onClick={() => handleOpenProject(project.id || '')}
-                  >
-                    {projectsTab === 'public' && supabaseUser && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleStarToggle(project.id);
-                        }}
-                        className="absolute top-2 right-2 p-2 hover:bg-gray-700 rounded-full transition-colors"
-                      >
-                        <Icons.FiStar
-                          className={`w-5 h-5 ${
-                            starredProjects.has(project.id)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-gray-400'
-                          }`}
-                        />
-                        <span className="ml-1 text-sm">{project.stars || 0}</span>
-                      </button>
-                    )}
-                    <div className="p-5">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <h3 className="font-bold truncate text-lg">{project.name}</h3>
-                        </div>
-                        {projectsTab === 'my' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={(e) => handleEditProject(e, project)}
-                              className="p-2 text-gray-400 hover:text-white transition-colors"
-                              title="Edit Project Name"
-                            >
-                              <Icons.FiEdit2 size={18} />
-                            </button>
-                            <button
-                              onClick={(e) => handleDeleteProject(e, project.id || '')}
-                              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                              title="Delete Project"
-                            >
-                              <Icons.FiTrash2 size={18} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-2 h-12">
-                        {project.description || 'No description'}
-                      </p>
-                      
-                      <div className="text-sm text-gray-500">
-                        <div className="flex items-center">
-                          <Icons.FiClock size={14} className="mr-1" /> 
-                          <span className="relative group">
-                            <span className="group-hover:hidden">Updated {timeAgo}</span>
-                            <span className="hidden group-hover:inline">{formattedDate}</span>
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 mt-4 text-sm text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Icons.FiBox size={14} className="text-green-500" />
-                          {project.nodes?.length || 0} Nodes
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Icons.FiGitCommit size={14} className="text-purple-500" />
-                          {project.edges?.length || 0} Edges
-                        </div>
-                        {project.is_public && (
-                          <div className="flex items-center gap-1">
-                            <Icons.FiStar size={14} className="text-yellow-500" />
-                            {project.stars || 0} Stars
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+          {loading ? (
+            <div className="flex flex-col py-24 items-center justify-center text-white">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+              <p>Loading projects...</p>
             </div>
           ) : (
-            <div className="bg-[#1E1E1E] rounded-lg border border-[#333333] overflow-hidden shadow-lg">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-[#333333]">
-                  <thead className="bg-[#252525]">
-                    <tr>
-                      <th 
-                        scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
-                        onClick={() => requestSort('name')}
+            <>
+              {paginatedProjects.length === 0 ? (
+                <div className="bg-[#1E1E1E] rounded-lg border border-[#333333] p-8 text-center">
+                  {searchTerm ? (
+                    <div className="py-8">
+                      <Icons.FiSearch className="mx-auto text-gray-500 mb-4" size={48} />
+                      <p className="text-gray-400 mb-2">No projects match your search</p>
+                      <button 
+                        onClick={() => setSearchTerm('')}
+                        className="text-blue-500 hover:text-blue-400"
                       >
-                        <div className="flex items-center gap-1">
-                          Project Name
-                          <span className="text-gray-500">{getSortDirectionIndicator('name')}</span>
-                        </div>
-                      </th>
-                      <th 
-                        scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
-                        onClick={() => requestSort('created_at')}
+                        Clear search
+                      </button>
+                    </div>
+                  ) : projectsTab === 'my' ? (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Icons.FiFolder className="text-gray-500 mb-4" size={48} />
+                      <p className="text-gray-400 mb-4">You don't have any projects yet</p>
+                      <button
+                        onClick={handleNewProject}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md font-medium flex items-center gap-2"
                       >
-                        <div className="flex items-center gap-1">
-                          Created
-                          <span className="text-gray-500">{getSortDirectionIndicator('created_at')}</span>
-                        </div>
-                      </th>
-                      <th 
-                        scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
-                        onClick={() => requestSort('updated_at')}
+                        <Icons.FiPlusCircle size={16} />
+                        Create Your First Project
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16">
+                      <Icons.FiGlobe className="text-gray-500 mb-4" size={48} />
+                      <p className="text-gray-400 mb-4">No public projects available</p>
+                    </div>
+                  )}
+                </div>
+              ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-12 py-4">
+                  {paginatedProjects.map((project) => {
+                    const { timeAgo, formattedDate } = getTimeAgo(project.updated_at);
+                    
+                    return (
+                      <div 
+                        key={project.id} 
+                        className="bg-[#1E1E1E] rounded-lg overflow-hidden border border-[#333333] shadow-lg h-full cursor-pointer hover:border-blue-500 transition-colors relative"
+                        onClick={() => handleOpenProject(project.id || '')}
                       >
-                        <div className="flex items-center gap-1">
-                          Updated
-                          <span className="text-gray-500">{getSortDirectionIndicator('updated_at')}</span>
-                        </div>
-                      </th>
-                      <th 
-                        scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
-                        onClick={() => requestSort('nodes')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Nodes
-                          <span className="text-gray-500">{getSortDirectionIndicator('nodes')}</span>
-                        </div>
-                      </th>
-                      <th 
-                        scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
-                        onClick={() => requestSort('edges')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Edges
-                          <span className="text-gray-500">{getSortDirectionIndicator('edges')}</span>
-                        </div>
-                      </th>
-                      <th 
-                        scope="col" 
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
-                        onClick={() => requestSort('stars')}
-                      >
-                        <div className="flex items-center gap-1">
-                          Stars
-                          <span className="text-gray-500">{getSortDirectionIndicator('stars')}</span>
-                        </div>
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                        STAR!
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#333333] bg-[#1E1E1E]">
-                    {paginatedProjects.map((project) => {
-                      const { timeAgo: createdTimeAgo, formattedDate: createdFormattedDate } = getTimeAgo(project.created_at);
-                      const { timeAgo: updatedTimeAgo, formattedDate: updatedFormattedDate } = getTimeAgo(project.updated_at);
-                      
-                      return (
-                        <tr 
-                          key={project.id} 
-                          className="hover:bg-[#292929] transition-colors cursor-pointer"
-                          onClick={() => handleOpenProject(project.id || '')}
-                        >
-                          <td className="px-6 py-4">
-                            <div className="text-sm font-medium">{project.name}</div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-300">
-                            <span 
-                              className="relative group"
-                            >
-                              <span className="group-hover:hidden">{createdFormattedDate}</span>
-                              <span className="hidden group-hover:inline">{createdTimeAgo}</span>
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-300">
-                            <span>{updatedTimeAgo}</span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-300">
+                        <div className="p-5">
+                          <div className="mb-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <h3 className="font-bold truncate text-lg">{project.name.length > 10 ? project.name.slice(0, 10) + '...' : project.name}</h3>
+                                {projectsTab === 'my' && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={(e) => handleEditProject(e, project)}
+                                      className="p-2 text-gray-400 hover:text-white transition-colors"
+                                      title="Edit Project"
+                                    >
+                                      <Icons.FiEdit2 size={18} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="">
+                                <span className={`text-xs px-2 py-1 rounded-full ${
+                                  project.is_public 
+                                    ? 'bg-green-900/50 text-green-400 border border-green-700' 
+                                    : 'text-gray-400 border border-[#333333]'
+                                }`}>
+                                  {project.is_public ? 'Public' : 'Private'}
+                                </span>
+                              </div>
+                              
+                            </div>
+                            {projectsTab === 'public' && (
+                              <div className="flex items-center gap-2 text-gray-500 text-xs">
+                                <span className="">Creator:</span>
+                                <span>{project.user_id !== supabaseUser?.id ? (project.user_id).slice(0, 4) + '...' + (project.user_id).slice(-4) : 'You'}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <p className="text-gray-400 text-sm mb-4 line-clamp-2 h-12">
+                            {project.description || 'No description'}
+                          </p>
+                          
+                          <div className="text-sm text-gray-500">
+                            <div className="flex items-center">
+                              <Icons.FiClock size={14} className="mr-1" /> 
+                              <span className="relative group">
+                                <span className="group-hover:hidden">Updated {timeAgo}</span>
+                                <span className="hidden group-hover:inline">{formattedDate}</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 mt-4 text-sm text-gray-400">
                             <div className="flex items-center gap-1">
                               <Icons.FiBox size={14} className="text-green-500" />
-                              <span>{project.nodes?.length || 0}</span>
+                              {project.nodes?.length || 0} Nodes
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-300">
                             <div className="flex items-center gap-1">
-                              <Icons.FiGitMerge size={14} className="text-purple-500" />
-                              <span>{project.edges?.length || 0}</span>
+                              <Icons.FiGitCommit size={14} className="text-purple-500" />
+                              {project.edges?.length || 0} Edges
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-300">
-                            <div className="flex items-center gap-1">
-                              <Icons.FiStar size={14} className="text-yellow-500 fill-yellow-500" />
-                              <span>{project.stars || 0}</span>
-                            </div>
-                          </td>
-                          {projectsTab === 'my' && (
-                            <td className="px-6 py-4 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                              <div className="flex justify-center gap-2">
+                            {supabaseUser && (
+                              <div className="flex items-center justify-center">
                                 <button
-                                  onClick={(e) => handleEditProject(e, project)}
-                                  className="text-blue-500 hover:text-blue-400 p-1 rounded-md hover:bg-blue-500 hover:bg-opacity-10 transition-colors"
-                                  title="Edit Project Name"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleStarToggle(project.id || '');
+                                  }}
+                                  className="flex items-center justify-center cursor-pointer rounded-full transition-colors group"
                                 >
-                                  <Icons.FiEdit2 size={16} />
-                                </button>
-                                <button
-                                  onClick={(e) => handleDeleteProject(e, project.id || '')}
-                                  className="text-red-500 hover:text-red-400 p-1 rounded-md hover:bg-red-500 hover:bg-opacity-10 transition-colors"
-                                  title="Delete Project"
-                                >
-                                  <Icons.FiTrash2 size={16} />
+                                  <Icons.FiStar
+                                    className={`w-5 h-5 ${
+                                      starredProjects.has(project.id || '')
+                                        ? 'text-yellow-400 fill-current'
+                                        : 'text-gray-400 group-hover:text-yellow-400'
+                                    }`}
+                                  />
+                                  <span className={`ml-1 text-sm ${starredProjects.has(project.id || '') ? 'text-yellow-400' : 'text-gray-400 group-hover:text-yellow-400'}`}>
+                                    {project.stars || 0}
+                                  </span>
                                 </button>
                               </div>
-                            </td>
-                          )}
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-[#1E1E1E] rounded-lg border border-[#333333] overflow-hidden shadow-lg mx-12 my-10">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-[#333333]">
+                      <thead className="bg-[#252525]">
+                        <tr>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                            onClick={() => requestSort('name')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Project Name
+                              <span className="text-gray-500">{getSortDirectionIndicator('name')}</span>
+                            </div>
+                          </th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                            onClick={() => requestSort('created_at')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Created
+                              <span className="text-gray-500">{getSortDirectionIndicator('created_at')}</span>
+                            </div>
+                          </th>
                           {projectsTab === 'public' && (
-                            <td className="px-6 py-4 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleStarToggle(project.id);
-                                }}
-                                className="p-2 hover:bg-gray-700 rounded-full transition-colors"
-                              >
-                                <Icons.FiStar
-                                  className={`w-5 h-5 ${
-                                    starredProjects.has(project.id)
-                                      ? 'text-yellow-400 fill-current'
-                                      : 'text-gray-400'
-                                  }`}
-                                />
-                                <span className="ml-1 text-sm">{project.stars || 0}</span>
-                              </button>
-                            </td>
+                            <th 
+                              scope="col" 
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                              onClick={() => requestSort('created_at')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Creator
+                                <span className="text-gray-500">{getSortDirectionIndicator('created_at')}</span>
+                              </div>
+                            </th>
+                          )}
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                            onClick={() => requestSort('updated_at')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Updated
+                              <span className="text-gray-500">{getSortDirectionIndicator('updated_at')}</span>
+                            </div>
+                          </th>
+                          {projectsTab === 'my' && (
+                            <th 
+                              scope="col" 
+                              className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                              onClick={() => requestSort('is_public')}
+                            >
+                              <div className="flex items-center gap-1">
+                                Visibility
+                                <span className="text-gray-500">{getSortDirectionIndicator('is_public')}</span>
+                              </div>
+                            </th>
+                          )}
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                            onClick={() => requestSort('nodes')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Nodes
+                              <span className="text-gray-500">{getSortDirectionIndicator('nodes')}</span>
+                            </div>
+                          </th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                            onClick={() => requestSort('edges')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Edges
+                              <span className="text-gray-500">{getSortDirectionIndicator('edges')}</span>
+                            </div>
+                          </th>
+                          <th 
+                            scope="col" 
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider cursor-pointer"
+                            onClick={() => requestSort('stars')}
+                          >
+                            <div className="flex items-center gap-1">
+                              Stars
+                              <span className="text-gray-500">{getSortDirectionIndicator('stars')}</span>
+                            </div>
+                          </th>
+                          {projectsTab === 'my' && (
+                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                              <div className="flex justify-center items-center gap-1">
+                                Actions
+                              </div>
+                            </th>
                           )}
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                      </thead>
+                      <tbody className="divide-y divide-[#333333] bg-[#1E1E1E]">
+                        {paginatedProjects.map((project) => {
+                          const { timeAgo: createdTimeAgo, formattedDate: createdFormattedDate } = getTimeAgo(project.created_at);
+                          const { timeAgo: updatedTimeAgo, formattedDate: updatedFormattedDate } = getTimeAgo(project.updated_at);
+                          
+                          return (
+                            <tr 
+                              key={project.id} 
+                              className="hover:bg-[#292929] transition-colors cursor-pointer"
+                              onClick={() => handleOpenProject(project.id || '')}
+                            >
+                              <td className="px-6 py-4">
+                                <div className="text-sm font-medium">{project.name}</div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-300">
+                                <span 
+                                  className="relative group"
+                                >
+                                  <span className="group-hover:hidden">{createdFormattedDate}</span>
+                                  <span className="hidden group-hover:inline">{createdTimeAgo}</span>
+                                </span>
+                              </td>
+                              {projectsTab === 'public' && (
+                                <td className="px-6 py-4 text-sm text-gray-300">
+                                  <span>{project.user_id !== supabaseUser?.id ? (project.user_id).slice(0, 4) + '...' + (project.user_id).slice(-4) : 'You'}</span>
+                                </td>
+                              )}
+                              <td className="px-6 py-4 text-sm text-gray-300">
+                                <span>{updatedTimeAgo}</span>
+                              </td>
+                              {projectsTab === 'my' && (
+                                <td className="px-6 py-4 text-sm text-gray-300">
+                                  <span className={`text-xs px-2 py-1 rounded-full ${
+                                    project.is_public 
+                                      ? 'bg-green-900/50 text-green-400 border border-green-700' 
+                                      : 'text-gray-400 border border-[#333333]'
+                                  }`}>
+                                    {project.is_public ? 'Public' : 'Private'}
+                                  </span>
+                                </td>
+                              )}
+                              <td className="px-6 py-4 text-sm text-gray-300">
+                                <div className="flex items-center gap-1">
+                                  <Icons.FiBox size={14} className="text-green-500" />
+                                  <span>{project.nodes?.length || 0}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-300">
+                                <div className="flex items-center gap-1">
+                                  <Icons.FiGitMerge size={14} className="text-purple-500" />
+                                  <span>{project.edges?.length || 0}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-300">
+                                <div className="flex items-center gap-1">
+                                  <div className="flex items-center justify-center">
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleStarToggle(project.id || '');
+                                      }}
+                                      className="flex items-center justify-center cursor-pointer rounded-full transition-colors group"
+                                    >
+                                      <Icons.FiStar
+                                        className={`w-4 h-4 ${
+                                          starredProjects.has(project.id || '')
+                                            ? 'text-yellow-400 fill-current'
+                                            : 'text-gray-400 group-hover:text-yellow-400'
+                                        }`}
+                                      />
+                                      <span className={`ml-1 text-sm ${starredProjects.has(project.id || '') ? 'text-yellow-400' : 'text-gray-400 group-hover:text-yellow-400'}`}>
+                                        {project.stars || 0}
+                                      </span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </td>
+                              {projectsTab === 'my' && (
+                                <td className="px-6 py-4 text-right text-sm font-medium" onClick={(e) => e.stopPropagation()}>
+                                  <div className="flex justify-center items-center">
+                                    <button
+                                      onClick={(e) => handleEditProject(e, project)}
+                                      className="text-blue-500 hover:text-blue-400 p-1 rounded-md hover:bg-blue-500 hover:bg-opacity-10 transition-colors"
+                                      title="Edit Project"
+                                    >
+                                      <Icons.FiEdit2 size={16} />
+                                    </button>
+                                  </div>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           
           {/* Only show pagination if there are projects and more than one page */}

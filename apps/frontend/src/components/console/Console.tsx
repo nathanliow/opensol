@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useEffect } from 'react';
+import { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { useNodes, useEdges, Panel } from '@xyflow/react';
 import CodeDisplay from '../code/CodeDisplay';
 import RunButton from '../canvas/RunButton';
@@ -8,6 +8,7 @@ import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
 import { enhanceCode } from '../../services/codeEnhanceService';
 import { useConfig } from '../../contexts/ConfigContext';
+import { CopyButton } from '../ui/CopyButton';
 
 interface ConsoleProps {
   className?: string;
@@ -19,6 +20,7 @@ interface ConsoleProps {
   onDebugGenerated: (debug: string) => void;
   onClear?: () => void;
   onRestoreFlow?: (nodes: any[], edges: any[]) => void;
+  forceCollapse?: boolean;
 }
 
 interface RestorePoint {
@@ -45,9 +47,10 @@ const Console = memo(({
   onCodeGenerated,
   onDebugGenerated,
   onClear,
-  onRestoreFlow 
+  onRestoreFlow,
+  forceCollapse = false
 }: ConsoleProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [size, setSize] = useState({ width: 600, height: 400 });
   const [restorePoints, setRestorePoints] = useState<RestorePoint[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,6 +60,20 @@ const Console = memo(({
   const nodes = useNodes();
   const edges = useEdges();
   const { apiKeys } = useConfig();
+
+  // Track the previous forceCollapse value
+  const prevForceCollapseRef = useRef(forceCollapse);
+  
+  // Update when forceCollapse changes
+  useEffect(() => {
+    // If menu was opened (forceCollapse changed from false to true)
+    if (forceCollapse && !prevForceCollapseRef.current) {
+      setIsCollapsed(true);
+    }
+    
+    // Update the ref with current value for next comparison
+    prevForceCollapseRef.current = forceCollapse;
+  }, [forceCollapse]);
 
   // Set initial size based on viewport after mount
   useEffect(() => {
@@ -270,15 +287,7 @@ const Console = memo(({
                 className="p-1 hover:bg-[#333333] rounded transition-colors"
                 title="Collapse console"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M3 8L8 3L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Icons.FiArrowDown />
               </button>
             </div>
           </div>
@@ -296,22 +305,18 @@ const Console = memo(({
               )}
               {activeTab === 'code' && (
                 <div className="flex flex-col h-full">
-                  <div className="flex justify-end items-center mb-2 gap-2">
-                    <button
-                      onClick={handleEnhanceCode}
-                      disabled={isEnhancing}
-                      className={`p-2 rounded ${isEnhancing ? 'opacity-50' : 'hover:bg-gray-700'} transition-colors`}
-                      title="Enhance variable names"
-                    >
-                      <Icons.WandIcon className={`w-4 h-4 ${isEnhancing ? 'animate-pulse' : ''}`} />
-                    </button>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(code)}
-                      className="p-2 rounded hover:bg-gray-700 transition-colors"
-                      title="Copy to clipboard"
-                    >
-                      <Icons.CopyIcon className="w-4 h-4" />
-                    </button>
+                  <div className="absolute top-14 right-4 z-50">
+                    <div className="flex justify-end px-4 items-center gap-4">
+                      <button
+                        onClick={handleEnhanceCode}
+                        disabled={isEnhancing}
+                        className={`p-2 rounded text-gray-500 cursor-pointer ${isEnhancing ? 'opacity-50' : 'hover:text-white'} transition-colors`}
+                        title="Enhance variable names"
+                      >
+                        <Icons.IoMdColorWand size={24} className={`${isEnhancing ? 'animate-pulse' : ''}`}/>
+                      </button>
+                      <CopyButton text={code} />
+                    </div>
                   </div>
                   <CodeDisplay code={code.replace(/const HELIUS_API_KEY = ".*";/, 'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;')} />
                 </div>

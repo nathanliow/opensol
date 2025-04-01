@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { createProject } from '@/lib/projects';
 import { useUserAccountContext } from '@/app/providers/UserAccountContext';
 import Canvas from '@/components/canvas/Canvas';
 import { usePrivy } from '@privy-io/react-auth';
+import { LoadingAnimation } from '@/components/loading/LoadingAnimation';
 
 export default function NewProjectPage() {
   const [projectName, setProjectName] = useState('Untitled Project');
@@ -51,7 +51,8 @@ export default function NewProjectPage() {
         description: '',
         nodes: [],
         edges: [],
-        user_id: supabaseUser.id
+        user_id: supabaseUser.id,
+        stars: 0
       });
 
       // Navigate to the new project
@@ -64,10 +65,7 @@ export default function NewProjectPage() {
 
   if (!ready || isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white p-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-        <p>Loading...</p>
-      </div>
+      <LoadingAnimation message="Loading..." />
     );
   }
 

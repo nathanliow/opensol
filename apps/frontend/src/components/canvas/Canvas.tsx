@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useState, useRef, useMemo, useEffect } from "react";
+import { 
+  useCallback, 
+  useState, 
+  useRef, 
+  useMemo, 
+  useEffect 
+} from "react";
 import {
   Background,
   ReactFlow,
@@ -11,38 +17,52 @@ import {
   type OnConnect,
   useReactFlow,
   SelectionMode,
+  Edge,
+  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { edgeTypes } from "../../types/EdgeTypes";
-import { createNodeTypes, nodeTypesData } from "../../types/NodeTypes";
+import { 
+  createNodeTypes, 
+  nodeTypesData 
+} from "../../types/NodeTypes";
 import Toolbar from "./Toolbar";
+import NodeSidebar from "./NodeSidebar";
 import Console from "../console/Console";
 import Menu from "./Menu";
-import { saveCanvasChanges, getProject } from "@/lib/projects";
+import { 
+  saveCanvasChanges, 
+  getProject 
+} from "@/lib/projects";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
-import LoadingAnimation from "@/components/loading/LoadingAnimation";
+import { Icons } from "../icons/icons";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
+  // State variables
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isProjectOwner, setIsProjectOwner] = useState<boolean>(false);
   const [projectData, setProjectData] = useState<any>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [showNodeTypes, setShowNodeTypes] = useState(false);
+  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
   const [debug, setDebug] = useState<string>('');
   const [output, setOutput] = useState<string>('');
   const [code, setCode] = useState<string>('');
+  const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+
+  // Refs
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const projectLoadedRef = useRef(false); // Add a ref to track if project was loaded
+  const projectLoadedRef = useRef(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+
+  // Hooks
   const reactFlowInstance = useReactFlow();
   const { supabaseUser } = useUserAccountContext();
-  const [isLoading, setIsLoading] = useState(true);
   
-  // Selection mode state
-  const [selectionMode, setSelectionMode] = useState(false);
-
   // Create node types with setNodes
   const nodeTypes = useMemo(() => createNodeTypes(setNodes), [setNodes]);
 
@@ -62,7 +82,6 @@ function Flow() {
       }
       
       try {
-        // Clear the force reload flag if it exists
         if (localStorage.getItem('forceProjectReload')) {
           localStorage.removeItem('forceProjectReload');
         }
@@ -72,13 +91,11 @@ function Flow() {
         if (storedProjectId) {
           setProjectId(storedProjectId);
           
-          // Fetch project data from Supabase
           const projectData = await getProject(storedProjectId);
-          setProjectData(projectData); // Store project data
+          setProjectData(projectData); 
           
           // Check if user has access to this project (either as owner or public project)
           if (projectData?.user_id === supabaseUser.id || projectData?.is_public === true) {
-            // Set ownership flag
             setIsProjectOwner(projectData?.user_id === supabaseUser.id);
             
             // Ensure we're setting completely new arrays to trigger React re-renders
@@ -95,7 +112,7 @@ function Flow() {
           setNodes([]);
           setEdges([]);
           setProjectId(null);
-          setIsProjectOwner(true); // User can edit new projects
+          setIsProjectOwner(true); 
         }
       } catch (error) {
         console.error('Error loading project:', error);
@@ -104,7 +121,7 @@ function Flow() {
         setNodes([]);
         setEdges([]);
         setProjectId(null);
-        setIsProjectOwner(true); // User can edit new projects
+        setIsProjectOwner(true);
       } finally {
         setIsLoading(false);
         projectLoadedRef.current = true; // Mark as loaded even on error to prevent retry loops
@@ -113,21 +130,17 @@ function Flow() {
     
     loadProjectFromStorage();
     
-    // Cleanup function to reset the loading flag if component unmounts
     return () => {
       projectLoadedRef.current = false;
     };
-  }, [supabaseUser, setNodes, setEdges, isLoading]); // Add isLoading dependency to reload when it changes
+  }, [supabaseUser, setNodes, setEdges, isLoading]);
 
   // Auto-save changes to Supabase
   useEffect(() => {
-    // Only save if we have a project ID and nodes/edges have changed
-    // AND the user owns the project (not just viewing a public one)
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;
     
-    // Check if user owns this project before saving
     const storedProjectId = localStorage.getItem('currentProjectId');
-    if (storedProjectId !== projectId) return; // Safety check
+    if (storedProjectId !== projectId) return; 
     
     // Get project data to verify ownership
     const checkProjectOwnership = async () => {
@@ -182,7 +195,6 @@ function Flow() {
   }, [setNodes, setEdges, reactFlowInstance]);
 
   const toggleSelectionMode = useCallback(() => {
-    if (!isProjectOwner) return; // Prevent mode toggle if not owner
     setSelectionMode(prev => !prev);
   }, [isProjectOwner]);
 
@@ -202,16 +214,11 @@ function Flow() {
     };
   
     setNodes((nds) => [...nds, newNode]);
-    setShowNodeTypes(false);
   }, [setNodes, isProjectOwner]);
-
-  const toggleNodeTypesDropdown = useCallback(() => {
-    setShowNodeTypes(!showNodeTypes);
-  }, [showNodeTypes]);
 
   const onConnect: OnConnect = useCallback(
     (connection) => {
-      if (!isProjectOwner) return; // Prevent edits if not owner
+      if (!isProjectOwner) return;
       setEdges((edges) => addEdge({
         ...connection,
         type: 'smoothstep',
@@ -220,7 +227,7 @@ function Flow() {
           strokeWidth: 2,
           stroke: 'white',
         },
-      }, edges));
+      } as Edge, edges));
     },
     [setEdges, isProjectOwner]
   );
@@ -228,6 +235,16 @@ function Flow() {
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
+    
+    // Set dragging state to true when dragging over canvas
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  }, [isDragging]);
+
+  const onDragEnd = useCallback(() => {
+    // Reset dragging state when drag operation ends
+    setIsDragging(false);
   }, []);
 
   const onDrop = useCallback(
@@ -235,11 +252,41 @@ function Flow() {
       if (!isProjectOwner || !reactFlowWrapper.current) return;
 
       event.preventDefault();
+      // Reset dragging state
+      setIsDragging(false);
 
       const reactFlowBounds = reactFlowWrapper.current?.getBoundingClientRect();
       const type = event.dataTransfer.getData('application/reactflow');
       if (!type || !reactFlowBounds) {
         return;
+      }
+
+      // Check if drop is on trash icon
+      const trashElement = document.getElementById('node-trash-area');
+      if (trashElement) {
+        const trashBounds = trashElement.getBoundingClientRect();
+        if (
+          event.clientX >= trashBounds.left &&
+          event.clientX <= trashBounds.right &&
+          event.clientY >= trashBounds.top &&
+          event.clientY <= trashBounds.bottom
+        ) {
+          return;
+        }
+      }
+
+      // Check if drop is on sidebar
+      const sidebarElement = document.getElementById('node-sidebar-container');
+      if (sidebarElement) {
+        const sidebarBounds = sidebarElement.getBoundingClientRect();
+        if (
+          event.clientX >= sidebarBounds.left &&
+          event.clientX <= sidebarBounds.right &&
+          event.clientY >= sidebarBounds.top &&
+          event.clientY <= sidebarBounds.bottom
+        ) {
+          return;
+        }
       }
 
       // Calculate position in flow coordinates
@@ -251,18 +298,16 @@ function Flow() {
       // Add the new node at the drop position
       addNewNode(type, position);
     },
-    [isProjectOwner, reactFlowInstance, addNewNode]
+    [isProjectOwner, reactFlowInstance, addNewNode, setIsDragging]
   );
 
-  if (isLoading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <LoadingAnimation />
-      </div>
-    );
-  }
+  const handleMenuToggle = useCallback((isOpen: boolean) => {
+    setMenuOpen(isOpen);
+  }, []);
 
-  const proOptions = { hideAttribution: true };
+  const handleProjectMenuToggle = useCallback((isOpen: boolean) => {
+    setProjectMenuOpen(isOpen);
+  }, []);
 
   return (
     <div className="w-full h-screen" ref={reactFlowWrapper}>
@@ -276,30 +321,55 @@ function Flow() {
         onConnect={isProjectOwner ? onConnect : undefined}
         onDrop={isProjectOwner ? onDrop : undefined}
         onDragOver={onDragOver}
-        panOnDrag={true}
+        onDragEnd={onDragEnd}
         selectionMode={selectionMode ? SelectionMode.Full : SelectionMode.Partial}
+        selectionOnDrag={selectionMode}
+        panOnDrag={!selectionMode}
+        panOnScroll={true}
         proOptions={{
           hideAttribution: true
         }}
         fitView
       >
-        <Background />
+        {isLoading ? (
+          <div className="flex flex-col min-h-screen min-w-screen items-center justify-center text-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+            <p>Loading project...</p>
+          </div>
+        ) : (
+          <Background />
+        )}
+
+        {isDragging && isProjectOwner && (
+          <Panel position="bottom-center" className="p-[20px]" style={{ zIndex: 1000 }}>
+            <div 
+              id="node-trash-area"
+              className="w-12 h-12 flex items-center justify-center bg-[#2D2D2D] rounded-full shadow-lg transition-all hover:scale-110"
+            >
+              <Icons.FiTrash2 className="text-white" size={24} />
+            </div>
+          </Panel>
+        )}
         <Toolbar
-          showNodeTypes={showNodeTypes}
-          toggleNodeTypesDropdown={toggleNodeTypesDropdown}
-          nodeTypesData={nodeTypesData}
-          addNewNode={addNewNode}
           selectionMode={selectionMode}
           toggleSelectionMode={toggleSelectionMode}
           isReadOnly={!isProjectOwner}
-        />
-        <Menu
           onExport={handleExport}
           onImport={handleImport}
           projectId={projectId}
           onProjectChange={handleProjectChange}
-          isProjectOwner={isProjectOwner}
           projectData={projectData}
+          onProjectMenuToggle={handleProjectMenuToggle}
+        />
+        <NodeSidebar
+          nodeTypesData={nodeTypesData}
+          addNewNode={addNewNode}
+          isReadOnly={!isProjectOwner}
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={() => setIsDragging(false)}
+        />
+        <Menu
+          onMenuToggle={handleMenuToggle}
         />
         <Console 
           output={output} 
@@ -313,6 +383,7 @@ function Flow() {
             setNodes(restoredNodes);
             setEdges(restoredEdges);
           }}
+          forceCollapse={menuOpen || projectMenuOpen}
         />
       </ReactFlow>
     </div>

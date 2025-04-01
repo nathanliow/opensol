@@ -69,7 +69,7 @@ const DashboardMenu = ({ onNewProject }: DashboardMenuProps) => {
       </button>
 
       {isOpen && (
-        <div className="absolute top-12 right-0 w-64 max-h-[calc(35vh)] bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg overflow-hidden overflow-y-auto z-50">
+        <div className="absolute top-12 right-0 w-64 max-h-[calc(100vh-150px)] overflow-y-auto p-2 bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg z-50">
           {userAddress && (
             <div className="p-3 border-b border-[#333333] text-xs">
               <div className="font-medium text-gray-300">Connected Wallet</div>

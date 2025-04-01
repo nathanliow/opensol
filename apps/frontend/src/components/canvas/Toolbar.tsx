@@ -1,67 +1,343 @@
-import { NodeCategory, NodeType } from "../../types/NodeTypes";
-import { Panel } from "@xyflow/react";
 import { useState, useRef, useEffect } from "react";
+import { Panel } from "@xyflow/react";
 import { Icons } from "../icons/icons";
+import { useRouter } from "next/navigation";
+import { useUserAccountContext } from "@/app/providers/UserAccountContext";
+import { createProject, copyProject } from "@/lib/projects";
 
 interface ToolbarProps {
-  showNodeTypes: boolean;
-  toggleNodeTypesDropdown: () => void;
-  nodeTypesData: Record<string, NodeType>;
-  addNewNode: (type: any, position?: { x: number; y: number }) => void;
   selectionMode: boolean;
   toggleSelectionMode: () => void;
-  isReadOnly?: boolean; 
+  isReadOnly?: boolean;
+  onExport: () => any;
+  onImport: (flowData: any) => void;
+  projectId?: string | null;
+  onProjectChange?: () => void;
+  projectData?: any;
+  onProjectMenuToggle?: (isOpen: boolean) => void;
 }
 
 export default function Toolbar({
-  showNodeTypes,
-  toggleNodeTypesDropdown,
-  nodeTypesData,
-  addNewNode,
   selectionMode,
   toggleSelectionMode,
-  isReadOnly = false, 
+  isReadOnly = false,
+  onExport,
+  onImport,
+  projectId,
+  onProjectChange,
+  projectData,
+  onProjectMenuToggle,
 }: ToolbarProps) {
-  const [activeTab, setActiveTab] = useState<NodeCategory>('Default');
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [isPublic, setIsPublic] = useState(projectData?.is_public || false);
+  const projectMenuRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+  const router = useRouter();
+  const { supabaseUser } = useUserAccountContext();
+
+  useEffect(() => {
+    // Update isPublic when projectData changes
+    if (projectData) {
+      setIsPublic(projectData.is_public || false);
+    }
+  }, [projectData]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showNodeTypes && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (projectMenuOpen && projectMenuRef.current && !projectMenuRef.current.contains(event.target as Node)) {
         event.preventDefault();
         event.stopPropagation();
-        toggleNodeTypesDropdown();
+        setProjectMenuOpen(false);
+        
+        // Notify parent when menu is closed by clicking outside
+        if (onProjectMenuToggle) {
+          onProjectMenuToggle(false);
+        }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside, true); 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-    };
-  }, [showNodeTypes, toggleNodeTypesDropdown]);
+    if (projectMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside, true);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside, true);
+      };
+    }
+  }, [projectMenuOpen, onProjectMenuToggle]);
 
-  const filteredNodeTypes = Object.values(nodeTypesData).filter(type => type.category === activeTab);
+  const toggleProjectMenu = () => {
+    const newState = !projectMenuOpen;
+    setProjectMenuOpen(newState);
+    
+    // Notify parent when menu is toggled
+    if (onProjectMenuToggle) {
+      onProjectMenuToggle(newState);
+    }
+  };
 
-  const onDragStart = (event: React.DragEvent<HTMLDivElement>, nodeType: string) => {
-    if (isReadOnly) {
-      event.preventDefault();
+  const toggleProjectPublic = async () => {
+    if (!projectId || !supabaseUser || isTogglingVisibility) return;
+
+    setIsTogglingVisibility(true);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/toggle-public`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isPublic: !isPublic }),
+      });
+
+      if (response.ok) {
+        setIsPublic(!isPublic);
+      } else {
+        console.error("Failed to update project visibility");
+      }
+    } catch (error) {
+      console.error("Error toggling project visibility:", error);
+    } finally {
+      setIsTogglingVisibility(false);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onloadend = () => {
+        try {
+          if (typeof fileReader.result === "string") {
+            const flowData = JSON.parse(fileReader.result);
+            onImport(flowData);
+          }
+        } catch (error) {
+          console.error("Error parsing flow file:", error);
+          alert("Could not parse flow file. Make sure it is a valid JSON file.");
+        }
+      };
+      fileReader.readAsText(file);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+    setProjectMenuOpen(false);
+    
+    // Notify parent when menu is closed
+    if (onProjectMenuToggle) {
+      onProjectMenuToggle(false);
+    }
+  };
+
+  const handleExportClick = () => {
+    setProjectMenuOpen(false);
+    
+    // Notify parent when menu is closed
+    if (onProjectMenuToggle) {
+      onProjectMenuToggle(false);
+    }
+
+    try {
+      const flowData = onExport();
+      const dataStr = JSON.stringify(flowData, null, 2);
+      const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+      const exportName = "flow-" + new Date().getTime() + ".json";
+
+      const linkElement = document.createElement("a");
+      linkElement.setAttribute("href", dataUri);
+      linkElement.setAttribute("download", exportName);
+      linkElement.click();
+    } catch (error) {
+      console.error("Error exporting flow:", error);
+      alert("Error exporting flow. Please try again.");
+    }
+  };
+
+  const handleSaveProject = async () => {
+    if (!supabaseUser) {
+      alert("Please log in to save your project");
       return;
     }
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
+
+    try {
+      const flowData = onExport();
+      const projectName = prompt("Enter a name for your project:", "Untitled Project");
+      if (!projectName) return;
+
+      const newProject = await createProject({
+        name: projectName,
+        description: "",
+        nodes: flowData.nodes,
+        edges: flowData.edges,
+        user_id: supabaseUser.id,
+        stars: 0,
+      });
+
+      localStorage.setItem("currentProjectId", newProject.id);
+      setProjectMenuOpen(false);
+      
+      // Notify parent when menu is closed
+      if (onProjectMenuToggle) {
+        onProjectMenuToggle(false);
+      }
+      
+      router.push("/");
+    } catch (error) {
+      console.error("Failed to create project:", error);
+      alert("Failed to create project. Please try again.");
+    }
   };
+
+  const handleCopyProject = async () => {
+    if (!projectId || !supabaseUser || !projectData) return;
+
+    try {
+      const newProject = await copyProject(projectId, supabaseUser.id);
+
+      // Save the new project ID to localStorage
+      localStorage.setItem("currentProjectId", newProject.id);
+      localStorage.setItem("forceProjectReload", "true");
+
+      // Trigger project change to reload the canvas
+      if (onProjectChange) {
+        onProjectChange();
+      }
+
+      // Close the menu
+      setProjectMenuOpen(false);
+      
+      // Notify parent when menu is closed
+      if (onProjectMenuToggle) {
+        onProjectMenuToggle(false);
+      }
+    } catch (error) {
+      console.error("Failed to copy project:", error);
+    }
+  };
+
+  const isProjectOwner = projectData?.user_id === supabaseUser?.id;
 
   return (
     <Panel position="top-center">
       <div className="flex bg-[#1E1E1E] rounded-lg items-center py-1 px-4 space-x-4">
         <button
           onClick={toggleSelectionMode}
-          className={`flex items-center justify-center w-10 h-10 ${isReadOnly ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : selectionMode ? 'bg-[#3D3D3D] text-white' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300'} rounded-lg shadow-lg`}
-          title={isReadOnly ? "Viewing Only - Cannot Edit" : "Selection Tool"}
-          disabled={isReadOnly}
+          className={`flex items-center justify-center w-10 h-10 transition-colors ${selectionMode ? 'bg-[#3D3D3D] text-white cursor-pointer' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300 cursor-pointer '} rounded-lg shadow-lg`}
         >
           <Icons.FiMousePointer size={18} />
         </button>
+
+        {/* Project Menu Button */}
+        <div ref={projectMenuRef} className="relative">
+          <button
+            onClick={toggleProjectMenu}
+            className="flex items-center justify-center bg-[#1E1E1E] hover:bg-[#2D2D2D] text-white rounded-lg shadow-lg h-10 px-3 space-x-1 cursor-pointer transition-colors"
+            title="Project Menu"
+          >
+            <Icons.FiFolder size={16} />
+          </button>
+
+          {projectMenuOpen && (
+            <div className="absolute top-12 left-0 w-64 bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg z-50 overflow-hidden">
+              {/* Project info section */}
+              {projectId && projectData && (
+                <div className="p-4 border-b border-[#333333]">
+                  <h3 className="font-semibold text-lg truncate text-white">{projectData.name}</h3>
+                  {projectData.description && (
+                    <p className="text-gray-400 text-sm mt-1 line-clamp-2">{projectData.description}</p>
+                  )}
+                  <div className="flex items-center mt-2 text-xs text-gray-500">
+                    <div className="flex items-center">
+                      <Icons.FiUser className="mr-1" />
+                      {isProjectOwner ? "You" : "Another User"}
+                    </div>
+                    {projectData.is_public && (
+                      <div className="flex items-center ml-3">
+                        <Icons.FiGlobe className="mr-1" />
+                        Public
+                      </div>
+                    )}
+                  </div>
+                  {!isProjectOwner && (
+                    <div className="mt-3 bg-amber-900/20 border border-amber-900/30 rounded-md p-2 text-xs text-amber-400 flex items-center">
+                      <Icons.FiAlertTriangle className="mr-1 flex-shrink-0" size={14} />
+                      <span>View-only mode</span>
+                    </div>
+                  )}
+
+                  {/* Public/Private toggle */}
+                  {isProjectOwner && (
+                    <div className="mt-3 flex items-center justify-between p-2 bg-[#1E1E1E] rounded-md">
+                      <span className="flex items-center text-xs text-gray-300">
+                        <Icons.FiGlobe className="mr-1" />
+                        {isPublic ? "Public project" : "Private project"}
+                      </span>
+                      <button
+                        onClick={toggleProjectPublic}
+                        className={`flex items-center ${isTogglingVisibility ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                        aria-label={isPublic ? "Make Private" : "Make Public"}
+                        disabled={isTogglingVisibility}
+                      >
+                        <div className={`w-8 h-4 ${isPublic ? "bg-green-500" : "bg-gray-600"} rounded-full relative transition-colors`}>
+                          {isTogglingVisibility ? (
+                            <div className="absolute w-3 h-3 bg-white rounded-full top-0.5 left-0.5 animate-pulse"></div>
+                          ) : (
+                            <div className={`absolute w-3 h-3 bg-white rounded-full top-0.5 transition-transform ${isPublic ? "right-0.5" : "left-0.5"}`}></div>
+                          )}
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Project action buttons */}
+              <div className="p-2">
+                {supabaseUser && (
+                  <>
+                    <button
+                      onClick={handleCopyProject}
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                      disabled={!projectId}
+                    >
+                      <Icons.FiCopy size={16} />
+                      Copy Project
+                    </button>
+                    <button
+                      onClick={handleSaveProject}
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    >
+                      <Icons.FiSave size={16} />
+                      Save as Project
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={handleImportClick}
+                  className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                >
+                  <Icons.FiUpload size={16} />
+                  Import Flow
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileInputChange}
+                  style={{ display: "none" }}
+                  accept=".json"
+                />
+                <button
+                  onClick={handleExportClick}
+                  className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                >
+                  <Icons.FiDownload size={16} />
+                  Export Flow
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {isReadOnly && (
           <div className="flex items-center bg-amber-700/20 text-amber-400 px-2 py-1 rounded-md text-xs">
@@ -69,55 +345,6 @@ export default function Toolbar({
             View Only
           </div>
         )}
-
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={isReadOnly ? undefined : toggleNodeTypesDropdown}
-            className={`flex items-center justify-center w-10 h-10 rounded-lg shadow-lg ${isReadOnly ? 'bg-gray-700 text-gray-500 cursor-not-allowed' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-white'}`}
-            title={isReadOnly ? "Cannot add nodes in view mode" : "Add Node"}
-            disabled={isReadOnly}
-          >
-            <Icons.FaRegSquare size={20} /> 
-          </button>
-
-          {showNodeTypes && !isReadOnly && (
-            <div className="absolute top-full left-0 mt-2 w-[320px] bg-[#1e1e1e] rounded shadow-lg z-10 overflow-hidden">
-              <div className="flex border-b border-gray-700">
-                {['Default', 'DeFi', 'Misc'].map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab as NodeCategory)}
-                    className={`flex-1 px-4 py-2 text-sm ${
-                      activeTab === tab 
-                        ? 'bg-gray-700 text-white' 
-                        : 'text-gray-400 hover:bg-gray-800'
-                    }`}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              <div className="max-h-[300px] overflow-y-auto p-2">
-                <div className="grid grid-cols-3 gap-2">
-                  {filteredNodeTypes.map((type) => (
-                    <div
-                      key={type.id}
-                      className="flex flex-col items-center p-2 hover:bg-gray-700 rounded transition cursor-grab"
-                      onClick={() => addNewNode(type.id)}
-                      draggable
-                      onDragStart={(event) => onDragStart(event, type.id)}
-                    >
-                      <div className={`w-[70px] h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}>
-                        <span className={`text-xs ${type.textColor} font-medium`}>{type.label}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </Panel>
   );
