@@ -6,21 +6,9 @@ import getAssetHelius from './flow-templates-data/flow-getAsset-helius.json'
 
 // Add metadata to templates
 const flowTemplatesWithMetadata: FlowTemplate[] = [
-  {
-    ...blankTemplate,
-    description: 'Start with a clean canvas',
-    category: 'Basic',
-  },
-  {
-    ...getSolBalanceTemplate,
-    description: 'Get SOL balance for a wallet address',
-    category: 'Solana',
-  },
-  {
-    ...getAssetHelius,
-    description: 'Get asset from Helius',
-    category: 'Helius',
-  },
+  blankTemplate,
+  getSolBalanceTemplate,
+  getAssetHelius,
 ];
 
 // Export all templates

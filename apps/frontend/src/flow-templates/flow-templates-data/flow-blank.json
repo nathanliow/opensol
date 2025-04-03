@@ -1,10 +1,12 @@
 {
+  "name": "Blank Project",
+  "description": "Start with a clean canvas",
+  "category": "Basic",
   "nodes": [],
   "edges": [],
   "viewport": {
     "x": 0,
     "y": 0,
     "zoom": 1
-  },
-  "name": "Blank Project"
+  }
 }

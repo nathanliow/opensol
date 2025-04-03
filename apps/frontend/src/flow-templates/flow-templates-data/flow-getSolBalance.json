@@ -1,4 +1,7 @@
 {
+  "name": "Get wallet SOL Balance",
+  "description": "Get the Solana balance for a wallet address",
+  "category": "Solana",
   "nodes": [
     {
       "id": "function-1742784695325",
@@ -125,6 +128,5 @@
     "x": -1290.9725629201585,
     "y": -301.0557597839247,
     "zoom": 2
-  },
-  "name": "Get Sol Balance"
+  }
 }

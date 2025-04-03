@@ -1,7 +1,10 @@
 {
-    "nodes": [
-      {
-        "id": "function-1742861522787",
+  "name": "Helius - getAsset",
+  "description": "Get an asset's data using Helius RPCs",
+  "category": "Helius",
+  "nodes": [
+    {
+      "id": "function-1742861522787",
         "type": "FUNCTION",
         "position": {
           "x": 765.6011612376292,
@@ -16,118 +19,115 @@
           "height": 81
         },
         "selected": false
-      },
-      {
-        "id": "helius-1742861555250",
-        "type": "HELIUS",
-        "position": {
-          "x": 762.0889582686544,
-          "y": 337.1207232792368
-        },
-        "data": {
-          "label": "HELIUS",
-          "selectedFunction": "getAsset",
-          "parameters": {
-            "network": "mainnet",
-            "assetId": "",
-            "apiKey": "59b22110-9b58-4580-9187-cf1cadeaa27d "
-          }
-        },
-        "measured": {
-          "width": 258,
-          "height": 115
-        },
-        "selected": false,
-        "dragging": false
-      },
-      {
-        "id": "const-1742861612991",
-        "type": "CONST",
-        "position": {
-          "x": 344.93189390689895,
-          "y": 345.0924543680174
-        },
-        "data": {
-          "label": "CONST",
-          "selectedFunction": "",
-          "parameters": {},
-          "value": "Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump"
-        },
-        "measured": {
-          "width": 258,
-          "height": 115
-        },
-        "selected": false,
-        "dragging": false
-      },
-      {
-        "id": "print-1742861627171",
-        "type": "PRINT",
-        "position": {
-          "x": 1171.285340236015,
-          "y": 320.1043361319817
-        },
-        "data": {
-          "label": "PRINT",
-          "selectedFunction": "",
-          "parameters": {},
-          "template": "$output$"
-        },
-        "measured": {
-          "width": 258,
-          "height": 114
-        },
-        "selected": false,
-        "dragging": false
-      }
-    ],
-    "edges": [
-      {
-        "source": "function-1742861522787",
-        "sourceHandle": "output",
-        "target": "helius-1742861555250",
-        "targetHandle": "flow",
-        "type": "smoothstep",
-        "animated": true,
-        "style": {
-          "strokeWidth": 2,
-          "stroke": "white"
-        },
-        "id": "xy-edge__function-1742861522787output-helius-1742861555250flow"
-      },
-      {
-        "source": "const-1742861612991",
-        "sourceHandle": "output",
-        "target": "helius-1742861555250",
-        "targetHandle": "param-assetId",
-        "type": "smoothstep",
-        "animated": true,
-        "style": {
-          "strokeWidth": 2,
-          "stroke": "white"
-        },
-        "id": "xy-edge__const-1742861612991output-helius-1742861555250param-assetId"
-      },
-      {
-        "source": "helius-1742861555250",
-        "sourceHandle": "output",
-        "target": "print-1742861627171",
-        "targetHandle": "template",
-        "type": "smoothstep",
-        "animated": true,
-        "style": {
-          "strokeWidth": 2,
-          "stroke": "white"
-        },
-        "id": "xy-edge__helius-1742861555250output-print-1742861627171template"
-      }
-    ],
-    "viewport": {
-      "x": -282.67512911056133,
-      "y": -140.44044993706058,
-      "zoom": 1.1178056974905393
     },
-    "name": "Helius - getAsset",
-    "description": "getAsset RPC call template",
-    "category": "Solana"
+    {
+      "id": "helius-1742861555250",
+      "type": "HELIUS",
+      "position": {
+        "x": 762.0889582686544,
+        "y": 337.1207232792368
+      },
+      "data": {
+        "label": "HELIUS",
+        "selectedFunction": "getAsset",
+        "parameters": {
+          "network": "mainnet",
+          "assetId": "",
+          "apiKey": "59b22110-9b58-4580-9187-cf1cadeaa27d "
+        }
+      },
+      "measured": {
+        "width": 258,
+        "height": 115
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "const-1742861612991",
+      "type": "CONST",
+      "position": {
+        "x": 344.93189390689895,
+        "y": 345.0924543680174
+      },
+      "data": {
+        "label": "CONST",
+        "selectedFunction": "",
+        "parameters": {},
+        "value": "Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump"
+      },
+      "measured": {
+        "width": 258,
+        "height": 115
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "print-1742861627171",
+      "type": "PRINT",
+      "position": {
+        "x": 1171.285340236015,
+        "y": 320.1043361319817
+      },
+      "data": {
+        "label": "PRINT",
+        "selectedFunction": "",
+        "parameters": {},
+        "template": "$output$"
+      },
+      "measured": {
+        "width": 258,
+        "height": 114
+      },
+      "selected": false,
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "function-1742861522787",
+      "sourceHandle": "output",
+      "target": "helius-1742861555250",
+      "targetHandle": "flow",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+        "strokeWidth": 2,
+        "stroke": "white"
+      },
+      "id": "xy-edge__function-1742861522787output-helius-1742861555250flow"
+    },
+    {
+      "source": "const-1742861612991",
+      "sourceHandle": "output",
+      "target": "helius-1742861555250",
+      "targetHandle": "param-assetId",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+        "strokeWidth": 2,
+        "stroke": "white"
+      },
+      "id": "xy-edge__const-1742861612991output-helius-1742861555250param-assetId"
+    },
+    {
+      "source": "helius-1742861555250",
+      "sourceHandle": "output",
+      "target": "print-1742861627171",
+      "targetHandle": "template",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+        "strokeWidth": 2,
+        "stroke": "white"
+      },
+      "id": "xy-edge__helius-1742861555250output-print-1742861627171template"
+    }
+  ],
+  "viewport": {
+    "x": -282.67512911056133,
+    "y": -140.44044993706058,
+    "zoom": 1.1178056974905393
+  }
   }
