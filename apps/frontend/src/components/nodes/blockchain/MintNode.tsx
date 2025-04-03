@@ -9,7 +9,8 @@ interface MintNodeProps {
     label?: string;
     name?: string;
     symbol?: string;
-    supply?: string;
+    description?: string;
+    image?: string;
   };
 }
 
@@ -36,10 +37,16 @@ export default function MintNode({ id, data }: MintNodeProps) {
       defaultValue: data.symbol || ''
     },
     {
-      id: 'supply',
-      label: 'Supply',
-      type: 'number',
-      defaultValue: data.supply || '1000000'
+      id: 'description',
+      label: 'Description',
+      type: 'text',
+      defaultValue: data.description || ''
+    },
+    {
+      id: 'image',
+      label: 'Image',
+      type: 'text',
+      defaultValue: data.image || ''
     }
   ];
   
