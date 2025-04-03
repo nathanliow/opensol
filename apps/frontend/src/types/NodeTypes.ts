@@ -1,14 +1,14 @@
 import { NodeTypes } from "@xyflow/react";
-import GetNode from "../components/nodes/GetNode";
-import ObjectNode from "../components/nodes/ObjectNode";
-import MintNode from "../components/nodes/MintNode";
-import ConstNode from "../components/nodes/ConstNode";
-import FunctionNode from "../components/nodes/FunctionNode";
-import PrintNode from "../components/nodes/PrintNode";
-import HeliusNode from "../components/nodes/HeliusNode";
-import MathNode from "../components/nodes/MathNode";
+import GetNode from "../components/nodes/blockchain/GetNode";
+import ObjectNode from "../components/nodes/code/ObjectNode";
+import MintNode from "../components/nodes/blockchain/MintNode";
+import ConstNode from "../components/nodes/code/ConstNode";
+import FunctionNode from "../components/nodes/code/FunctionNode";
+import PrintNode from "../components/nodes/code/PrintNode";
+import HeliusNode from "../components/nodes/provider/HeliusNode";
+import MathNode from "../components/nodes/code/MathNode";
 
-export type NodeCategory = 'Default' | 'DeFi' | 'Misc';
+export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
 
 export interface NodeType {
   id: string;
@@ -24,43 +24,39 @@ export interface NodeType {
 
 // nodeTypes only for Canvas
 export const createNodeTypes = (setNodes: (updater: any) => void) => ({  
-  // Default
-  GET: GetNode,
+  // Code
   OBJECT: ObjectNode,
   CONST: ConstNode,
   FUNCTION: FunctionNode,
   PRINT: PrintNode,
-  HELIUS: HeliusNode,
+  MATH: MathNode,
 
-  // DeFi
+  // Database
+
+  // Blockchain
+  GET: GetNode,
   MINT: MintNode,
 
+  // DeFi
+
+
+  // Provider
+  HELIUS: HeliusNode,
+
   // Misc
-  MATH: MathNode,
-  
 } satisfies NodeTypes);
 
 // Data for node types (NEEDS TO MATCH THE NODE TYPES IN THE CANVAS)
 export const nodeTypesData: Record<string, NodeType> = {
 
   /* ------------------------------------------------------------ */
-  /* -------------------------- DEFAULT ------------------------- */
+  /* -------------------------- Code ---------------------------- */
   /* ------------------------------------------------------------ */
 
-  GET: { 
-    id: 'GET', 
-    label: 'GET', 
-    category: 'Default', 
-    backgroundColor: 'bg-blue-200',
-    borderColor: 'border-blue-400',
-    primaryColor: 'blue-200', 
-    secondaryColor: 'blue-400',
-    textColor: 'text-black'
-  },
   OBJECT: { 
     id: 'OBJECT', 
     label: 'OBJECT', 
-    category: 'Default', 
+    category: 'Code', 
     backgroundColor: 'bg-blue-300',
     borderColor: 'border-blue-500',
     primaryColor: 'blue-400', 
@@ -70,7 +66,7 @@ export const nodeTypesData: Record<string, NodeType> = {
   CONST: {
     id: 'CONST',
     label: 'CONST',
-    category: 'Default',
+    category: 'Code',
     backgroundColor: 'bg-blue-400',
     borderColor: 'border-blue-600',
     primaryColor: 'blue-400',
@@ -80,7 +76,7 @@ export const nodeTypesData: Record<string, NodeType> = {
   FUNCTION: {
     id: 'FUNCTION',
     label: 'FUNCTION',
-    category: 'Default',
+    category: 'Code',
     backgroundColor: 'bg-gray-200',
     borderColor: 'border-gray-400',
     primaryColor: 'gray-200',
@@ -90,7 +86,7 @@ export const nodeTypesData: Record<string, NodeType> = {
   PRINT: {
     id: 'PRINT',
     label: 'PRINT',
-    category: 'Default',
+    category: 'Code',
     backgroundColor: 'bg-yellow-200',
     borderColor: 'border-yellow-400',
     primaryColor: 'yellow-200',
@@ -100,22 +96,46 @@ export const nodeTypesData: Record<string, NodeType> = {
   HELIUS: {
     id: 'HELIUS',
     label: 'HELIUS',
-    category: 'Default',
+    category: 'Provider',
     backgroundColor: 'bg-[#E84125]',
     borderColor: 'border-[#E84125]',
     primaryColor: '[#E84125]',
     secondaryColor: '[#E84125]',
     textColor: 'text-black'
   },
+  MATH: {
+    id: 'MATH',
+    label: 'MATH',
+    category: 'Code',
+    backgroundColor: 'bg-purple-200',
+    borderColor: 'border-purple-400',
+    primaryColor: 'purple-700',
+    secondaryColor: 'purple-400',
+    textColor: 'text-black'
+  },
 
-  /* ------------------------------------------------------------ */
-  /* -------------------------- DEFI ---------------------------- */
-  /* ------------------------------------------------------------ */
+  /* -------------------------------------------------------------- */
+  /* -------------------------- Database -------------------------- */
+  /* -------------------------------------------------------------- */
 
+  /* -------------------------------------------------------------- */
+  /* -------------------------- Blockchain ------------------------ */
+  /* -------------------------------------------------------------- */
+
+  GET: { 
+    id: 'GET', 
+    label: 'GET', 
+    category: 'Blockchain', 
+    backgroundColor: 'bg-blue-200',
+    borderColor: 'border-blue-400',
+    primaryColor: 'blue-200', 
+    secondaryColor: 'blue-400',
+    textColor: 'text-black'
+  },
   MINT: {
     id: 'MINT',
     label: 'MINT',
-    category: 'DeFi',
+    category: 'Blockchain',
     backgroundColor: 'bg-red-200',
     borderColor: 'border-red-400',
     primaryColor: 'red',
@@ -123,18 +143,15 @@ export const nodeTypesData: Record<string, NodeType> = {
     textColor: 'text-black'
   },
 
-  /* ------------------------------------------------------------ */
-  /* -------------------------- MISC ---------------------------- */
-  /* ------------------------------------------------------------ */
+  /* -------------------------------------------------------------- */
+  /* -------------------------- DeFi ------------------------------ */
+  /* -------------------------------------------------------------- */
 
-  MATH: {
-    id: 'MATH',
-    label: 'MATH',
-    category: 'Misc',
-    backgroundColor: 'bg-purple-200',
-    borderColor: 'border-purple-400',
-    primaryColor: 'purple-700',
-    secondaryColor: 'purple-400',
-    textColor: 'text-black'
-  },
+  /* -------------------------------------------------------------- */
+  /* -------------------------- Provider -------------------------- */
+  /* -------------------------------------------------------------- */
+
+  /* -------------------------------------------------------------- */
+  /* ---------------------------- Misc ---------------------------- */
+  /* -------------------------------------------------------------- */
 };

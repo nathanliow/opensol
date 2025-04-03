@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Panel } from "@xyflow/react";
 import { NodeCategory, NodeType } from "../../types/NodeTypes";
 import { Icons } from "../icons/icons";
@@ -18,18 +18,41 @@ export default function NodeSidebar({
   onDragStart,
   onDragEnd,
 }: NodeSidebarProps) {
-  const [activeTab, setActiveTab] = useState<NodeCategory>("Default");
+  const [activeTab, setActiveTab] = useState<NodeCategory>("Code");
   const [isOpen, setIsOpen] = useState(true);
+  const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const nodeListRef = useRef<HTMLDivElement | null>(null);
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
   };
 
-  const categories: NodeCategory[] = ["Default", "DeFi", "Misc"];
+  const categories: NodeCategory[] = ['Code', 'Database', 'Blockchain', 'DeFi', 'Provider', 'Misc'];
   
-  const filteredNodeTypes = Object.values(nodeTypesData).filter(
-    (type) => type.category === activeTab
-  );
+  // Group nodes by category
+  const nodesByCategory = categories.reduce((acc, category) => {
+    acc[category] = Object.values(nodeTypesData).filter(
+      (type) => type.category === category
+    );
+    return acc;
+  }, {} as Record<NodeCategory, NodeType[]>);
+
+  // Set category refs
+  const setCategoryRef = (element: HTMLDivElement | null, category: string) => {
+    if (element) {
+      categoryRefs.current[category] = element;
+    }
+  };
+
+  // Scroll to category when tab changes
+  useEffect(() => {
+    if (categoryRefs.current[activeTab] && nodeListRef.current) {
+      categoryRefs.current[activeTab]?.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, [activeTab]);
 
   const onDragStartHandler = (event: React.DragEvent<HTMLDivElement>, nodeType: string) => {
     if (isReadOnly) {
@@ -123,40 +146,63 @@ export default function NodeSidebar({
                 ))}
               </div>
 
-              {/* Node Items - Independently scrollable */}
+              {/* Node Items - All categories in one scrollable list */}
               <div className="flex-1 flex flex-col w-28">
                 {/* Node List */}
-                <div className="overflow-y-auto p-2 flex-1">
-                  <div className="grid grid-cols-1 gap-2">
-                    {filteredNodeTypes.map((type) => (
-                      <div
-                        key={type.id}
-                        className={`flex flex-col items-center p-2 rounded transition-colors ${
-                          isReadOnly
-                            ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-gray-700 cursor-grab"
-                        }`}
-                        onClick={isReadOnly ? undefined : () => addNewNode(type.id)}
-                        draggable={!isReadOnly}
-                        onDragStart={
-                          isReadOnly 
-                            ? undefined 
-                            : (event) => onDragStartHandler(event, type.id)
-                        }
-                        onDragEnd={isReadOnly ? undefined : onDragEndHandler}
-                      >
-                        <div
-                          className={`w-full h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}
-                        >
-                          <span
-                            className={`text-xs ${type.textColor} font-medium`}
-                          >
-                            {type.label}
-                          </span>
-                        </div>
+                <div 
+                  ref={nodeListRef}
+                  className="overflow-y-auto flex-1"
+                >
+                  {categories.map((category) => (
+                    <div 
+                      key={category} 
+                      ref={(el) => setCategoryRef(el, category)}
+                    >
+                      {/* Category Header */}
+                      <div className="sticky top-0 bg-[#1E1E1E] p-2 font-medium text-xs text-gray-300 flex items-center border-b border-t border-gray-700">
+                        <span className="mr-2">{getCategoryIcon(category)}</span>
+                        <span>{category}</span>
                       </div>
-                    ))}
-                  </div>
+                      
+                      {/* Category Nodes */}
+                      <div className="grid grid-cols-1 gap-2 p-1">
+                        {nodesByCategory[category].length === 0 && (
+                          <div className="flex flex-col items-center text-center py-10 text-gray-400 text-xs">
+                            <Icons.FiInfo className="mb-2" size={18} />
+                            <span>Nodes coming soon...</span>
+                          </div>
+                        )}
+                        {nodesByCategory[category].map((type) => (
+                          <div
+                            key={type.id}
+                            className={`flex flex-col items-center p-2 rounded transition-colors ${
+                              isReadOnly
+                                ? "opacity-50 cursor-not-allowed"
+                                : "hover:bg-gray-700 cursor-grab"
+                            }`}
+                            onClick={isReadOnly ? undefined : () => addNewNode(type.id)}
+                            draggable={!isReadOnly}
+                            onDragStart={
+                              isReadOnly 
+                                ? undefined 
+                                : (event) => onDragStartHandler(event, type.id)
+                            }
+                            onDragEnd={isReadOnly ? undefined : onDragEndHandler}
+                          >
+                            <div
+                              className={`w-full h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}
+                            >
+                              <span
+                                className={`text-xs ${type.textColor} font-medium`}
+                              >
+                                {type.label}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Read-Only Notice (if applicable) */}
@@ -177,12 +223,18 @@ export default function NodeSidebar({
 // Helper function to get appropriate icons for categories
 function getCategoryIcon(category: NodeCategory) {
   switch (category) {
-    case "Default":
+    case "Code":
       return <Icons.FiBox size={14} />;
-    case "DeFi":
+    case "Database":
       return <Icons.FiDatabase size={14} />;
+    case "Blockchain":
+      return <Icons.FiShare2 size={14} />;
+    case "DeFi":
+      return <Icons.PiMoneyWavyLight size={18} />;
+    case "Provider":
+      return <Icons.FiCommand size={14} />;
     case "Misc":
-      return <Icons.FiGitMerge size={14} />;
+      return <Icons.FiMoreHorizontal size={14} />;
     default:
       return <Icons.FiBox size={14} />;
   }

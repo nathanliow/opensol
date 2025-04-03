@@ -2,9 +2,7 @@
 
 import Canvas from '@/components/canvas/Canvas';
 import { useUserAccountContext } from '@/app/providers/UserAccountContext';
-import { Icons } from '@/components/icons/icons';
-import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Typewriter from 'typewriter-effect';
 import BlockchainAnimation from '@/components/animations/BlockchainAnimation';
 
