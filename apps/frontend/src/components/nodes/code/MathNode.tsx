@@ -25,11 +25,11 @@ const MathNode = memo(({ id, data }: MathNodeProps) => {
   const nodes = useNodes();
   
   const nodeType = nodeTypesData['MATH'];
-  const backgroundColor = nodeType?.backgroundColor || 'bg-purple-200';
-  const borderColor = nodeType?.borderColor || 'border-purple-400';
-  const primaryColor = nodeType?.primaryColor || 'text-purple-700';
-  const secondaryColor = nodeType?.secondaryColor || 'text-purple-500';
-  const textColor = nodeType?.textColor || 'text-black';
+  const backgroundColor = nodeType?.backgroundColor;
+  const borderColor = nodeType?.borderColor;
+  const primaryColor = nodeType?.primaryColor;
+  const secondaryColor = nodeType?.secondaryColor;
+  const textColor = nodeType?.textColor;
 
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 

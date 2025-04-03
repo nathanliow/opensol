@@ -53,6 +53,16 @@ export const nodeTypesData: Record<string, NodeType> = {
   /* -------------------------- Code ---------------------------- */
   /* ------------------------------------------------------------ */
 
+  CONST: {
+    id: 'CONST',
+    label: 'CONST',
+    category: 'Code',
+    backgroundColor: 'bg-blue-400',
+    borderColor: 'border-blue-600',
+    primaryColor: 'blue-400',
+    secondaryColor: 'blue-600',
+    textColor: 'text-black'
+  },
   OBJECT: { 
     id: 'OBJECT', 
     label: 'OBJECT', 
@@ -63,14 +73,14 @@ export const nodeTypesData: Record<string, NodeType> = {
     secondaryColor: 'blue-600',
     textColor: 'text-black'
   },
-  CONST: {
-    id: 'CONST',
-    label: 'CONST',
+  MATH: {
+    id: 'MATH',
+    label: 'MATH',
     category: 'Code',
-    backgroundColor: 'bg-blue-400',
-    borderColor: 'border-blue-600',
-    primaryColor: 'blue-400',
-    secondaryColor: 'blue-600',
+    backgroundColor: 'bg-blue-200',
+    borderColor: 'border-blue-400',
+    primaryColor: 'blue-700',
+    secondaryColor: 'blue-400',
     textColor: 'text-black'
   },
   FUNCTION: {
@@ -93,27 +103,7 @@ export const nodeTypesData: Record<string, NodeType> = {
     secondaryColor: 'yellow-400',
     textColor: 'text-black'
   },
-  HELIUS: {
-    id: 'HELIUS',
-    label: 'HELIUS',
-    category: 'Provider',
-    backgroundColor: 'bg-[#E84125]',
-    borderColor: 'border-[#E84125]',
-    primaryColor: '[#E84125]',
-    secondaryColor: '[#E84125]',
-    textColor: 'text-black'
-  },
-  MATH: {
-    id: 'MATH',
-    label: 'MATH',
-    category: 'Code',
-    backgroundColor: 'bg-purple-200',
-    borderColor: 'border-purple-400',
-    primaryColor: 'purple-700',
-    secondaryColor: 'purple-400',
-    textColor: 'text-black'
-  },
-
+  
   /* -------------------------------------------------------------- */
   /* -------------------------- Database -------------------------- */
   /* -------------------------------------------------------------- */
@@ -126,10 +116,10 @@ export const nodeTypesData: Record<string, NodeType> = {
     id: 'GET', 
     label: 'GET', 
     category: 'Blockchain', 
-    backgroundColor: 'bg-blue-200',
-    borderColor: 'border-blue-400',
-    primaryColor: 'blue-200', 
-    secondaryColor: 'blue-400',
+    backgroundColor: 'bg-purple-200',
+    borderColor: 'border-purple-400',
+    primaryColor: 'purple-200', 
+    secondaryColor: 'purple-400',
     textColor: 'text-black'
   },
   MINT: {
@@ -150,6 +140,16 @@ export const nodeTypesData: Record<string, NodeType> = {
   /* -------------------------------------------------------------- */
   /* -------------------------- Provider -------------------------- */
   /* -------------------------------------------------------------- */
+  HELIUS: {
+    id: 'HELIUS',
+    label: 'HELIUS',
+    category: 'Provider',
+    backgroundColor: 'bg-[#E84125]',
+    borderColor: 'border-[#E84125]',
+    primaryColor: '[#E84125]',
+    secondaryColor: '[#E84125]',
+    textColor: 'text-black'
+  },
 
   /* -------------------------------------------------------------- */
   /* ---------------------------- Misc ---------------------------- */

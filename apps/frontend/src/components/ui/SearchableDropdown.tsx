@@ -80,7 +80,7 @@ export default function SearchableDropdown({
   };
 
   return (
-    <div ref={dropdownRef} className={`relative w-full ${className}`}>
+    <div ref={dropdownRef} className={`relative w-full`}>
       {/* Current selection display */}
       <div
         onClick={toggleDropdown}
