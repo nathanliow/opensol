@@ -43,43 +43,6 @@ export const getUserSolBalance: BlockTemplate = {
         throw new Error('Helius API key is required.');
       }
 
-      // Fetch assets owned by the user (using getAssetsByOwner)
-      const assetsResponse = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'text',
-          method: 'getAssetsByOwner',
-          params: {
-            ownerAddress: address,
-            page: 1,
-            limit: 50,
-            sortBy: {
-              sortBy: 'created',
-              sortDirection: 'asc'
-            },
-            options: {
-              showUnverifiedCollections: false,
-              showCollectionMetadata: false,
-              showGrandTotal: false,
-              showFungible: false,
-              showNativeBalance: false,
-              showInscription: false,
-              showZeroBalance: false
-            }
-          }
-        })
-      });
-
-      if (!assetsResponse.ok) {
-        const errorText = await assetsResponse.text();
-        throw new Error(`Helius API error (${assetsResponse.status}): ${errorText}`);
-      }
-      const assetsData = await assetsResponse.json();
-
       // Fetch the SOL balance for the account
       const balanceResponse = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
         method: 'POST',

@@ -174,7 +174,8 @@ export class FlowCompiler {
     switch (node.type) {
       case 'GET':
       case 'HELIUS':
-      case 'MATH': {
+      case 'MATH':
+      case 'MINT': {
         const templateName = node.data.selectedFunction || '';
         const functionName = this.generateGetFunctionName(templateName);
         // Generate function body if needed (for inlining)
@@ -188,8 +189,8 @@ export class FlowCompiler {
           }
         });
 
-        // For GET/HELIUS nodes, ensure the apiKey parameter is set.
-        if (node.type === 'GET' || node.type === 'HELIUS') {
+        // For GET/HELIUS/MINT nodes, ensure the apiKey parameter is set.
+        if (node.type === 'GET' || node.type === 'HELIUS' || node.type === 'MINT') {
           parameters['apiKey'] = "HELIUS_API_KEY";
         }
 
