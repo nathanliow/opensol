@@ -12,8 +12,6 @@ interface SearchableDropdownProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  className?: string;
-  textColor?: string;
 }
 
 export default function SearchableDropdown({
@@ -22,7 +20,6 @@ export default function SearchableDropdown({
   onChange,
   disabled = false,
   placeholder = 'Select an option',
-  className = '',
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

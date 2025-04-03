@@ -109,10 +109,7 @@ export default function TemplateNode({
             value={inputValues[input.id] || ''}
             onChange={(value) => handleInputChange(input.id, value)}
             disabled={isConnected}
-            backgroundColor={isConnected ? 'bg-gray-100' : 'bg-white'}
             placeholder={input.placeholder || 'Select an option'}
-            textColor="text-black"
-            maxHeight="200px"
           />
         );
       case 'textarea':

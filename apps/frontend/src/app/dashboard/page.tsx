@@ -366,6 +366,14 @@ export default function DashboardPage() {
       });
 
       // Update UI with optimistic star count
+      setProjects(prev =>
+        prev.map(p =>
+          p.id === projectId
+            ? { ...p, stars: Math.max(0, (p.stars || 0) + (isCurrentlyStarred ? -1 : 1)) }
+            : p
+        )
+      );
+
       setPublicProjects(prev =>
         prev.map(p =>
           p.id === projectId
@@ -387,6 +395,14 @@ export default function DashboardPage() {
         console.log('Star toggled successfully:', { stars, hasStarred });
         
         // Update with actual values from server
+        setProjects(prev =>
+          prev.map(p =>
+            p.id === projectId
+              ? { ...p, stars }
+              : p
+          )
+        );
+
         setPublicProjects(prev =>
           prev.map(p =>
             p.id === projectId
@@ -418,6 +434,14 @@ export default function DashboardPage() {
         });
         
         // Revert optimistic star count update
+        setProjects(prev =>
+          prev.map(p =>
+            p.id === projectId
+              ? { ...p, stars: (p.stars || 0) + (isCurrentlyStarred ? 1 : -1) }
+              : p
+          )
+        );
+
         setPublicProjects(prev =>
           prev.map(p =>
             p.id === projectId
