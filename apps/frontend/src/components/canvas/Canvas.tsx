@@ -26,10 +26,10 @@ import {
   createNodeTypes, 
   nodeTypesData 
 } from "../../types/NodeTypes";
-import Toolbar from "./Toolbar";
-import NodeSidebar from "./NodeSidebar";
-import Console from "../console/Console";
-import Menu from "./Menu";
+import { Toolbar } from "./Toolbar";
+import { NodeSidebar } from "./NodeSidebar";
+import { Console } from "../console/Console";
+import { Menu } from "./Menu";
 import { 
   saveCanvasChanges, 
   getProject 

@@ -1,9 +1,9 @@
 import { memo, useCallback, useState, useEffect, useRef } from 'react';
 import { useNodes, useEdges, Panel } from '@xyflow/react';
-import CodeDisplay from '../code/CodeDisplay';
-import RunButton from '../canvas/RunButton';
+import { CodeDisplay } from '../code/CodeDisplay';
+import { RunButton } from '../canvas/RunButton';
 import { Icons } from '../icons/icons';
-import LLMInput from '../llm/LLMInput';
+import { LLMInput } from '../llm/LLMInput';
 import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
 import { enhanceCode } from '../../services/codeEnhanceService';
@@ -38,7 +38,7 @@ interface Message {
   error?: boolean;
 }
 
-const Console = memo(({ 
+export const Console = memo(({ 
   className = '', 
   output = '', 
   code = '', 
@@ -441,5 +441,3 @@ const Console = memo(({
 });
 
 Console.displayName = 'Console';
-
-export default Console;

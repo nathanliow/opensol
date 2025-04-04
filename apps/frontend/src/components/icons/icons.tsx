@@ -36,6 +36,7 @@ import {
   FiShare2,
   FiCommand,
   FiMoreHorizontal,
+  FiKey,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -142,5 +143,6 @@ export const Icons = {
   FiMoreHorizontal,
   MdCheck,
   MdContentCopy,
-  PiMoneyWavyLight
+  PiMoneyWavyLight,
+  FiKey
 };

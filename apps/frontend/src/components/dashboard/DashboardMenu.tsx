@@ -1,23 +1,20 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useConfig } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
 import { signOut } from "@/lib/auth";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
+import { ApiKeyModal } from "../modal/ApiKeyModal";
 
 interface DashboardMenuProps {
   onNewProject: () => void;
 }
 
-const DashboardMenu = ({ onNewProject }: DashboardMenuProps) => {
+export const DashboardMenu = ({ onNewProject }: DashboardMenuProps) => {
   const { login, logout } = usePrivy();
   const { userAddress, supabaseUser } = useUserAccountContext();
-  const { network, setNetwork, apiKeys, setApiKey } = useConfig();
-  const [heliusApiKey, setHeliusApiKey] = useState(apiKeys['helius'] || '');
-  const [openaiApiKey, setOpenaiApiKey] = useState(apiKeys['openai'] || '');
-  const [birdeyeApiKey, setBirdeyeApiKey] = useState(apiKeys['birdeye'] || '');
   const [isOpen, setIsOpen] = useState(false);
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -54,8 +51,9 @@ const DashboardMenu = ({ onNewProject }: DashboardMenuProps) => {
     }
   };
 
-  const handleApiKeySave = (provider: string, key: string) => {
-    setApiKey(provider, key);
+  const openApiKeyModal = () => {
+    setIsApiKeyModalOpen(true);
+    setIsOpen(false);
   };
 
   return (
@@ -77,88 +75,33 @@ const DashboardMenu = ({ onNewProject }: DashboardMenuProps) => {
             </div>
           )}
 
-          {/* API Keys */}
-          <div className="mt-2 pt-2">
-            <div className="text-xs text-gray-400 px-3 pb-1">API Keys</div>
-            <div className="px-3 pb-2">
-              <div className="mb-1.5 mt-1">
-                <label className="block text-xs text-gray-400 mb-1 flex items-center" htmlFor="helius">
-                  Helius API Key
-                  <a href="https://dev.helius.xyz/dashboard/app" target="_blank" rel="noopener noreferrer" className="inline-flex ml-1">
-                    <Icons.FiInfo size={12} />
-                  </a>
-                </label>
-                <input 
-                  id="helius"
-                  type="password" 
-                  className="w-full text-xs px-2 py-1 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-                  value={heliusApiKey}
-                  onChange={(e) => {
-                    setHeliusApiKey(e.target.value);
-                    handleApiKeySave('helius', heliusApiKey);
-                  }}
-                  onBlur={() => handleApiKeySave('helius', heliusApiKey)}
-                  placeholder="Your Helius API key"
-                />
-              </div>
-              <div className="mb-1.5">
-                <label className="block text-xs text-gray-400 mb-1 flex items-center" htmlFor="openai">
-                  OpenAI API Key
-                  <a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noopener noreferrer" className="inline-flex ml-1">
-                    <Icons.FiInfo size={12} />
-                  </a>
-                </label>
-                <input 
-                  id="openai"
-                  type="password" 
-                  className="w-full text-xs px-2 py-1 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-                  value={openaiApiKey}
-                  onChange={(e) => {
-                    setOpenaiApiKey(e.target.value);
-                    handleApiKeySave('openai', openaiApiKey);
-                  }}
-                  onBlur={() => handleApiKeySave('openai', openaiApiKey)}
-                  placeholder="Your OpenAI API key"
-                />
-              </div>
-              <div className="mb-1.5">
-                <label className="block text-xs text-gray-400 mb-1 flex items-center" htmlFor="birdeye">
-                  Birdeye API Key
-                  <a href="https://docs.birdeye.so/reference/overview" target="_blank" rel="noopener noreferrer" className="inline-flex ml-1">
-                    <Icons.FiInfo size={12} />
-                  </a>
-                </label>
-                <input 
-                  id="birdeye"
-                  type="password" 
-                  className="w-full text-xs px-2 py-1 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-                  value={birdeyeApiKey}
-                  onChange={(e) => {
-                    setBirdeyeApiKey(e.target.value); 
-                    handleApiKeySave('birdeye', birdeyeApiKey);
-                  }}
-                  onBlur={() => handleApiKeySave('birdeye', birdeyeApiKey)}
-                  placeholder="Your Birdeye API key"
-                />
-              </div>
-            </div>
+          {/* API Keys Button */}
+          <div className="py-1">
+            <button
+              onClick={openApiKeyModal}
+              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+            >
+              <Icons.FiKey size={16} />
+              Manage API Keys
+            </button>
           </div>
 
-          <div className="">
-            <div className="border-t border-[#333333] my-1 pt-1">
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
-              >
-                <Icons.FiLogOut size={16} />
-                Disconnect Wallet
-              </button>
-            </div>
+          <div className="border-t border-[#333333] py-1">
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+            >
+              <Icons.FiLogOut size={16} />
+              Disconnect Wallet
+            </button>
           </div>
         </div>
       )}
+      
+      <ApiKeyModal 
+        isOpen={isApiKeyModalOpen}
+        onClose={() => setIsApiKeyModalOpen(false)}
+      />
     </div>
   );
 };
-
-export default DashboardMenu; 

@@ -11,13 +11,13 @@ interface NodeSidebarProps {
   onDragEnd?: () => void;
 }
 
-export default function NodeSidebar({
+export const NodeSidebar = ({
   nodeTypesData,
   addNewNode,
   isReadOnly = false,
   onDragStart,
   onDragEnd,
-}: NodeSidebarProps) {
+}: NodeSidebarProps) => {
   const [activeTab, setActiveTab] = useState<NodeCategory>("Code");
   const [isOpen, setIsOpen] = useState(true);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
