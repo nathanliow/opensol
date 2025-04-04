@@ -1,7 +1,7 @@
 import { useCallback, useState, ChangeEvent } from 'react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesData } from '../../../types/NodeTypes';
+import { nodeTypesMetadata } from '../../../types/NodeTypes';
 
 interface MintNodeProps {
   id: string;
@@ -17,14 +17,7 @@ interface MintNodeProps {
   setNodeData: (id: string, data: any) => void;
 }
 
-export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
-  const nodeType = nodeTypesData['MINT'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
-  
+export default function MintNode({ id, data, setNodeData }: MintNodeProps) {  
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   
@@ -153,13 +146,7 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
   
   return (
     <TemplateNode
-      id={id}
-      title="MINT"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      textColor={textColor}
+      metadata={nodeTypesMetadata['MINT']}
       inputs={inputs}
       data={data}
       onInputChange={handleInputChange}

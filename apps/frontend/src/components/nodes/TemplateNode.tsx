@@ -4,6 +4,7 @@ import { Position } from '@xyflow/system';
 import { InputDefinition } from '../../types/InputTypes';
 import { CustomHandle, HandlePosition } from '@/types/HandleTypes';
 import SearchableDropdown from '../ui/SearchableDropdown';
+import { NodeTypeMetadata } from '@/types/NodeTypes';
 
 export interface NodeOutput {
   type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
@@ -11,35 +12,31 @@ export interface NodeOutput {
 }
 
 export interface TemplateNodeProps {
-  id: string;
-  title: string;
-  backgroundColor: string;
-  borderColor: string;
-  primaryColor: string;
-  secondaryColor: string;
-  textColor: string;
+  metadata: NodeTypeMetadata;
   inputs: InputDefinition[];
-  data: Record<string, any>;
-  onInputChange?: (inputId: string, value: any) => void;
-  hideInputHandles?: boolean;
-  customHandles?: CustomHandle[];
   output?: NodeOutput;
+  data: Record<string, any>;
+
+  onInputChange?: (inputId: string, value: any) => void;
+  hideTopHandle?: boolean;
+  hideBottomHandle?: boolean;
+  hideInputHandles?: boolean;
+  hideOutputHandle?: boolean;
+  customHandles?: CustomHandle[];
 }
 
 export default function TemplateNode({
-  id,
-  title,
-  backgroundColor,
-  borderColor,
-  primaryColor,
-  secondaryColor,
-  textColor,
+  metadata,
   inputs,
+  output,
   data,
+
   onInputChange,
   hideInputHandles = false,
+  hideTopHandle = false,
+  hideBottomHandle = false,
+  hideOutputHandle = false,
   customHandles = [],
-  output
 }: TemplateNodeProps) {
   const initialValues = useMemo(() => {
     const values: Record<string, any> = {};
@@ -73,8 +70,8 @@ export default function TemplateNode({
   
   // Update node internals when inputs change to reposition handles
   useEffect(() => {
-    updateNodeInternals(id);
-  }, [id, updateNodeInternals, inputs.length]);
+    updateNodeInternals(metadata.id);
+  }, [metadata.id, updateNodeInternals, inputs.length]);
   
   const handleInputChange = (inputId: string, value: any) => {
     setInputValues(prev => ({ ...prev, [inputId]: value }));
@@ -90,6 +87,26 @@ export default function TemplateNode({
       case 'top': return Position.Top;
       case 'bottom': return Position.Bottom;
       default: return Position.Left;
+    }
+  };
+
+  const positionToReactFlowWidth = (position: HandlePosition): number => {
+    switch (position) {
+      case 'left': return 15;
+      case 'right': return 15;
+      case 'top': return 40;
+      case 'bottom': return 40;
+      default: return 15;
+    }
+  };
+
+  const positionToReactFlowHeight = (position: HandlePosition): number => {
+    switch (position) {
+      case 'left': return 20;
+      case 'right': return 20;
+      case 'top': return 15;
+      case 'bottom': return 15;
+      default: return 15;
     }
   };
   
@@ -124,7 +141,7 @@ export default function TemplateNode({
               placeholder={input.placeholder}
             />
             {isConnected && (
-              <div className={`absolute inset-0 flex items-center justify-center text-xs ${textColor} bg-opacity-75 ${backgroundColor}`}>
+              <div className={`absolute inset-0 flex items-center justify-center text-xs ${metadata.textColor} bg-opacity-75 ${metadata.backgroundColor}`}>
                 {String(displayValue)}
               </div>
             )}
@@ -156,20 +173,63 @@ export default function TemplateNode({
 
   return (
     <div 
-      className={`${backgroundColor} p-1 rounded-md border ${borderColor}`}
+      className={`${metadata.backgroundColor} p-1 rounded-md border ${metadata.borderColor}`}
       style={{ 
         boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1)'
       }}
     >
-      <div className={`text-center font-bold ${textColor} mb-2 border-b ${borderColor} pb-1`}>
-        {title}
+      <div className={`text-center font-bold ${metadata.textColor} mb-2 border-b ${metadata.borderColor} pb-1`}>
+        {metadata.label}
       </div>
+
+      {/* Flow handles (top and bottom) */}
+      {!hideTopHandle && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          style={{ 
+            top: -3,
+            background: `#343434`,
+            borderColor: `#343434`,
+            backgroundColor: `#343434`,
+            width: positionToReactFlowWidth('top'),
+            height: positionToReactFlowHeight('top'),
+            borderRadius: 5,
+            zIndex: -1
+          }}
+          id="flow-top"
+          isValidConnection={(connection) => {  
+            return connection.targetHandle === 'flow-bottom';
+          }}
+        />
+      )}
+
+      {!hideBottomHandle && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          style={{ 
+            bottom: -3,
+            background: `#343434`,
+            borderColor: `#343434`,
+            backgroundColor: `#343434`,
+            width: positionToReactFlowWidth('bottom'),
+            height: positionToReactFlowHeight('bottom'),
+            borderRadius: 5,
+            zIndex: -1
+          }}
+          id="flow-bottom"
+          isValidConnection={(connection) => {  
+            return connection.targetHandle === 'flow-top';
+          }}
+        />
+      )}
       
       {/* Inputs and handles */}
       <div className="text-xs text-gray-700">
         {inputs.map((input) => (
           <div key={input.id} className="flex items-center mb-2 relative">
-            <div className="ml-1 font-medium w-[90px]">{input.label}:</div>
+            <div className={`ml-1 font-medium ${metadata.textColor} w-[90px]`}>{input.label}:</div>
             <div className="w-full mr-1 max-w-[150px]">
               {renderInput(input)}
             </div>
@@ -179,23 +239,21 @@ export default function TemplateNode({
                 type="target"
                 position={Position.Left}
                 style={{ 
-                  left: -8, 
-                  top: '50%',
-                  background: `var(--color-white)`,
-                  borderColor: `var(--color-black)`,
-                  backgroundColor: `var(--color-white)`
+                  left: -5, 
+                  background: `#343434`,
+                  borderColor: `#343434`,
+                  backgroundColor: `#343434`,
+                  width: positionToReactFlowWidth('left'),
+                  height: positionToReactFlowHeight('left'),
+                  borderRadius: 5,
+                  zIndex: -1
                 }}
-                className={`w-3 h-3 ml-1 border-2 transition-colors ${
-                  input.getConnectedValue && input.getConnectedValue() !== null 
-                    ? 'border-pink-500 bg-pink-700' 
-                    : `border-${borderColor} bg-${primaryColor}`
-                }`}
               />
             )}
           </div>
         ))}
       </div>
-      
+
       {/* Custom handles */}
       {customHandles?.map((handle) => (
         <Handle
@@ -204,31 +262,32 @@ export default function TemplateNode({
           position={positionToReactFlowPosition(handle.position)}
           style={{ 
             [handle.position === Position.Left ? 'left' : 'right']: -8,
-            background: `var(--color-white)`,
-            borderColor: `var(--color-black)`,
-            backgroundColor: `var(--color-white)`
+            background: `#343434`,
+            borderColor: `#343434`,
+            backgroundColor: `#343434`,
+            width: positionToReactFlowWidth(handle.position),
+            height: positionToReactFlowHeight(handle.position),
+            borderRadius: 5,
+            zIndex: -1
           }}
           id={handle.id}
-          isValidConnection={(connection) => {
-            // Only allow flow connections (bottom to top)
-            if (handle.position === Position.Bottom) {
-              return connection.targetHandle === 'flow';
-            }
-            return true;
-          }}
         />
       ))}
       
       {/* Output handle - only show if output type exists */}
-      {output?.type && (
+      {!hideOutputHandle && output?.type && (
         <Handle
           type="source"
           position={Position.Right}
           style={{ 
-            right: 0, 
-            background: `var(--color-white)`,
-            borderColor: `var(--color-black)`,
-            backgroundColor: `var(--color-white)`
+            right: -1, 
+            background: `#343434`,
+            borderColor: `#343434`,
+            backgroundColor: `#343434`,
+            width: positionToReactFlowWidth('right'),
+            height: positionToReactFlowHeight('right'),
+            borderRadius: 5,
+            zIndex: -1
           }}
           id="output"
           isValidConnection={(connection) => {

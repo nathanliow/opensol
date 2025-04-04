@@ -2,8 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesData } from '../../../types/NodeTypes';
-import { CustomHandle } from '../../../types/HandleTypes';
+import { nodeTypesMetadata } from '../../../types/NodeTypes';
 
 interface LabelNodeProps {
   id: string;
@@ -14,12 +13,6 @@ interface LabelNodeProps {
 
 export default function FunctionNode({ id, data }: LabelNodeProps) {
   const { setNodes } = useReactFlow();
-  const nodeType = nodeTypesData['FUNCTION'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
 
   const handleNameChange = useCallback((value: string) => {
     setNodes((nodes) =>
@@ -48,27 +41,9 @@ export default function FunctionNode({ id, data }: LabelNodeProps) {
     }
   ], [data.name]);
 
-  // Define custom handle (output at bottom)
-  const customHandles: CustomHandle[] = useMemo(() => [
-    {
-      type: 'source',
-      position: 'bottom',
-      id: 'output',
-      isValidConnection: (connection: { targetHandle: string; }) => {
-        return connection.targetHandle === 'top-target';
-      }
-    }
-  ], []);
-
   return (
     <TemplateNode
-      id={id}
-      title="FUNCTION"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      textColor={textColor}
+      metadata={nodeTypesMetadata['FUNCTION']}
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {
@@ -76,8 +51,8 @@ export default function FunctionNode({ id, data }: LabelNodeProps) {
           handleNameChange(value);
         }
       }}
+      hideTopHandle={true}
       hideInputHandles={true}
-      customHandles={customHandles}
     />
   );
 }

@@ -7,10 +7,11 @@ import FunctionNode from "../components/nodes/code/FunctionNode";
 import PrintNode from "../components/nodes/code/PrintNode";
 import HeliusNode from "../components/nodes/provider/HeliusNode";
 import MathNode from "../components/nodes/code/MathNode";
+import ConditionalNode from "../components/nodes/code/ConditionalNode";
 
 export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
 
-export interface NodeType {
+export interface NodeTypeMetadata {
   id: string;
   label: string;
   category: NodeCategory;
@@ -30,6 +31,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   FUNCTION: FunctionNode,
   PRINT: PrintNode,
   MATH: MathNode,
+  CONDITIONAL: ConditionalNode,
 
   // Database
 
@@ -47,7 +49,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
 } satisfies NodeTypes);
 
 // Data for node types (NEEDS TO MATCH THE NODE TYPES IN THE CANVAS)
-export const nodeTypesData: Record<string, NodeType> = {
+export const nodeTypesMetadata: Record<string, NodeTypeMetadata> = {
 
   /* ------------------------------------------------------------ */
   /* -------------------------- Code ---------------------------- */
@@ -57,20 +59,30 @@ export const nodeTypesData: Record<string, NodeType> = {
     id: 'CONST',
     label: 'CONST',
     category: 'Code',
-    backgroundColor: 'bg-blue-400',
-    borderColor: 'border-blue-600',
-    primaryColor: 'blue-400',
-    secondaryColor: 'blue-600',
+    backgroundColor: 'bg-blue-500',
+    borderColor: 'border-blue-700',
+    primaryColor: 'blue-500',
+    secondaryColor: 'blue-700',
     textColor: 'text-black'
   },
   OBJECT: { 
     id: 'OBJECT', 
     label: 'OBJECT', 
     category: 'Code', 
-    backgroundColor: 'bg-blue-300',
-    borderColor: 'border-blue-500',
+    backgroundColor: 'bg-blue-400',
+    borderColor: 'border-blue-600',
     primaryColor: 'blue-400', 
     secondaryColor: 'blue-600',
+    textColor: 'text-black'
+  },
+  CONDITIONAL: {
+    id: 'CONDITIONAL',
+    label: 'CONDITIONAL',
+    category: 'Code',
+    backgroundColor: 'bg-blue-300',
+    borderColor: 'border-blue-500',
+    primaryColor: 'blue-200',
+    secondaryColor: 'blue-400',
     textColor: 'text-black'
   },
   MATH: {
@@ -79,7 +91,7 @@ export const nodeTypesData: Record<string, NodeType> = {
     category: 'Code',
     backgroundColor: 'bg-blue-200',
     borderColor: 'border-blue-400',
-    primaryColor: 'blue-700',
+    primaryColor: 'blue-200',
     secondaryColor: 'blue-400',
     textColor: 'text-black'
   },

@@ -2,7 +2,7 @@ import { memo, useCallback, useState, useMemo } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, InputType } from '../../../types/InputTypes';
-import { nodeTypesData } from '../../../types/NodeTypes';
+import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
 import { CustomHandle } from '../../../types/HandleTypes';
 import { useConfig } from '../../../contexts/ConfigContext';
@@ -26,13 +26,6 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
   const nodes = useNodes();
   const { network } = useConfig();
   
-  const nodeType = nodeTypesData['GET'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
-
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
       e.target === id && 
@@ -121,21 +114,9 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
     return undefined;
   }, [selectedFunction, blockTemplates]);
 
-  // Define custom handles
-  const customHandles: CustomHandle[] = useMemo(() => ([
-    { type: 'target', position: 'top', id: 'flow' },
-    { type: 'source', position: 'bottom', id: 'bottom-source' }
-  ]), []);
-
   return (
     <TemplateNode
-      id={id}
-      title="GET"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      textColor={textColor}
+      metadata={nodeTypesMetadata['GET']}
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {
@@ -145,7 +126,6 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
           handleParameterChange(inputId, value);
         }
       }}
-      customHandles={customHandles}
       output={output}
     />
   );

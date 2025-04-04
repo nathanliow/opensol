@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Panel } from "@xyflow/react";
-import { NodeCategory, NodeType } from "../../types/NodeTypes";
+import { NodeCategory, NodeTypeMetadata } from "../../types/NodeTypes";
 import { Icons } from "../icons/icons";
 
 interface NodeSidebarProps {
-  nodeTypesData: Record<string, NodeType>;
+  nodeTypesMetadata: Record<string, NodeTypeMetadata>;
   addNewNode: (type: any, position?: { x: number; y: number }) => void;
   isReadOnly?: boolean;
   onDragStart?: () => void;
@@ -12,7 +12,7 @@ interface NodeSidebarProps {
 }
 
 export const NodeSidebar = ({
-  nodeTypesData,
+  nodeTypesMetadata,
   addNewNode,
   isReadOnly = false,
   onDragStart,
@@ -31,11 +31,11 @@ export const NodeSidebar = ({
   
   // Group nodes by category
   const nodesByCategory = categories.reduce((acc, category) => {
-    acc[category] = Object.values(nodeTypesData).filter(
+    acc[category] = Object.values(nodeTypesMetadata).filter(
       (type) => type.category === category
     );
     return acc;
-  }, {} as Record<NodeCategory, NodeType[]>);
+  }, {} as Record<NodeCategory, NodeTypeMetadata[]>);
 
   // Set category refs
   const setCategoryRef = (element: HTMLDivElement | null, category: string) => {

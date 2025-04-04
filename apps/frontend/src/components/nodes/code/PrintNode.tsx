@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesData } from '../../../types/NodeTypes';
+import { nodeTypesMetadata } from '../../../types/NodeTypes';
 
 interface PrintNodeData {
   label: string;
@@ -17,12 +17,6 @@ interface PrintNodeProps {
 
 const PrintNode = memo(({ id, data }: PrintNodeProps) => {
   const { setNodes } = useReactFlow();
-  const nodeType = nodeTypesData['PRINT'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
 
   const handleTemplateChange = useCallback((value: string) => {
     setNodes((nodes) =>
@@ -55,13 +49,7 @@ const PrintNode = memo(({ id, data }: PrintNodeProps) => {
 
   return (
     <TemplateNode
-      id={id}
-      title="PRINT"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      textColor={textColor}
+      metadata={nodeTypesMetadata['PRINT']}
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {

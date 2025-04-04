@@ -2,9 +2,8 @@ import { memo, useCallback, useState, useMemo } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesData } from '../../../types/NodeTypes';
+import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
-import { CustomHandle } from '../../../types/HandleTypes';
 import { useConfig } from '../../../contexts/ConfigContext';
 
 interface HeliusNodeData {
@@ -25,13 +24,6 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
   const edges = useEdges();
   const nodes = useNodes();
   const { network, getApiKey } = useConfig();
-  
-  const nodeType = nodeTypesData['HELIUS'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
 
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
@@ -123,21 +115,9 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
     return undefined;
   }, [selectedFunction, blockTemplates]);
 
-  // Define custom handles
-  const customHandles: CustomHandle[] = useMemo(() => ([
-    { type: 'target', position: 'top', id: 'flow' },
-    { type: 'source', position: 'bottom', id: 'bottom-source' }
-  ]), []);
-
   return (
     <TemplateNode
-      id={id}
-      title="HELIUS"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      textColor={textColor}
+      metadata={nodeTypesMetadata['HELIUS']}
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {
@@ -147,7 +127,6 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
           handleParameterChange(inputId, value);
         }
       }}
-      customHandles={customHandles}
       output={output}
     />
   );

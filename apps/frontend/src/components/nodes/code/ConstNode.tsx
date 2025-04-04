@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesData } from '../../../types/NodeTypes';
+import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import { CustomHandle } from '../../../types/HandleTypes';
 
 // Available data types for constants
@@ -23,12 +23,6 @@ interface ConstNodeProps {
 
 export default function ConstNode({ id, data }: ConstNodeProps) {
   const { setNodes } = useReactFlow();
-  const nodeType = nodeTypesData['CONST'];
-  const backgroundColor = nodeType?.backgroundColor;
-  const borderColor = nodeType?.borderColor;
-  const primaryColor = nodeType?.primaryColor;
-  const secondaryColor = nodeType?.secondaryColor;
-  const textColor = nodeType?.textColor;
   
   // Default values
   const dataType = data.dataType || 'string';
@@ -41,16 +35,21 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
   }), [dataType]);
   
   // Define custom handle (output at bottom)
-  const customHandles: CustomHandle[] = useMemo(() => [
-    {
-      type: 'source',
-      position: 'bottom',
-      id: 'value',
-      isValidConnection: (connection: { targetHandle: string; }) => {
-        return connection.targetHandle?.startsWith('param-');
-      }
-    }
-  ], []);
+  // const customHandles: CustomHandle[] = useMemo(() => [
+  //   {
+  //     type: 'source',
+  //     position: 'bottom',
+  //     style: {
+  //       background: `var(--color-red)`,
+  //       borderColor: `var(--color-black)`,
+  //       backgroundColor: `var(--color-red)`
+  //     },
+  //     id: 'value',
+  //     isValidConnection: (connection: { targetHandle: string; }) => {
+  //       return connection.targetHandle?.startsWith('param-');
+  //     }
+  //   }
+  // ], []);
 
   // Determine input type based on selected data type
   const getInputType = useMemo(() => {
@@ -123,17 +122,11 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
 
   return (
     <TemplateNode
-      id={id}
-      title="CONST"
-      backgroundColor={backgroundColor}
-      borderColor={borderColor}
-      primaryColor={primaryColor}
-      secondaryColor={secondaryColor}
-      textColor={textColor}
+      metadata={nodeTypesMetadata['CONST']}
       inputs={inputs}
       data={data}
       onInputChange={handleInputChange}
-      customHandles={customHandles}
+      // customHandles={customHandles}
       output={output}
     />
   );
