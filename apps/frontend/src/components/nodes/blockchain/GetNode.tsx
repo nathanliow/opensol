@@ -18,7 +18,7 @@ interface GetNodeProps {
   data: GetNodeData;
 }
 
-const GetNode = memo(({ id, data }: GetNodeProps) => {
+export default function GetNode({ id, data }: GetNodeProps) {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
   const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
   const blockTemplates = blockTemplateService.getTemplatesByType('GET');
@@ -129,8 +129,4 @@ const GetNode = memo(({ id, data }: GetNodeProps) => {
       output={output}
     />
   );
-});
-
-GetNode.displayName = 'GetNode';
-
-export default GetNode;
+};

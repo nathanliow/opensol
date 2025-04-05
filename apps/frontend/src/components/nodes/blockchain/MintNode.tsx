@@ -1,4 +1,4 @@
-import { useCallback, useState, ChangeEvent } from 'react';
+import { useCallback, useState, ChangeEvent, memo } from 'react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
@@ -17,7 +17,7 @@ interface MintNodeProps {
   setNodeData: (id: string, data: any) => void;
 }
 
-export default function MintNode({ id, data, setNodeData }: MintNodeProps) {  
+export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   
@@ -156,4 +156,4 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
       }}
     />
   );
-}
+};

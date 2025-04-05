@@ -17,7 +17,7 @@ interface HeliusNodeProps {
   data: HeliusNodeData;
 }
 
-const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
+export default function HeliusNode({ id, data }: HeliusNodeProps) {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
   const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
   const blockTemplates = blockTemplateService.getTemplatesByType('HELIUS');
@@ -130,8 +130,4 @@ const HeliusNode = memo(({ id, data }: HeliusNodeProps) => {
       output={output}
     />
   );
-});
-
-HeliusNode.displayName = 'HeliusNode';
-
-export default HeliusNode;
+};

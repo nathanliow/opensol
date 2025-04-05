@@ -15,7 +15,7 @@ interface PrintNodeProps {
   data: PrintNodeData;
 }
 
-const PrintNode = memo(({ id, data }: PrintNodeProps) => {
+export default function PrintNode({ id, data }: PrintNodeProps) {
   const { setNodes } = useReactFlow();
 
   const handleTemplateChange = useCallback((value: string) => {
@@ -59,8 +59,4 @@ const PrintNode = memo(({ id, data }: PrintNodeProps) => {
       }}
     />
   );
-});
-
-PrintNode.displayName = 'PrintNode';
-
-export default PrintNode;
+};

@@ -89,7 +89,7 @@
       "source": "function-1742861522787",
       "sourceHandle": "output",
       "target": "helius-1742861555250",
-      "targetHandle": "flow",
+      "targetHandle": "flow-top",
       "type": "smoothstep",
       "animated": true,
       "style": {

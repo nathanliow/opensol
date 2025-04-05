@@ -260,14 +260,14 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "source": "helius-1742539536871",
                 "sourceHandle": "output",
                 "target": "print-1742539553798",
-                "targetHandle": "flow",
+                "targetHandle": "flow-top",
                 "id": "xy-edge__helius-1742539536871output-print-1742539553798flow"
               },
               {
                 "source": "function-1742539096506",
                 "sourceHandle": "output",
                 "target": "get-1742539131042",
-                "targetHandle": "flow",
+                "targetHandle": "flow-top",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
@@ -332,7 +332,7 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "source": "get-1742539131042",
                 "sourceHandle": "flow-bottom",
                 "target": "helius-1742539536871",
-                "targetHandle": "flow",
+                "targetHandle": "flow-top",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {

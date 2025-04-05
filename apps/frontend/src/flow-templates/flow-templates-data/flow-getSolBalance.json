@@ -95,7 +95,7 @@
       "target": "get-1742785990720",
       "animated": true,
       "sourceHandle": "output",
-      "targetHandle": "flow"
+      "targetHandle": "flow-top"
     },
     {
       "source": "const-1742786439908",

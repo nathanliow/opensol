@@ -16,7 +16,7 @@ interface MathNodeProps {
   data: MathNodeData;
 }
 
-const MathNode = memo(({ id, data }: MathNodeProps) => {
+export default function MathNode({ id, data }: MathNodeProps) {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
   const [parameters, setParameters] = useState<Record<string, string | number>>(data.parameters || {});
   const blockTemplates = blockTemplateService.getTemplatesByType('MATH');
@@ -158,8 +158,4 @@ const MathNode = memo(({ id, data }: MathNodeProps) => {
       output={output}
     />
   );
-});
-
-MathNode.displayName = 'MathNode';
-
-export default MathNode;
+};
