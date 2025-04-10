@@ -260,14 +260,14 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "source": "helius-1742539536871",
                 "sourceHandle": "output",
                 "target": "print-1742539553798",
-                "targetHandle": "flow",
+                "targetHandle": "flow-top",
                 "id": "xy-edge__helius-1742539536871output-print-1742539553798flow"
               },
               {
                 "source": "function-1742539096506",
                 "sourceHandle": "output",
                 "target": "get-1742539131042",
-                "targetHandle": "flow",
+                "targetHandle": "flow-top",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
@@ -330,16 +330,16 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
               },
               {
                 "source": "get-1742539131042",
-                "sourceHandle": "bottom-source",
+                "sourceHandle": "flow-bottom",
                 "target": "helius-1742539536871",
-                "targetHandle": "flow",
+                "targetHandle": "flow-top",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
                   "strokeWidth": 2,
                   "stroke": "white"
                 },
-                "id": "xy-edge__get-1742539131042bottom-source-helius-1742539536871flow"
+                "id": "xy-edge__get-1742539131042flow-bottom-helius-1742539536871flow"
               }
             ],
             "viewport": {

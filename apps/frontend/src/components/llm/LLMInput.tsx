@@ -6,7 +6,7 @@ interface LLMInputProps {
   disabled?: boolean;
 }
 
-const LLMInput = ({ onSubmit, disabled }: LLMInputProps) => {
+export const LLMInput = ({ onSubmit, disabled }: LLMInputProps) => {
   const [prompt, setPrompt] = useState('');
   const { apiKeys } = useConfig();
   const hasOpenAIKey = Boolean(apiKeys['openai']);
@@ -39,5 +39,3 @@ const LLMInput = ({ onSubmit, disabled }: LLMInputProps) => {
     </div>
   );
 };
-
-export default LLMInput;

@@ -1,56 +1,57 @@
-import { getUserSolBalance } from './default/get/getUserSolBalance';
-import { usdToSol } from './misc/math/usdToSol';
-import { solToUsd } from './misc/math/solToUsd';
+import { getUserSolBalance } from './blockchain/get/getUserSolBalance';
+import { usdToSol } from './code/math/usdToSol';
+import { solToUsd } from './code/math/solToUsd';
 import { BlockTemplate } from '../../../frontend/src/components/services/blockTemplateService';
-import { getAccountInfo } from './default/helius/getAccountInfo';
-import { getAsset } from './default/helius/getAsset';
-import { getAssetProof } from './default/helius/getAssetProof';
-import { getAssetsByAuthority } from './default/helius/getAssetsByAuthority';
-import { getAssetsByCreator } from './default/helius/getAssetsByCreator';
-import { getAssetsByGroup } from './default/helius/getAssetsByGroup';
-import { getAssetsByOwner } from './default/helius/getAssetsByOwner';
-import { getBalance } from './default/helius/getBalance';
-import { getBlockCommitment } from './default/helius/getBlockCommitment';
-import { getBlockHeight } from './default/helius/getBlockHeight';
-import { getBlockProduction } from './default/helius/getBlockProduction';
-import { getBlocks } from './default/helius/getBlocks';
-import { getBlockTime } from './default/helius/getBlockTime';
-import { getClusterNodes } from './default/helius/getClusterNodes';
-import { getEpochInfo } from './default/helius/getEpochInfo';
-import { getEpochSchedule } from './default/helius/getEpochSchedule';
-import { getFeeForMessage } from './default/helius/getFeeForMessage';
-import { getFirstAvailableBlock } from './default/helius/getFirstAvailableBlock';
-import { getGenesisHash } from './default/helius/getGenesisHash';
-import { getHealth } from './default/helius/getHealth';
-import { getHighestSnapshotSlot } from './default/helius/getHighestSnapshotSlot';
-import { getIdentity } from './default/helius/getIdentity';
-import { getInflationGovernor } from './default/helius/getInflationGovernor';
-import { getInflationRate } from './default/helius/getInflationRate';
-import { getLargestAccounts } from './default/helius/getLargestAccounts';
-import { getLatestBlockhash } from './default/helius/getLatestBlockhash';
-import { getLeaderSchedule } from './default/helius/getLeaderSchedule';
-import { getMaxRetransmitSlot } from './default/helius/getMaxRetransmitSlot';
-import { getMaxShredInsertSlot } from './default/helius/getMaxShredInsertSlot';
-import { getMinimumBalanceForRentExemption } from './default/helius/getMinimumBalanceForRentExemption';
-import { getNftEditions } from './default/helius/getNftEditions';
-import { getProgramAccounts } from './default/helius/getProgramAccounts';
-import { getRecentPerformanceSamples } from './default/helius/getRecentPerformanceSamples';
-import { getSignaturesForAddress } from './default/helius/getSignaturesForAddress';
-import { getSignaturesForAsset } from './default/helius/getSignaturesForAsset';
-import { getSlot } from './default/helius/getSlot';
-import { getSlotLeader } from './default/helius/getSlotLeader';
-import { getStakeMinimumDelegation } from './default/helius/getStakeMinimumDelegation';
-import { getSupply } from './default/helius/getSupply';
-import { getTokenAccountBalance } from './default/helius/getTokenAccountBalance';
-import { getTokenAccounts } from './default/helius/getTokenAccounts';
-import { getTokenLargestAccounts } from './default/helius/getTokenLargestAccounts';
-import { getTokenSupply } from './default/helius/getTokenSupply';
-import { getTransaction } from './default/helius/getTransaction';
-import { getTransactionCount } from './default/helius/getTransactionCount';
-import { getVersion } from './default/helius/getVersion';
-import { getVoteAccounts } from './default/helius/getVoteAccounts';
-import { isBlockhashValid } from './default/helius/isBlockhashValid';
-import { minimumLedgerSlot } from './default/helius/minimumLedgerSlot';
+import { getAccountInfo } from './provider/helius/getAccountInfo';
+import { getAsset } from './provider/helius/getAsset';
+import { getAssetProof } from './provider/helius/getAssetProof';
+import { getAssetsByAuthority } from './provider/helius/getAssetsByAuthority';
+import { getAssetsByCreator } from './provider/helius/getAssetsByCreator';
+import { getAssetsByGroup } from './provider/helius/getAssetsByGroup';
+import { getAssetsByOwner } from './provider/helius/getAssetsByOwner';
+import { getBalance } from './provider/helius/getBalance';
+import { getBlockCommitment } from './provider/helius/getBlockCommitment';
+import { getBlockHeight } from './provider/helius/getBlockHeight';
+import { getBlockProduction } from './provider/helius/getBlockProduction';
+import { getBlocks } from './provider/helius/getBlocks';
+import { getBlockTime } from './provider/helius/getBlockTime';
+import { getClusterNodes } from './provider/helius/getClusterNodes';
+import { getEpochInfo } from './provider/helius/getEpochInfo';
+import { getEpochSchedule } from './provider/helius/getEpochSchedule';
+import { getFeeForMessage } from './provider/helius/getFeeForMessage';
+import { getFirstAvailableBlock } from './provider/helius/getFirstAvailableBlock';
+import { getGenesisHash } from './provider/helius/getGenesisHash';
+import { getHealth } from './provider/helius/getHealth';
+import { getHighestSnapshotSlot } from './provider/helius/getHighestSnapshotSlot';
+import { getIdentity } from './provider/helius/getIdentity';
+import { getInflationGovernor } from './provider/helius/getInflationGovernor';
+import { getInflationRate } from './provider/helius/getInflationRate';
+import { getLargestAccounts } from './provider/helius/getLargestAccounts';
+import { getLatestBlockhash } from './provider/helius/getLatestBlockhash';
+import { getLeaderSchedule } from './provider/helius/getLeaderSchedule';
+import { getMaxRetransmitSlot } from './provider/helius/getMaxRetransmitSlot';
+import { getMaxShredInsertSlot } from './provider/helius/getMaxShredInsertSlot';
+import { getMinimumBalanceForRentExemption } from './provider/helius/getMinimumBalanceForRentExemption';
+import { getNftEditions } from './provider/helius/getNftEditions';
+import { getProgramAccounts } from './provider/helius/getProgramAccounts';
+import { getRecentPerformanceSamples } from './provider/helius/getRecentPerformanceSamples';
+import { getSignaturesForAddress } from './provider/helius/getSignaturesForAddress';
+import { getSignaturesForAsset } from './provider/helius/getSignaturesForAsset';
+import { getSlot } from './provider/helius/getSlot';
+import { getSlotLeader } from './provider/helius/getSlotLeader';
+import { getStakeMinimumDelegation } from './provider/helius/getStakeMinimumDelegation';
+import { getSupply } from './provider/helius/getSupply';
+import { getTokenAccountBalance } from './provider/helius/getTokenAccountBalance';
+import { getTokenAccounts } from './provider/helius/getTokenAccounts';
+import { getTokenLargestAccounts } from './provider/helius/getTokenLargestAccounts';
+import { getTokenSupply } from './provider/helius/getTokenSupply';
+import { getTransaction } from './provider/helius/getTransaction';
+import { getTransactionCount } from './provider/helius/getTransactionCount';
+import { getVersion } from './provider/helius/getVersion';
+import { getVoteAccounts } from './provider/helius/getVoteAccounts';
+import { isBlockhashValid } from './provider/helius/isBlockhashValid';
+import { minimumLedgerSlot } from './provider/helius/minimumLedgerSlot';
+import { mintToken } from './blockchain/mint/mintToken';
 
 // Group templates by their block type
 export const templates: Record<string, Record<string, BlockTemplate>> = {
@@ -111,6 +112,9 @@ export const templates: Record<string, Record<string, BlockTemplate>> = {
   MATH: {
     solToUsd,
     usdToSol
+  },
+  MINT: {
+    mintToken
   }
 };
 

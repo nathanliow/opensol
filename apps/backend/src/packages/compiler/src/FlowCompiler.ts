@@ -83,7 +83,9 @@ export class FlowCompiler {
     switch (node.type) {
       case 'GET':
       case 'HELIUS': {
-        const template = this.templates[node.data.selectedFunction];
+        const selectedFunction = node.data.selectedFunction;
+        if (!selectedFunction) return 'any';
+        const template = this.templates[selectedFunction];
         return template?.metadata?.output?.type ?? 'any';
       }
       case 'CONST': {
@@ -91,6 +93,9 @@ export class FlowCompiler {
       }
       case 'STRING': {
         return 'string';
+      }
+      case 'CONDITIONAL': {
+        return 'any';
       }
       default:
         return 'any';
@@ -103,14 +108,20 @@ export class FlowCompiler {
     if (!targetNode) return;
 
     if (targetNode.type === 'GET' || targetNode.type === 'HELIUS') {
-      const template = this.templates[targetNode.data.selectedFunction];
+      const selectedFunction = targetNode.data.selectedFunction;
+      if (!selectedFunction) return;
+      const template = this.templates[selectedFunction];
       if (!template) return;
 
-      const param = template.metadata.parameters.find(p => p.name === targetParam);
+      const param = template.metadata.parameters.find((p: { name: string; type: string }) => p.name === targetParam);
       if (!param) return;
 
-      if (sourceType !== param.type && sourceType !== 'any' && param.type !== 'any') {
-        throw new Error(`Type mismatch: ${targetNode.type} node parameter '${targetParam}' expects ${param.type} but got ${sourceType} from source node`);
+      // For safety, only validate if we have explicit, non-'any' types
+      const sourceTypeStr = String(sourceType);
+      const paramTypeStr = String(param.type);
+      
+      if (sourceTypeStr !== 'any' && paramTypeStr !== 'any' && sourceTypeStr !== paramTypeStr) {
+        throw new Error(`Type mismatch: ${targetNode.type} node parameter '${targetParam}' expects ${paramTypeStr} but got ${sourceTypeStr} from source node`);
       }
     }
   }
@@ -174,7 +185,8 @@ export class FlowCompiler {
     switch (node.type) {
       case 'GET':
       case 'HELIUS':
-      case 'MATH': {
+      case 'MATH':
+      case 'MINT': {
         const templateName = node.data.selectedFunction || '';
         const functionName = this.generateGetFunctionName(templateName);
         // Generate function body if needed (for inlining)
@@ -183,13 +195,13 @@ export class FlowCompiler {
         const parameters = { ...node.data.parameters };
         const inputs = this.getNodeInputs(node.id);
         Object.entries(inputs).forEach(([handle, value]) => {
-          if (handle !== 'flow' && handle !== 'top-target' && handle !== 'bottom-source') {
+          if (handle !== 'flow' && handle !== 'flow-top' && handle !== 'flow-bottom') {
             parameters[handle] = value;
           }
         });
 
-        // For GET/HELIUS nodes, ensure the apiKey parameter is set.
-        if (node.type === 'GET' || node.type === 'HELIUS') {
+        // For GET/HELIUS/MINT nodes, ensure the apiKey parameter is set.
+        if (node.type === 'GET' || node.type === 'HELIUS' || node.type === 'MINT') {
           parameters['apiKey'] = "HELIUS_API_KEY";
         }
 
@@ -213,6 +225,70 @@ export class FlowCompiler {
         const printCode = this.generatePrintCode(node, inputVar);
         this.printOutputs.push(printCode);
         return `const ${varName} = ${inputVar};`;
+      }
+
+      case 'CONDITIONAL': {
+        const inputs = this.getNodeInputs(node.id);
+        const conditionInput = inputs['condition'];
+        
+        if (!conditionInput) {
+          throw new Error(`Conditional node ${node.id} has no condition input`);
+        }
+
+        // Find connected nodes for then/else branches
+        const thenEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'then');
+        const elseEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'else');
+        
+        // Check if the then/else nodes have been processed
+        let thenCode = 'null';
+        let elseCode = 'null';
+        
+        if (thenEdges.length > 0) {
+          const thenTarget = thenEdges[0].target;
+          // Ensure the target node is processed
+          const targetNode = this.nodes.find(n => n.id === thenTarget);
+          if (targetNode && !this.nodeOutputs.has(thenTarget)) {
+            // Process the target node first
+            const code = this.generateNodeCode(targetNode);
+            if (code) {
+              this.nodeOutputs.set(thenTarget, code.split(' = ')[0].replace('const ', ''));
+            }
+          }
+          thenCode = this.nodeOutputs.get(thenTarget) ?? 'null';
+        }
+        
+        if (elseEdges.length > 0) {
+          const elseTarget = elseEdges[0].target;
+          // Ensure the target node is processed
+          const targetNode = this.nodes.find(n => n.id === elseTarget);
+          if (targetNode && !this.nodeOutputs.has(elseTarget)) {
+            // Process the target node first
+            const code = this.generateNodeCode(targetNode);
+            if (code) {
+              this.nodeOutputs.set(elseTarget, code.split(' = ')[0].replace('const ', ''));
+            }
+          }
+          elseCode = this.nodeOutputs.get(elseTarget) ?? 'null';
+        }
+        
+        // Generate code with ternary operator or if/else block based on complexity
+        const conditionStr = conditionInput.includes('&&') || conditionInput.includes('||') 
+          ? `(${conditionInput})` 
+          : conditionInput;
+        
+        if (thenCode === 'null' && elseCode === 'null') {
+          // If both branches are null, just evaluate the condition
+          return `const ${varName} = Boolean(${conditionStr});`;
+        } else {
+          // Create a proper if/else block for better readability
+          return `
+let ${varName};
+if (${conditionStr}) {
+  ${varName} = ${thenCode};
+} else {
+  ${varName} = ${elseCode};
+}`;
+        }
       }
 
       case 'FUNCTION': {
@@ -268,7 +344,7 @@ export class FlowCompiler {
         }
         return false;
       });
-      if (userKeyNode) {
+      if (userKeyNode && userKeyNode.data.parameters) {
         const providedKey = userKeyNode.data.parameters.apiKey;
         defineApiKey = `const HELIUS_API_KEY = ${JSON.stringify(providedKey)};`;
       } else {

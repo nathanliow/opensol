@@ -123,7 +123,9 @@ export default function NewProjectPage() {
           </div>
         </div>
       ) : (
-        <Canvas />
+        <div className="w-screen h-screen">
+          <Canvas />
+        </div>
       )}
     </div>
   );

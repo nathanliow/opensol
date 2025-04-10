@@ -24,12 +24,12 @@ import "@xyflow/react/dist/style.css";
 import { edgeTypes } from "../../types/EdgeTypes";
 import { 
   createNodeTypes, 
-  nodeTypesData 
+  nodeTypesMetadata 
 } from "../../types/NodeTypes";
-import Toolbar from "./Toolbar";
-import NodeSidebar from "./NodeSidebar";
-import Console from "../console/Console";
-import Menu from "./Menu";
+import { Toolbar } from "./Toolbar";
+import { NodeSidebar } from "./NodeSidebar";
+import { Console } from "../console/Console";
+import { Menu } from "./Menu";
 import { 
   saveCanvasChanges, 
   getProject 
@@ -362,7 +362,7 @@ function Flow() {
           onProjectMenuToggle={handleProjectMenuToggle}
         />
         <NodeSidebar
-          nodeTypesData={nodeTypesData}
+          nodeTypesMetadata={nodeTypesMetadata}
           addNewNode={addNewNode}
           isReadOnly={!isProjectOwner}
           onDragStart={() => setIsDragging(true)}

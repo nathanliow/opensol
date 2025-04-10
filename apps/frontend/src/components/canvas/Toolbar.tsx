@@ -17,7 +17,7 @@ interface ToolbarProps {
   onProjectMenuToggle?: (isOpen: boolean) => void;
 }
 
-export default function Toolbar({
+export const Toolbar = ({
   selectionMode,
   toggleSelectionMode,
   isReadOnly = false,
@@ -27,7 +27,7 @@ export default function Toolbar({
   onProjectChange,
   projectData,
   onProjectMenuToggle,
-}: ToolbarProps) {
+}: ToolbarProps) => {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [isPublic, setIsPublic] = useState(projectData?.is_public || false);
   const projectMenuRef = useRef<HTMLDivElement>(null);

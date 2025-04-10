@@ -12,10 +12,6 @@ interface SearchableDropdownProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  className?: string;
-  textColor?: string;
-  backgroundColor?: string;
-  maxHeight?: string;
 }
 
 export default function SearchableDropdown({
@@ -24,15 +20,12 @@ export default function SearchableDropdown({
   onChange,
   disabled = false,
   placeholder = 'Select an option',
-  className = '',
-  textColor = 'text-black',
-  backgroundColor = 'bg-white',
-  maxHeight = '300px'
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const optionsListRef = useRef<HTMLDivElement>(null);
 
   // Find the current selected option
   const selectedOption = options.find(option => option.value === value);
@@ -54,6 +47,20 @@ export default function SearchableDropdown({
     return () => document.removeEventListener('mousedown', handleClickOutside, true);
   }, []);
 
+  // Prevent scroll propagation when dropdown is open
+  useEffect(() => {
+    const preventScrollPropagation = (e: WheelEvent) => {
+      const target = e.target as Node;
+      if (isOpen && optionsListRef.current && optionsListRef.current.contains(target)) {
+        e.stopPropagation();
+      }
+    };
+
+    // Use capture phase to intercept events before they reach other handlers
+    window.addEventListener('wheel', preventScrollPropagation, { passive: false, capture: true });
+    return () => window.removeEventListener('wheel', preventScrollPropagation, { capture: true });
+  }, [isOpen]);
+
   const handleOptionClick = (optionValue: string) => {
     onChange(optionValue);
     setIsOpen(false);
@@ -73,13 +80,13 @@ export default function SearchableDropdown({
   };
 
   return (
-    <div ref={dropdownRef} className={`relative w-full ${className}`}>
+    <div ref={dropdownRef} className={`relative w-full`}>
       {/* Current selection display */}
       <div
         onClick={toggleDropdown}
         className={`flex items-center justify-between p-1 text-xs rounded border ${
-          disabled ? 'bg-gray-100 cursor-not-allowed opacity-75' : `${backgroundColor} cursor-pointer`
-        } ${textColor} ${isOpen ? 'border-blue-500' : 'border-gray-300'} transition-colors duration-150`}
+          disabled ? 'bg-gray-100 cursor-not-allowed opacity-75' : `bg-white cursor-pointer`
+        } text-black ${isOpen ? 'border-blue-500' : 'border-gray-300'} transition-colors duration-150`}
       >
         <div className="truncate">
           {selectedOption ? selectedOption.label : placeholder}
@@ -89,7 +96,7 @@ export default function SearchableDropdown({
 
       {/* Dropdown content */}
       {isOpen && (
-        <div className={`absolute z-50 w-full mt-1 ${backgroundColor} border border-gray-300 rounded shadow-lg`}>
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg">
           {/* Search input */}
           <div className="p-1 border-b border-gray-200">
             <div className="relative">
@@ -106,13 +113,17 @@ export default function SearchableDropdown({
           </div>
           
           {/* Options list */}
-          <div className={`overflow-y-auto max-h-[${maxHeight}]`} style={{ maxHeight }}>
+          <div 
+            ref={optionsListRef}
+            className="overflow-y-auto max-h-[200px]"
+            onClick={(e) => e.stopPropagation()}
+          >
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <div
                   key={option.value}
                   onClick={() => handleOptionClick(option.value)}
-                  className={`p-1.5 text-xs hover:bg-gray-100 cursor-pointer ${
+                  className={`p-1.5 text-xs hover:bg-gray-100 cursor-pointer truncate ${
                     option.value === value ? 'bg-blue-50 font-medium' : ''
                   }`}
                 >

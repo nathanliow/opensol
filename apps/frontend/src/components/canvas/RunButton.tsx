@@ -13,7 +13,7 @@ interface RunButtonProps {
   selectedFunction: string;
 }
 
-const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedFunction }: RunButtonProps) => {
+export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedFunction }: RunButtonProps) => {
   const nodes = useNodes();
   const edges = useEdges();
   const { apiKeys, network } = useConfig();
@@ -243,5 +243,3 @@ const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedF
 });
 
 RunButton.displayName = 'RunButton';
-
-export default RunButton;
