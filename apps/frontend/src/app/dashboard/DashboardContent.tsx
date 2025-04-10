@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Project } from '@/types/ProjectTypes';
 import { Icons } from '@/components/icons/icons';
 import { useTimeAgo } from '@/hooks/useTimeAgo';
@@ -42,8 +42,13 @@ export const DashboardContent = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(viewMode === 'grid' ? 12 : 10);
 
+  // Reset page to 1 when switching tabs
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [projectsTab]);
+
   // Update itemsPerPage when view mode changes
-  React.useEffect(() => {
+  useEffect(() => {
     // More items in list view, fewer in grid view
     setItemsPerPage(viewMode === 'grid' ? 12 : 10);
     setCurrentPage(1); // Reset to first page when switching views
