@@ -143,6 +143,7 @@ export async function copyProject(projectId: string, userId: string) {
     edges: originalProject.edges,
     user_id: userId,
     is_public: false, // Set copy as private by default
+    stars: 0,
   };
 
   // Create new project with copied data
@@ -221,7 +222,7 @@ export async function updateStarredProjects(userId: string, projectId: string, i
   // Update existing profile
   const newStarred = isStarring 
     ? [...new Set([...currentStarred, projectId])]  // Add and deduplicate
-    : currentStarred.filter(id => id !== projectId); // Remove
+    : currentStarred.filter((id: string) => id !== projectId); // Remove
 
   const { error: updateError } = await supabase
     .from('user_profiles')

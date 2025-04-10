@@ -2,22 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getUserProjects, deleteProject, createProject, updateProject, getNumTotalProjects, getTopProjects, getStarredProjects } from '@/lib/projects';
+import { getUserProjects, deleteProject, createProject, updateProject, getStarredProjects } from '@/lib/projects';
 import { Project } from '@/types/ProjectTypes';
 import { useUserAccountContext } from '@/app/providers/UserAccountContext';
 import { Icons } from '@/components/icons/icons';
 import { DashboardMenu } from '@/components/dashboard/DashboardMenu';
 import { ProjectModal } from '@/components/modal/ProjectModal';
 import { NewProjectModal } from '@/components/modal/NewProjectModal';
-import { DashboardTabs } from './DashboardTabs';
-import { DashboardContent } from './DashboardContent';
+import { DashboardTabs } from '../../components/dashboard/DashboardTabs';
+import { DashboardContent } from '../../components/dashboard/DashboardContent';
 import { flowTemplates } from '@/flow-templates';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [publicProjects, setPublicProjects] = useState<Project[]>([]);
-  const [numTotalProjects, setNumTotalProjects] = useState<number>(0);
-  const [topProjects, setTopProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -46,10 +44,10 @@ export default function DashboardPage() {
   const [modalMode, setModalMode] = useState<'edit' | 'delete'>('edit');
 
   // New state for active tab
-  const [projectsTab, setProjectsTab] = useState<'my' | 'public'>('my');
+  const [tab, setTab] = useState<'my' | 'public' | 'earnings'>('my');
 
   // Use the selected tab to determine which projects to display
-  const displayProjects = projectsTab === 'my' ? projects : publicProjects;
+  const displayProjects = tab === 'my' ? projects : publicProjects;
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -61,14 +59,6 @@ export default function DashboardPage() {
           // Fetch user's projects
           const userProjects = await getUserProjects(supabaseUser.id);
           setProjects(userProjects);
-          
-          // Get project statistics
-          const numProjects = await getNumTotalProjects();
-          setNumTotalProjects(typeof numProjects === 'number' ? numProjects : 0);
-          
-          // Get top projects
-          const popularProjects = await getTopProjects();
-          setTopProjects(popularProjects);
         } else {
           // Clear projects array if not logged in
           setProjects([]);
@@ -320,15 +310,6 @@ export default function DashboardPage() {
               : p
           )
         );
-        
-        // Also update top projects list if needed
-        setTopProjects(prev =>
-          prev.map(p =>
-            p.id === projectId
-              ? { ...p, stars }
-              : p
-          )
-        );
       } else {
         // Revert optimistic update if API call failed
         console.error('Failed to toggle star:', await response.text());
@@ -370,7 +351,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#121212] text-white p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <div className="flex flex-row justify-between items-start items-center gap-4 mb-6">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold">Dashboard</h1>
             </div>
@@ -388,8 +369,8 @@ export default function DashboardPage() {
 
           {/* Dashboard Tabs */}
           <DashboardTabs 
-            projectsTab={projectsTab} 
-            setProjectsTab={setProjectsTab} 
+            tab={tab} 
+            setTab={setTab} 
           />
 
           {/* Dashboard Content */}
@@ -400,7 +381,7 @@ export default function DashboardPage() {
             viewMode={viewMode}
             setViewMode={setViewMode}
             loading={loading}
-            projectsTab={projectsTab}
+            tab={tab}
             handleOpenProject={handleOpenProject}
             handleEditProject={handleEditProject}
             handleStarToggle={handleStarToggle}
