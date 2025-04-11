@@ -1,9 +1,16 @@
-import { useState, useRef, useEffect } from "react";
+import { 
+  useState, 
+  useRef, 
+  useEffect 
+} from "react";
 import { Panel } from "@xyflow/react";
 import { Icons } from "../icons/icons";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
-import { createProject, copyProject } from "@/lib/projects";
+import { 
+  createProject, 
+  copyProject, 
+} from "@/lib/projects";
 import { Project } from "@/types/ProjectTypes";
 
 interface ToolbarProps {
@@ -14,7 +21,7 @@ interface ToolbarProps {
   onImport: (flowData: any) => void;
   projectId?: string | null;
   onProjectChange?: () => void;
-  projectData?: any;
+  projectData?: Project | null;
   onProjectMenuToggle?: (isOpen: boolean) => void;
 }
 
@@ -34,6 +41,8 @@ export const Toolbar = ({
   const projectMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+  const [tipAmount, setTipAmount] = useState(0);
+  const [isTipping, setIsTipping] = useState(false);
   const router = useRouter();
   const { supabaseUser } = useUserAccountContext();
 
@@ -218,6 +227,37 @@ export const Toolbar = ({
     }
   };
 
+  const handleTipProject = async () => {
+    if (!projectId || !supabaseUser || !projectData) return;
+
+    setIsTipping(true);
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/tip`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          id: projectId, 
+          amount: tipAmount 
+        }),
+      });
+
+      if (response.ok) {
+        console.log("Project tipped successfully");
+        // TODO: add a toast or something to show the 
+        // user that the project was tipped
+      } else {
+        console.error("Failed to tip project");
+      }
+    } catch (error) {
+      console.error("Error tipping project:", error);
+    } finally {
+      setIsTipping(false);
+    }
+  };
+
   const isProjectOwner = projectData?.user_id === supabaseUser?.id;
 
   return (
@@ -336,6 +376,29 @@ export const Toolbar = ({
                   <Icons.FiDownload size={16} />
                   Export Flow
                 </button>
+                {supabaseUser && (
+                  <div className="flex flex-row items-center gap-2">
+                    <div
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    >
+                      <Icons.FiDollarSign size={16} />
+                      Tip
+                    </div>
+                    <input
+                        type="number"
+                        value={tipAmount}
+                        onChange={(e) => setTipAmount(Number(e.target.value))}
+                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                      />
+                      <button
+                        onClick={handleTipProject}
+                        className="bg-blue-500 w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                        disabled={!projectId || !projectData || isProjectOwner || isTipping}
+                      >
+                        Tip
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

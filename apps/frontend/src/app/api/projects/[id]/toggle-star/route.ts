@@ -42,6 +42,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         .insert({
           user_id: user.id,
           starred_projects: [projectId],
+          monthly_earnings: [{"year":2025,"month":1,"earnings":0},{"year":2025,"month":2,"earnings":0},{"year":2025,"month":3,"earnings":0},{"year":2025,"month":4,"earnings":0},{"year":2025,"month":5,"earnings":0},{"year":2025,"month":6,"earnings":0},{"year":2025,"month":7,"earnings":0},{"year":2025,"month":8,"earnings":0},{"year":2025,"month":9,"earnings":0},{"year":2025,"month":10,"earnings":0},{"year":2025,"month":11,"earnings":0},{"year":2025,"month":12,"earnings":0}],
           display_name: user.email || user.id.substring(0, 8)
         });
 
@@ -78,7 +79,6 @@ export async function POST(request: Request, { params }: { params: { id: string 
       ? Math.max((project.stars || 1) - 1, 0) 
       : (project.stars || 0) + 1;
       
-    
     const { data: updatedProject, error: updateCountError } = await supabase
       .from('projects')
       .update({ stars: newStarCount })

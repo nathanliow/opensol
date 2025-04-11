@@ -19,12 +19,29 @@ export async function createProject(project: Omit<Project, 'id' | 'created_at' |
 }
 
 // Get a project by ID
-export async function getProject(id: string) {
+export async function getProject(id: string): Promise<Project | null> {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
     .eq('id', id)
     .single();
+
+  // Convert raw data to Project type
+  if (data) {
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      description: data.description,
+      nodes: data.nodes as Node[],
+      edges: data.edges as Edge[],
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      stars: data.stars || 0,
+      is_public: data.is_public || false,
+      earnings: data.earnings || 0
+    } as Project;
+  }
 
   if (error) {
     console.error('Error getting project:', error);
@@ -130,7 +147,7 @@ export async function getNumTotalProjects() {
 // Copy an existing project
 export async function copyProject(projectId: string, userId: string) {
   // Get the original project
-  const originalProject = await getProject(projectId);
+  const originalProject: Project | null = await getProject(projectId);
   if (!originalProject) {
     throw new Error('Project not found');
   }
