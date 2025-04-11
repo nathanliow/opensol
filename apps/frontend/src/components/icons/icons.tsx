@@ -46,6 +46,7 @@ import {
   MdContentCopy,
 } from 'react-icons/md';
 import { PiMoneyWavyLight } from "react-icons/pi";
+import { BsBarChartFill } from 'react-icons/bs';
 
 const ResizeIcon = () => {
   return (
@@ -144,5 +145,6 @@ export const Icons = {
   MdCheck,
   MdContentCopy,
   PiMoneyWavyLight,
-  FiKey
+  FiKey,
+  BsBarChartFill,
 };

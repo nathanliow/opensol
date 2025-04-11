@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Project } from '@/types/ProjectTypes';
 import { Icons } from '@/components/icons/icons';
 import { ProjectContent } from '@/components/dashboard/project/ProjectContent';
+import { EarningsContent } from './EarningsContent';
 
 interface DashboardContentProps {
   projects: Project[];
@@ -125,10 +126,7 @@ export const DashboardContent = ({
           itemsPerPage={itemsPerPage}
         />
       ) : tab === 'earnings' && (
-        <div className="flex flex-col items-center justify-center py-16">
-          <Icons.FiGlobe className="text-gray-500 mb-4" size={48} />
-          <p className="text-gray-400 mb-4">No public projects available</p>
-        </div>
+        <EarningsContent />
       )}
     </>
   );
