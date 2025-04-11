@@ -12,6 +12,8 @@ import { NewProjectModal } from '@/components/modal/NewProjectModal';
 import { DashboardTabs } from '../../components/dashboard/DashboardTabs';
 import { DashboardContent } from '../../components/dashboard/DashboardContent';
 import { flowTemplates } from '@/flow-templates';
+import { getUserData } from '@/lib/user';
+import { UserData } from '@/types/UserTypes';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -48,6 +50,23 @@ export default function DashboardPage() {
 
   // Use the selected tab to determine which projects to display
   const displayProjects = tab === 'my' ? projects : publicProjects;
+
+  // State for user profile data
+  const [userData, setUserData] = useState<UserData | null>(null);
+
+  // Fetch user profile when supabaseUser changes
+  useEffect(() => {
+    if (supabaseUser) {
+      const fetchUserData = async () => {
+        const data = await getUserData(supabaseUser.id);
+        setUserData(data);
+      };
+      
+      fetchUserData();
+    } else {
+      setUserData(null);
+    }
+  }, [supabaseUser]);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -153,17 +172,18 @@ export default function DashboardPage() {
       const edges = selectedTemplate?.edges || [];
       
       // Create a new project with template data if available
-      const newProject = await createProject({
+      const newProject: Project = await createProject({
         name: newProjectName,
         description: newProjectDescription,
         nodes: nodes,
         edges: edges,
         user_id: supabaseUser.id,
-        stars: 0
+        stars: 0,
+        earnings: 0
       });
       
       // Save project ID to localStorage
-      localStorage.setItem('currentProjectId', newProject.id);
+      localStorage.setItem('currentProjectId', newProject.id || '');
       
       // Close modal
       setShowNewProjectModal(false);
@@ -375,6 +395,7 @@ export default function DashboardPage() {
 
           {/* Dashboard Content */}
           <DashboardContent
+            userData={userData}
             projects={displayProjects}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}

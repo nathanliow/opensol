@@ -4,6 +4,7 @@ import { Icons } from "../icons/icons";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { createProject, copyProject } from "@/lib/projects";
+import { Project } from "@/types/ProjectTypes";
 
 interface ToolbarProps {
   selectionMode: boolean;
@@ -165,16 +166,17 @@ export const Toolbar = ({
       const projectName = prompt("Enter a name for your project:", "Untitled Project");
       if (!projectName) return;
 
-      const newProject = await createProject({
+      const newProject: Project = await createProject({
         name: projectName,
         description: "",
         nodes: flowData.nodes,
         edges: flowData.edges,
         user_id: supabaseUser.id,
         stars: 0,
+        earnings: 0,
       });
 
-      localStorage.setItem("currentProjectId", newProject.id);
+      localStorage.setItem("currentProjectId", newProject.id || '');
       setProjectMenuOpen(false);
       
       // Notify parent when menu is closed
@@ -196,7 +198,7 @@ export const Toolbar = ({
       const newProject = await copyProject(projectId, supabaseUser.id);
 
       // Save the new project ID to localStorage
-      localStorage.setItem("currentProjectId", newProject.id);
+      localStorage.setItem("currentProjectId", newProject.id || '');
       localStorage.setItem("forceProjectReload", "true");
 
       // Trigger project change to reload the canvas

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Project } from '@/types/ProjectTypes';
-import { Icons } from '@/components/icons/icons';
 import { ProjectContent } from '@/components/dashboard/project/ProjectContent';
 import { EarningsContent } from './EarningsContent';
+import { UserData } from '@/types/UserTypes';
 
 interface DashboardContentProps {
+  userData: UserData | null;
   projects: Project[];
   searchTerm: string;
   viewMode: 'grid' | 'list';
@@ -23,6 +24,7 @@ interface DashboardContentProps {
 }
 
 export const DashboardContent = ({
+  userData,
   projects,
   searchTerm,
   viewMode,
@@ -126,7 +128,10 @@ export const DashboardContent = ({
           itemsPerPage={itemsPerPage}
         />
       ) : tab === 'earnings' && (
-        <EarningsContent />
+        <EarningsContent 
+          userData={userData}
+          projects={projects}
+        />
       )}
     </>
   );

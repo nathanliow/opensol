@@ -6,6 +6,7 @@ import { useUserAccountContext } from '@/app/providers/UserAccountContext';
 import Canvas from '@/components/canvas/Canvas';
 import { usePrivy } from '@privy-io/react-auth';
 import { LoadingAnimation } from '@/components/loading/LoadingAnimation';
+import { Project } from '@/types/ProjectTypes';
 
 export default function NewProjectPage() {
   const [projectName, setProjectName] = useState('Untitled Project');
@@ -46,13 +47,14 @@ export default function NewProjectPage() {
 
     try {
       // Create a new project with empty nodes and edges
-      const newProject = await createProject({
+      const newProject: Project = await createProject({
         name: projectName,
         description: '',
         nodes: [],
         edges: [],
         user_id: supabaseUser.id,
-        stars: 0
+        stars: 0,
+        earnings: 0
       });
 
       // Navigate to the new project

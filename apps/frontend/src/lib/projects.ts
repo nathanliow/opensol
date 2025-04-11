@@ -3,7 +3,7 @@ import { Node, Edge } from '@xyflow/react';
 import { Project } from '@/types/ProjectTypes';
 
 // Create a new project
-export async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) {
+export async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> {
   const { data, error } = await supabase
     .from('projects')
     .insert(project)
@@ -15,7 +15,7 @@ export async function createProject(project: Omit<Project, 'id' | 'created_at' |
     throw error;
   }
 
-  return data;
+  return data as Project;
 }
 
 // Get a project by ID
@@ -136,7 +136,7 @@ export async function copyProject(projectId: string, userId: string) {
   }
 
   // Create a copy with modified name and description
-  const projectCopy = {
+  const projectCopy: Project = {
     name: `Copy - ${originalProject.name}`,
     description: originalProject.description,
     nodes: originalProject.nodes,
@@ -144,6 +144,7 @@ export async function copyProject(projectId: string, userId: string) {
     user_id: userId,
     is_public: false, // Set copy as private by default
     stars: 0,
+    earnings: 0,
   };
 
   // Create new project with copied data
