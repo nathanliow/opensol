@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
-export async function POST(request: Request, { params }: { params: { id: string, amount: number } }) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
-    // Fix: properly access cookies
+    // Get the current user using client-side Supabase instance
     const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -12,15 +12,16 @@ export async function POST(request: Request, { params }: { params: { id: string,
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Fix: correctly access the project ID parameter
+    console.log('User:', user);
+    // Parse request body
+    const body = await request.json();
+    const { amount } = body;
     const projectId = (await params).id;
-    const amount = (await params).amount;
-    
+
     // First check if project exists
     const { data: project, error: projectError } = await supabase
       .from('projects')
-      .select('earnings')
+      .select('earnings, user_id')
       .eq('id', projectId)
       .single();
 
@@ -28,6 +29,22 @@ export async function POST(request: Request, { params }: { params: { id: string,
       console.error('Project error:', projectError);
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
+
+    // Get recipient's wallet address from user_profiles
+    const { data: recipientProfile, error: recipientError } = await supabase
+      .from('user_profiles')
+      .select('wallet_address')
+      .eq('user_id', project.user_id)
+      .single();
+
+    if (recipientError || !recipientProfile?.wallet_address) {
+      console.error('Error getting recipient wallet:', recipientError);
+      return NextResponse.json({ error: 'Failed to get recipient wallet address' }, { status: 500 });
+    }
+
+    const recipientWallet = recipientProfile.wallet_address;
+    console.log('Recipient wallet:', recipientWallet);
+    
 
     // Check if user already has a profile
     const { data: userProfile, error: profileError } = await supabase
@@ -69,10 +86,7 @@ export async function POST(request: Request, { params }: { params: { id: string,
       }, { status: 500 });
     }
 
-    // TODO: get wallet address from project.user_id
-    // const recipient = 
-
-    // TODO: use Kite to send USDC from const user to const recipient
+    // TODO: use Kite to send USDC from user to recipientWallet
     // import transfer function from backend file so action is done on backend?
 
 

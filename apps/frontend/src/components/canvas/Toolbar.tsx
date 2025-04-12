@@ -7,11 +7,13 @@ import { Panel } from "@xyflow/react";
 import { Icons } from "../icons/icons";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
+import { useUSDCTransfer } from "@/lib/usdc";
 import { 
   createProject, 
   copyProject, 
 } from "@/lib/projects";
 import { Project } from "@/types/ProjectTypes";
+import { usePrivy } from "@privy-io/react-auth";
 
 interface ToolbarProps {
   selectionMode: boolean;
@@ -45,6 +47,8 @@ export const Toolbar = ({
   const [isTipping, setIsTipping] = useState(false);
   const router = useRouter();
   const { supabaseUser } = useUserAccountContext();
+  const { login } = usePrivy();
+  const { sendUSDC } = useUSDCTransfer();
 
   useEffect(() => {
     // Update isPublic when projectData changes
@@ -228,31 +232,43 @@ export const Toolbar = ({
   };
 
   const handleTipProject = async () => {
-    if (!projectId || !supabaseUser || !projectData) return;
-
-    setIsTipping(true);
-
     try {
+      if (!supabaseUser) {
+        await login();
+        return;
+      }
+
+      if (!projectId || !projectData || !tipAmount) {
+        console.error('Missing required data for tipping');
+        return;
+      }
+
+      setIsTipping(true);
+
+      // Get the recipient's wallet address from the API
       const response = await fetch(`/api/projects/${projectId}/tip`, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          id: projectId, 
-          amount: tipAmount 
-        }),
+        credentials: 'include',
+        body: JSON.stringify({ amount: tipAmount }),
       });
 
-      if (response.ok) {
-        console.log("Project tipped successfully");
-        // TODO: add a toast or something to show the 
-        // user that the project was tipped
-      } else {
-        console.error("Failed to tip project");
+      if (!response.ok) {
+        throw new Error('Failed to get recipient wallet address');
       }
+
+      const { recipientWallet } = await response.json();
+      console.log('Recipient wallet:', recipientWallet);
+
+      // Send USDC tip
+      await sendUSDC(tipAmount, recipientWallet);
+      alert('Tip sent successfully!');
+      setTipAmount(0);
     } catch (error) {
-      console.error("Error tipping project:", error);
+      console.error('Error sending tip:', error);
+      alert('Failed to send tip. Please make sure your wallet is connected and try again.');
     } finally {
       setIsTipping(false);
     }
