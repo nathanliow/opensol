@@ -14,6 +14,8 @@ import {
 } from "@/lib/projects";
 import { Project } from "@/types/ProjectTypes";
 import { usePrivy } from "@privy-io/react-auth";
+import { getUserData } from "@/lib/user";
+import { UserData } from "@/types/UserTypes";
 
 interface ToolbarProps {
   selectionMode: boolean;
@@ -45,6 +47,7 @@ export const Toolbar = ({
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
   const [tipAmount, setTipAmount] = useState(0);
   const [isTipping, setIsTipping] = useState(false);
+  const [creatorData, setCreatorData] = useState<UserData | null>(null);
   const router = useRouter();
   const { supabaseUser } = useUserAccountContext();
   const { login } = usePrivy();
@@ -78,6 +81,22 @@ export const Toolbar = ({
       };
     }
   }, [projectMenuOpen, onProjectMenuToggle]);
+  
+  // Fetch project creator's data when project data changes
+  useEffect(() => {
+    const fetchCreatorData = async () => {
+      if (projectData?.user_id) {
+        try {
+          const userData = await getUserData(projectData.user_id);
+          setCreatorData(userData);
+        } catch (error) {
+          console.error("Error fetching creator data:", error);
+        }
+      }
+    };
+    
+    fetchCreatorData();
+  }, [projectData]);
 
   const toggleProjectMenu = () => {
     const newState = !projectMenuOpen;
@@ -238,32 +257,32 @@ export const Toolbar = ({
         return;
       }
 
-      if (!projectId || !projectData || !tipAmount) {
+      if (!projectId || !projectData || !tipAmount || !creatorData || isTipping || tipAmount <= 0) {
         console.error('Missing required data for tipping');
         return;
       }
 
       setIsTipping(true);
 
-      // Get the recipient's wallet address from the API
+      // Call tip API to update supabase
       const response = await fetch(`/api/projects/${projectId}/tip`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ amount: tipAmount }),
+        body: JSON.stringify({ 
+          amount: tipAmount, 
+          recipientUserId: creatorData.user_id 
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get recipient wallet address');
+        throw new Error('Failed to update database earnings');
       }
 
-      const { recipientWallet } = await response.json();
-      console.log('Recipient wallet:', recipientWallet);
-
       // Send USDC tip
-      await sendUSDC(tipAmount, recipientWallet);
+      await sendUSDC(tipAmount, creatorData.wallet_address);
       alert('Tip sent successfully!');
       setTipAmount(0);
     } catch (error) {
@@ -306,9 +325,9 @@ export const Toolbar = ({
                     <p className="text-gray-400 text-sm mt-1 line-clamp-2">{projectData.description}</p>
                   )}
                   <div className="flex items-center mt-2 text-xs text-gray-500">
-                    <div className="flex items-center">
+                    <div className="flex items-center truncate">
                       <Icons.FiUser className="mr-1" />
-                      {isProjectOwner ? "You" : "Another User"}
+                      {isProjectOwner ? "You" : creatorData?.display_name}
                     </div>
                     {projectData.is_public && (
                       <div className="flex items-center ml-3">
@@ -402,17 +421,25 @@ export const Toolbar = ({
                     </div>
                     <input
                         type="number"
+                        min="0"
                         value={tipAmount}
-                        onChange={(e) => setTipAmount(Number(e.target.value))}
+                        onChange={(e) => setTipAmount(Math.max(0, Number(e.target.value)))}
                         className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
                       />
                       <button
                         onClick={handleTipProject}
-                        className="bg-blue-500 w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                        className="cursor-pointer bg-blue-500 w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
                         disabled={!projectId || !projectData || isProjectOwner || isTipping}
                       >
-                        Tip
-                    </button>
+                        {isTipping ? (
+                          <>
+                            <Icons.FiLoader className="animate-spin" size={16} />
+                            Tipping...
+                          </>
+                        ) : (
+                          "Tip"
+                        )}
+                      </button>
                   </div>
                 )}
               </div>

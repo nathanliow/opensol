@@ -12,10 +12,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.log('User:', user);
+
     // Parse request body
     const body = await request.json();
-    const { amount } = body;
+    const { amount, recipientUserId } = body;
     const projectId = (await params).id;
 
     // First check if project exists
@@ -29,23 +29,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       console.error('Project error:', projectError);
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
-
-    // Get recipient's wallet address from user_profiles
-    const { data: recipientProfile, error: recipientError } = await supabase
-      .from('user_profiles')
-      .select('wallet_address')
-      .eq('user_id', project.user_id)
-      .single();
-
-    if (recipientError || !recipientProfile?.wallet_address) {
-      console.error('Error getting recipient wallet:', recipientError);
-      return NextResponse.json({ error: 'Failed to get recipient wallet address' }, { status: 500 });
-    }
-
-    const recipientWallet = recipientProfile.wallet_address;
-    console.log('Recipient wallet:', recipientWallet);
     
-
     // Check if user already has a profile
     const { data: userProfile, error: profileError } = await supabase
       .from('user_profiles')
@@ -70,6 +54,47 @@ export async function POST(request: Request, { params }: { params: { id: string 
       }
     }
 
+    // Get recipient's earnings
+    const { data: recipientData, error: recipientDataError } = await supabase
+      .from('user_profiles')
+      .select('monthly_earnings')
+      .eq('user_id', recipientUserId)
+      .maybeSingle();
+
+    if (!recipientData) {
+      console.error('Recipient profile not found');
+      return NextResponse.json({ error: 'Recipient profile not found' }, { status: 404 });
+    }
+
+    // Update recipient's earnings
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript months are 0-11, so add 1 to get 1-12
+    
+    // Find if there's already an entry for the current year and month
+    const updatedEarnings = [...recipientData.monthly_earnings];
+    const existingEntryIndex = updatedEarnings.findIndex(
+      entry => entry.year === currentYear && entry.month === currentMonth
+    );
+    
+    if (existingEntryIndex !== -1) {
+      // Update existing entry
+      updatedEarnings[existingEntryIndex].earnings += amount;
+    } else {
+      // Add new entry for current year and month
+      updatedEarnings.push({ year: currentYear, month: currentMonth, earnings: amount });
+    }
+    
+    const { error: updateRecipientEarningsError } = await supabase
+      .from('user_profiles')
+      .update({ monthly_earnings: updatedEarnings })
+      .eq('user_id', recipientUserId);
+
+    if (updateRecipientEarningsError) {
+      console.error('Error updating recipient earnings:', updateRecipientEarningsError);
+      return NextResponse.json({ error: 'Failed to update recipient earnings' }, { status: 500 });
+    }
+      
     // Update the project earnings
     const newEarnings = project.earnings + amount;
 
@@ -86,11 +111,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       }, { status: 500 });
     }
 
-    // TODO: use Kite to send USDC from user to recipientWallet
-    // import transfer function from backend file so action is done on backend?
-
-
-    return NextResponse.json({ earnings: newEarnings, hasEarned: true });
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error: any) {
     console.error('Error tipping project:', error);
     return NextResponse.json({ 

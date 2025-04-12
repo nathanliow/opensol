@@ -38,6 +38,7 @@ import {
   FiMoreHorizontal,
   FiKey,
   FiDollarSign,
+  FiLoader,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -119,6 +120,7 @@ export const Icons = {
   FiTrash2,
   FiGrid,
   FiList,
+  FiLoader,
   FiEdit2,
   FiDatabase,
   FiLayout,
