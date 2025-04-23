@@ -3,7 +3,7 @@ import { Node, Edge } from '@xyflow/react';
 import { Project } from '@/types/ProjectTypes';
 
 // Create a new project
-export async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>) {
+export async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> {
   const { data, error } = await supabase
     .from('projects')
     .insert(project)
@@ -15,16 +15,33 @@ export async function createProject(project: Omit<Project, 'id' | 'created_at' |
     throw error;
   }
 
-  return data;
+  return data as Project;
 }
 
 // Get a project by ID
-export async function getProject(id: string) {
+export async function getProject(id: string): Promise<Project | null> {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
     .eq('id', id)
     .single();
+
+  // Convert raw data to Project type
+  if (data) {
+    return {
+      id: data.id,
+      user_id: data.user_id,
+      name: data.name,
+      description: data.description,
+      nodes: data.nodes as Node[],
+      edges: data.edges as Edge[],
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+      stars: data.stars || 0,
+      is_public: data.is_public || false,
+      earnings: data.earnings || 0
+    } as Project;
+  }
 
   if (error) {
     console.error('Error getting project:', error);
@@ -130,19 +147,21 @@ export async function getNumTotalProjects() {
 // Copy an existing project
 export async function copyProject(projectId: string, userId: string) {
   // Get the original project
-  const originalProject = await getProject(projectId);
+  const originalProject: Project | null = await getProject(projectId);
   if (!originalProject) {
     throw new Error('Project not found');
   }
 
   // Create a copy with modified name and description
-  const projectCopy = {
+  const projectCopy: Project = {
     name: `Copy - ${originalProject.name}`,
     description: originalProject.description,
     nodes: originalProject.nodes,
     edges: originalProject.edges,
     user_id: userId,
     is_public: false, // Set copy as private by default
+    stars: 0,
+    earnings: 0,
   };
 
   // Create new project with copied data
@@ -221,7 +240,7 @@ export async function updateStarredProjects(userId: string, projectId: string, i
   // Update existing profile
   const newStarred = isStarring 
     ? [...new Set([...currentStarred, projectId])]  // Add and deduplicate
-    : currentStarred.filter(id => id !== projectId); // Remove
+    : currentStarred.filter((id: string) => id !== projectId); // Remove
 
   const { error: updateError } = await supabase
     .from('user_profiles')

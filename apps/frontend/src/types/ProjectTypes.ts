@@ -12,4 +12,5 @@ export interface Project {
   updated_at?: string;
   stars: number;
   is_public?: boolean;
+  earnings: number;
 }

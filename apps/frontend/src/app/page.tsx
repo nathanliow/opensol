@@ -62,7 +62,7 @@ export default function Home() {
               Start Building →
             </button>
             <button
-              onClick={() => window.open('https://docs.opensol.xyz', '_blank')}
+              onClick={() => window.open('https://opensol-2.gitbook.io/opensol', '_blank')}
               className="cursor-pointer px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-lg"
             >
               Documentation →

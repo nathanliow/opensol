@@ -1,9 +1,21 @@
-import { useState, useRef, useEffect } from "react";
+import { 
+  useState, 
+  useRef, 
+  useEffect 
+} from "react";
 import { Panel } from "@xyflow/react";
 import { Icons } from "../icons/icons";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
-import { createProject, copyProject } from "@/lib/projects";
+import { useUSDCTransfer } from "@/lib/usdc";
+import { 
+  createProject, 
+  copyProject, 
+} from "@/lib/projects";
+import { Project } from "@/types/ProjectTypes";
+import { usePrivy } from "@privy-io/react-auth";
+import { getUserData } from "@/lib/user";
+import { UserData } from "@/types/UserTypes";
 
 interface ToolbarProps {
   selectionMode: boolean;
@@ -13,7 +25,7 @@ interface ToolbarProps {
   onImport: (flowData: any) => void;
   projectId?: string | null;
   onProjectChange?: () => void;
-  projectData?: any;
+  projectData?: Project | null;
   onProjectMenuToggle?: (isOpen: boolean) => void;
 }
 
@@ -33,8 +45,13 @@ export const Toolbar = ({
   const projectMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
+  const [tipAmount, setTipAmount] = useState(0);
+  const [isTipping, setIsTipping] = useState(false);
+  const [creatorData, setCreatorData] = useState<UserData | null>(null);
   const router = useRouter();
   const { supabaseUser } = useUserAccountContext();
+  const { login } = usePrivy();
+  const { sendUSDC } = useUSDCTransfer();
 
   useEffect(() => {
     // Update isPublic when projectData changes
@@ -64,6 +81,22 @@ export const Toolbar = ({
       };
     }
   }, [projectMenuOpen, onProjectMenuToggle]);
+  
+  // Fetch project creator's data when project data changes
+  useEffect(() => {
+    const fetchCreatorData = async () => {
+      if (projectData?.user_id) {
+        try {
+          const userData = await getUserData(projectData.user_id);
+          setCreatorData(userData);
+        } catch (error) {
+          console.error("Error fetching creator data:", error);
+        }
+      }
+    };
+    
+    fetchCreatorData();
+  }, [projectData]);
 
   const toggleProjectMenu = () => {
     const newState = !projectMenuOpen;
@@ -165,16 +198,17 @@ export const Toolbar = ({
       const projectName = prompt("Enter a name for your project:", "Untitled Project");
       if (!projectName) return;
 
-      const newProject = await createProject({
+      const newProject: Project = await createProject({
         name: projectName,
         description: "",
         nodes: flowData.nodes,
         edges: flowData.edges,
         user_id: supabaseUser.id,
         stars: 0,
+        earnings: 0,
       });
 
-      localStorage.setItem("currentProjectId", newProject.id);
+      localStorage.setItem("currentProjectId", newProject.id || '');
       setProjectMenuOpen(false);
       
       // Notify parent when menu is closed
@@ -196,7 +230,7 @@ export const Toolbar = ({
       const newProject = await copyProject(projectId, supabaseUser.id);
 
       // Save the new project ID to localStorage
-      localStorage.setItem("currentProjectId", newProject.id);
+      localStorage.setItem("currentProjectId", newProject.id || '');
       localStorage.setItem("forceProjectReload", "true");
 
       // Trigger project change to reload the canvas
@@ -213,6 +247,49 @@ export const Toolbar = ({
       }
     } catch (error) {
       console.error("Failed to copy project:", error);
+    }
+  };
+
+  const handleTipProject = async () => {
+    try {
+      if (!supabaseUser) {
+        await login();
+        return;
+      }
+
+      if (!projectId || !projectData || !tipAmount || !creatorData || isTipping || tipAmount <= 0) {
+        console.error('Missing required data for tipping');
+        return;
+      }
+
+      setIsTipping(true);
+
+      // Call tip API to update supabase
+      const response = await fetch(`/api/projects/${projectId}/tip`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          amount: tipAmount, 
+          recipientUserId: creatorData.user_id 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update database earnings');
+      }
+
+      // Send USDC tip
+      await sendUSDC(tipAmount, creatorData.wallet_address);
+      alert('Tip sent successfully!');
+      setTipAmount(0);
+    } catch (error) {
+      console.error('Error sending tip:', error);
+      alert('Failed to send tip. Please make sure your wallet is connected and try again.');
+    } finally {
+      setIsTipping(false);
     }
   };
 
@@ -248,9 +325,9 @@ export const Toolbar = ({
                     <p className="text-gray-400 text-sm mt-1 line-clamp-2">{projectData.description}</p>
                   )}
                   <div className="flex items-center mt-2 text-xs text-gray-500">
-                    <div className="flex items-center">
+                    <div className="flex items-center truncate">
                       <Icons.FiUser className="mr-1" />
-                      {isProjectOwner ? "You" : "Another User"}
+                      {isProjectOwner ? "You" : creatorData?.display_name}
                     </div>
                     {projectData.is_public && (
                       <div className="flex items-center ml-3">
@@ -334,6 +411,37 @@ export const Toolbar = ({
                   <Icons.FiDownload size={16} />
                   Export Flow
                 </button>
+                {supabaseUser && (
+                  <div className="flex flex-row items-center gap-2">
+                    <div
+                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    >
+                      <Icons.FiDollarSign size={16} />
+                      Tip
+                    </div>
+                    <input
+                        type="number"
+                        min="0"
+                        value={tipAmount}
+                        onChange={(e) => setTipAmount(Math.max(0, Number(e.target.value)))}
+                        className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                      />
+                      <button
+                        onClick={handleTipProject}
+                        className="cursor-pointer bg-blue-500 w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                        disabled={!projectId || !projectData || isProjectOwner || isTipping}
+                      >
+                        {isTipping ? (
+                          <>
+                            <Icons.FiLoader className="animate-spin" size={16} />
+                            Tipping...
+                          </>
+                        ) : (
+                          "Tip"
+                        )}
+                      </button>
+                  </div>
+                )}
               </div>
             </div>
           )}

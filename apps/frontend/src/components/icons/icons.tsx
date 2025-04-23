@@ -37,6 +37,8 @@ import {
   FiCommand,
   FiMoreHorizontal,
   FiKey,
+  FiDollarSign,
+  FiLoader,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -46,6 +48,7 @@ import {
   MdContentCopy,
 } from 'react-icons/md';
 import { PiMoneyWavyLight } from "react-icons/pi";
+import { BsBarChartFill } from 'react-icons/bs';
 
 const ResizeIcon = () => {
   return (
@@ -117,6 +120,7 @@ export const Icons = {
   FiTrash2,
   FiGrid,
   FiList,
+  FiLoader,
   FiEdit2,
   FiDatabase,
   FiLayout,
@@ -141,8 +145,10 @@ export const Icons = {
   FiShare2,
   FiCommand,
   FiMoreHorizontal,
+  FiDollarSign,
   MdCheck,
   MdContentCopy,
   PiMoneyWavyLight,
-  FiKey
+  FiKey,
+  BsBarChartFill,
 };

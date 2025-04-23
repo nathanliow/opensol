@@ -372,7 +372,7 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
     }
 
     const nodesEqual = JSON.stringify(nodes.map(n => ({ ...n, position: undefined }))) === 
-                      JSON.stringify(result.nodes?.map(n => ({ ...n, position: undefined })));
+                      JSON.stringify(result.nodes?.map((n: any) => ({ ...n, position: undefined })));
     const edgesEqual = JSON.stringify(edges) === JSON.stringify(result.edges);
 
     if (nodesEqual && edgesEqual) {

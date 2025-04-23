@@ -159,7 +159,7 @@ export const NodeSidebar = ({
                       ref={(el) => setCategoryRef(el, category)}
                     >
                       {/* Category Header */}
-                      <div className="sticky top-0 bg-[#1E1E1E] p-2 font-medium text-xs text-gray-300 flex items-center border-b border-t border-gray-700">
+                      <div className="sticky top-0 bg-[#1E1E1E] p-2 z-20 font-medium text-xs text-gray-300 flex items-center border-b border-t border-gray-700">
                         <span className="mr-2">{getCategoryIcon(category)}</span>
                         <span>{category}</span>
                       </div>

@@ -36,6 +36,7 @@ import {
 } from "@/lib/projects";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { Icons } from "../icons/icons";
+import { Project } from "@/types/ProjectTypes";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -91,7 +92,7 @@ function Flow() {
         if (storedProjectId) {
           setProjectId(storedProjectId);
           
-          const projectData = await getProject(storedProjectId);
+          const projectData: Project | null = await getProject(storedProjectId);
           setProjectData(projectData); 
           
           // Check if user has access to this project (either as owner or public project)
@@ -145,7 +146,7 @@ function Flow() {
     // Get project data to verify ownership
     const checkProjectOwnership = async () => {
       try {
-        const projectData = await getProject(projectId);
+        const projectData: Project | null = await getProject(projectId);
         
         // Only save if user is the owner
         if (projectData?.user_id !== supabaseUser.id) {
