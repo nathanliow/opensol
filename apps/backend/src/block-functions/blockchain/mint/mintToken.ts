@@ -1,4 +1,5 @@
 import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { Connection, Keypair, PublicKey, clusterApiUrl } from '@solana/web3.js';
 
 export const mintToken: BlockTemplate = {
   metadata: {
@@ -37,6 +38,11 @@ export const mintToken: BlockTemplate = {
         name: 'network',
         type: 'string',
         description: 'Network to use'
+      },
+      {
+        name: 'decimals',
+        type: 'number',
+        description: 'Token decimals'
       }
     ],
     requiredKeys: ['helius'],
@@ -54,7 +60,8 @@ export const mintToken: BlockTemplate = {
         description, 
         image, 
         apiKey, 
-        network = 'devnet' 
+        network = 'devnet',
+        decimals = 9
       } = params;
       
       // Validate required parameters
@@ -70,23 +77,19 @@ export const mintToken: BlockTemplate = {
         throw new Error('Helius API key is required.');
       }
       
-      // Todo: figure out wallet signing and minting a token
-
-      // const mintAddress = await connection.createTokenMint({
-      //   mintAuthority: wallet,
-      //   decimals: 9,
-      //   name: "My Token",
-      //   symbol: "MYTKN",
-      //   uri: "https://example.com/token-metadata.json",
-      //   additionalMetadata: {
-      //     description: "My custom token",
-      //   },
-      // });
-
-      // Return mint result
+      // This function provides the data needed to create a token, but actual signing
+      // should be done on the frontend using the Privy wallet
+      
       return {
         success: true,
-        mintAddress: "",
+        mintConfig: {
+          name,
+          symbol,
+          description,
+          imageUri: image,
+          decimals,
+          network
+        },
         metadata: {
           name,
           symbol,
@@ -98,6 +101,7 @@ export const mintToken: BlockTemplate = {
       console.error('Error in mintToken:', error);
       return {
         success: false,
+        error: (error instanceof Error) ? error.message : 'Unknown error'
       };
     }
   }

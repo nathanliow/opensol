@@ -1,7 +1,10 @@
-import { useCallback, useState, ChangeEvent, memo } from 'react';
+import { useCallback, useState, ChangeEvent, memo, FormEvent } from 'react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { useTokenMint } from '../../../lib/tokenMint';
+import { useConfig } from '../../../contexts/ConfigContext';
+import { pinata } from '@/pinataConfig';
 
 interface MintNodeProps {
   id: string;
@@ -11,15 +14,32 @@ interface MintNodeProps {
     symbol?: string;
     description?: string;
     image?: string;
+    decimals?: number;
+    network?: 'devnet' | 'mainnet-beta' | 'testnet';
     mintAddress?: string;
     mintStatus?: string;
+    signature?: string;
+    metadataUri?: string;
+    imageIpfsUrl?: string;
   };
-  setNodeData: (id: string, data: any) => void;
 }
 
-export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
+export default function MintNode({ id, data }: MintNodeProps) {
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isUploadingMetadata, setIsUploadingMetadata] = useState(false);
+  
+  // Local state to ensure UI updates
+  const [name, setName] = useState(data.name || '');
+  const [symbol, setSymbol] = useState(data.symbol || '');
+  const [description, setDescription] = useState(data.description || '');
+  const [decimals, setDecimals] = useState(data.decimals || 9);
+  
+  const { mintToken } = useTokenMint();
+  const { network } = useConfig();
   
   // Define inputs for token minting
   const inputs: InputDefinition[] = [
@@ -27,39 +47,108 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
       id: 'name',
       label: 'Token Name',
       type: 'text',
-      defaultValue: data.name || ''
+      defaultValue: name
     },
     {
       id: 'symbol',
       label: 'Symbol',
       type: 'text',
-      defaultValue: data.symbol || ''
+      defaultValue: symbol
     },
     {
       id: 'description',
       label: 'Description',
       type: 'text',
-      defaultValue: data.description || ''
+      defaultValue: description
     },
     {
-      id: 'image',
-      label: 'Image URL',
-      type: 'text',
-      defaultValue: data.image || '',
-      // Custom component to handle disabled state
-      getConnectedValue: uploading ? () => 'Uploading...' : undefined
+      id: 'decimals',
+      label: 'Decimals',
+      type: 'number',
+      defaultValue: decimals
     }
   ];
   
   const handleInputChange = useCallback((inputId: string, value: any) => {
     console.log(`Mint parameter ${inputId} changed to ${value}`);
-    setNodeData(id, { 
-      ...data, 
-      [inputId]: value 
-    });
-  }, [id, data, setNodeData]);
+    
+    // Update local state for UI
+    switch(inputId) {
+      case 'name':
+        setName(value);
+        break;
+      case 'symbol':
+        setSymbol(value);
+        break;
+      case 'description':
+        setDescription(value);
+        break;
+      case 'image':
+        setImage(value);
+        break;
+      case 'decimals':
+        setDecimals(value);
+        break;
+    }
+    
+    // Update data object directly (similar to HeliusNode) with type-safe access
+    if (inputId === 'name') data.name = value;
+    else if (inputId === 'symbol') data.symbol = value;
+    else if (inputId === 'description') data.description = value;
+    else if (inputId === 'image') data.image = value;
+    else if (inputId === 'decimals') data.decimals = value;
+  }, [data]);
+
+  const uploadImageToPinata = async (file: File): Promise<string> => {
+    try {
+      const urlRequest = await fetch("/api/pinata/url");
+      if (!urlRequest.ok) {
+        throw new Error('Failed to get Pinata upload credentials'); 
+      }
+      
+      const urlResponse = await urlRequest.json();
+      
+      const upload = await pinata.upload.public
+        .file(file)
+        .url(urlResponse.url); // Upload the file with the signed URL
+      console.log(upload);
+
+      return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
+    } catch (error) {
+      console.error('Error uploading to Pinata:', error);
+      throw error;
+    }
+  }
   
-  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+  const uploadMetadataToPinata = async (jsonMetadata: {
+    name: string;
+    symbol: string;
+    description: string;
+    image: string;
+    showName: boolean;
+    createdOn: string;
+  }): Promise<string> => {
+    try {
+      const urlRequest = await fetch("/api/pinata/url");
+      if (!urlRequest.ok) {
+        throw new Error('Failed to get Pinata upload credentials');
+      }
+      
+      const urlResponse = await urlRequest.json();
+      
+      const upload = await pinata.upload.public
+        .json(jsonMetadata)
+        .url(urlResponse.url); // Upload the file with the signed URL
+      console.log(upload);
+      
+      return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
+    } catch (error) {
+      console.error('Error uploading to Pinata:', error);
+      throw error;
+    }
+  };
+  
+  const handleImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     
@@ -69,29 +158,111 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
       return;
     }
     
-    setUploading(true);
     setUploadError(null);
+    setSelectedImageFile(file);
+    
+    // Create a preview URL for the selected image
+    const previewUrl = URL.createObjectURL(file);
+    data.image = previewUrl;
+  };
+
+  const handleMintToken = async () => {
+    setIsLoading(true);
+    setError(null);
+    setUploading(true);
     
     try {
-      // In a real implementation, this would upload to Filebase or another service
-      // For demo purposes, we're creating a data URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageDataUrl = reader.result as string;
-        // In a real implementation, here's where we'd upload to Filebase and get a URL
-        // For now, we'll just use the data URL as a placeholder
-        handleInputChange('image', imageDataUrl);
+      // Check if we have a selected image file
+      if (!selectedImageFile && !data.imageIpfsUrl) {
+        setError('Please select an image first');
+        setIsLoading(false);
         setUploading(false);
-      };
-      reader.onerror = () => {
-        setUploadError('Error reading the file');
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      console.error('Image upload error:', error);
-      setUploadError('Failed to upload image');
+        return;
+      }
+      
+      // If we have a selected image that hasn't been uploaded yet
+      let imageIpfsUrl = data.imageIpfsUrl;
+      if (selectedImageFile && !data.imageIpfsUrl) {
+        try {
+          // Upload image to Pinata IPFS
+          imageIpfsUrl = await uploadImageToPinata(selectedImageFile);
+          
+          // Update state with the IPFS URL
+          data.imageIpfsUrl = imageIpfsUrl;
+        } catch (error) {
+          console.error('Image upload error:', error);
+          setError('Failed to upload image to IPFS');
+          setIsLoading(false);
+          setUploading(false);
+          return;
+        }
+      }
+      
       setUploading(false);
+      setIsUploadingMetadata(true);
+      
+      // Create and upload metadata with the image IPFS URL
+      try {
+        if (!name || !symbol) {
+          setError('Missing required fields for metadata');
+          setIsLoading(false);
+          setIsUploadingMetadata(false);
+          return;
+        }
+        
+        // Create metadata JSON object
+        const metadata = {
+          name: name,
+          symbol: symbol,
+          description: description || '',
+          image: imageIpfsUrl as string,
+          showName: true,
+          createdOn: "openSOL"
+        };
+          
+        // Upload the metadata JSON to IPFS
+        const metadataIpfsUrl = await uploadMetadataToPinata(metadata);
+        
+        console.log('Metadata uploaded to IPFS:', metadataIpfsUrl);
+        console.log('Metadata content:', metadata);
+        
+        // Store the metadata IPFS URL
+        data.metadataUri = metadataIpfsUrl;
+        
+        // Convert network format if needed ('mainnet' to 'mainnet-beta')
+        const solanaNetwork = network === 'mainnet' ? 'mainnet-beta' : network;
+        
+        const res = await mintToken(
+          name || '',
+          symbol || '',
+          description || '',
+          imageIpfsUrl || '', // Use IPFS image URL
+          decimals || 9,
+          solanaNetwork,
+          100, // Default amount
+          metadataIpfsUrl // Use the IPFS metadata URI
+        );
+
+        if (res.success) {
+          data.mintAddress = res.mintAddress;
+          data.signature = res.signature;
+          data.mintStatus = 'success';
+        } else {
+          setError(res.error || 'Unknown error occurred');
+          data.mintStatus = 'error';
+        }
+      } catch (error) {
+        console.error('Error uploading metadata to IPFS:', error);
+        setError('Failed to upload metadata to IPFS');
+      }
+    } catch (err) {
+      const errorMessage = (err as Error).message || 'Unknown error occurred';
+      setError(errorMessage);
+      data.mintStatus = 'error';
+    } finally {
+      setIsLoading(false);
+      setUploading(false);
+      setIsUploadingMetadata(false);
     }
   };
   
@@ -103,11 +274,26 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
       <div className="p-3 bg-green-100 dark:bg-green-900 rounded-md mt-2">
         <h3 className="text-sm font-semibold mb-1">Token Minted!</h3>
         <p className="text-xs truncate">Address: {data.mintAddress}</p>
-        {data.image && (
+        {data.signature && (
+          <p className="text-xs truncate mt-1">Transaction: {data.signature}</p>
+        )}
+        {data.metadataUri && (
+          <p className="text-xs truncate mt-1">
+            <a 
+              href={data.metadataUri} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              View Metadata
+            </a>
+          </p>
+        )}
+        {data.imageIpfsUrl && (
           <div className="mt-2 flex justify-center">
             <img 
-              src={data.image} 
-              alt={data.name || 'Token'} 
+              src={data.imageIpfsUrl} 
+              alt={name || 'Token'} 
               className="w-24 h-24 object-cover rounded-md border border-gray-300"
             />
           </div>
@@ -115,10 +301,31 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
       </div>
     );
   };
+
+  const renderError = () => {
+    if (!error) return null;
+    
+    return (
+      <div className="p-3 bg-red-100 dark:bg-red-900 rounded-md mt-2">
+        <p className="text-xs text-red-700 dark:text-red-200">Error: {error}</p>
+      </div>
+    );
+  };
   
   // Additional content to show below the standard inputs
   const additionalContent = (
     <div className="px-3 pb-3">
+      {(() => {
+        console.log('Debug disabled state:', {
+          isLoading,
+          name: name,
+          symbol: symbol,
+          hasSelectedFile: !!selectedImageFile,
+          hasIpfsUrl: !!data.imageIpfsUrl,
+          disabledStatus: isLoading || !name || !symbol || (!selectedImageFile && !data.imageIpfsUrl)
+        });
+        return null;
+      })()}
       {/* Image upload input */}
       <div className="mt-2">
         <label className="block text-xs font-medium mb-1">
@@ -127,17 +334,45 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
         <input
           type="file"
           accept="image/*"
-          onChange={handleImageUpload}
-          disabled={uploading}
+          onChange={handleImageSelection}
+          disabled={isLoading}
           className="block w-full text-xs text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:py-1 file:px-4 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         />
         {uploadError && (
           <p className="mt-1 text-xs text-red-500">{uploadError}</p>
         )}
-        {uploading && (
-          <p className="mt-1 text-xs text-blue-500">Uploading...</p>
+        {selectedImageFile && !data.imageIpfsUrl && (
+          <p className="mt-1 text-xs text-blue-500">Image selected - will be uploaded when minting</p>
+        )}
+        {data.imageIpfsUrl && (
+          <p className="mt-1 text-xs text-green-500 truncate">
+            Image uploaded to IPFS: {data.imageIpfsUrl}
+          </p>
         )}
       </div>
+      
+      {/* Network display */}
+      <div className="mt-2">
+        <p className="text-xs">Network: <span className="font-semibold">{network === 'mainnet' ? 'Mainnet' : 'Devnet'}</span></p>
+      </div>
+      
+      {/* Mint button */}
+      <div className="mt-4">
+        <button
+          onClick={handleMintToken}
+          disabled={isLoading || !name || !symbol || (!selectedImageFile && !data.imageIpfsUrl)}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? 
+            (uploading ? 'Uploading Image...' : 
+             isUploadingMetadata ? 'Uploading Metadata...' : 
+             'Minting...') : 
+            'Mint Token'}
+        </button>
+      </div>
+      
+      {/* Error display */}
+      {renderError()}
       
       {/* Mint result */}
       {renderMintResult()}
@@ -145,15 +380,18 @@ export default function MintNode({ id, data, setNodeData }: MintNodeProps) {
   );
   
   return (
-    <TemplateNode
-      metadata={nodeTypesMetadata['MINT']}
-      inputs={inputs}
-      data={data}
-      onInputChange={handleInputChange}
-      output={{
-        type: 'object',
-        description: 'Minted token with address and metadata'
-      }}
-    />
+    <>
+      <TemplateNode
+        metadata={nodeTypesMetadata['MINT']}
+        inputs={inputs}
+        data={data}
+        onInputChange={handleInputChange}
+        output={{
+          type: 'object',
+          description: 'Minted token with address and metadata'
+        }}
+      />
+      {additionalContent}
+    </>
   );
 };
