@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
 
 interface LabelNodeProps {
@@ -30,15 +30,14 @@ export default function FunctionNode({ id, data }: LabelNodeProps) {
     );
   }, [id, setNodes]);
 
-  // Define input for the name field
+  // Define input for the name field using the new helper
   const inputs: InputDefinition[] = useMemo(() => [
-    {
+    createInputDefinition.text({
       id: 'name',
       label: 'Name',
-      type: 'text',
       defaultValue: data.name || 'Untitled Function',
       placeholder: 'Enter Function name...'
-    }
+    })
   ], [data.name]);
 
   return (

@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
-import { CustomHandle } from '../../../types/HandleTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 // Available data types for constants
 const dataTypes = [
@@ -28,40 +28,13 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
   const dataType = data.dataType || 'string';
   const value = data.value !== undefined ? data.value : '';
   
-  // Define output type based on data type
-  const output = useMemo(() => ({
-    type: dataType as 'string' | 'number' | 'boolean',
+  // Define output with OutputDefinition
+  const output: OutputDefinition = useMemo(() => ({
+    id: 'output',
+    label: 'Output',
+    type: dataType as 'string' | 'number' | 'boolean' | 'any',
     description: `Constant ${dataType} value`
   }), [dataType]);
-  
-  // Define custom handle (output at bottom)
-  // const customHandles: CustomHandle[] = useMemo(() => [
-  //   {
-  //     type: 'source',
-  //     position: 'bottom',
-  //     style: {
-  //       background: `var(--color-red)`,
-  //       borderColor: `var(--color-black)`,
-  //       backgroundColor: `var(--color-red)`
-  //     },
-  //     id: 'value',
-  //     isValidConnection: (connection: { targetHandle: string; }) => {
-  //       return connection.targetHandle?.startsWith('param-');
-  //     }
-  //   }
-  // ], []);
-
-  // Determine input type based on selected data type
-  const getInputType = useMemo(() => {
-    switch (dataType) {
-      case 'number':
-        return 'number';
-      case 'boolean':
-        return 'dropdown';
-      default:
-        return 'text';
-    }
-  }, [dataType]);
 
   const handleInputChange = useCallback((inputId: string, newValue: any) => {
     if (inputId === 'dataType') {
@@ -104,21 +77,48 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
     }
   }, [id, setNodes, dataType]);
 
-  const inputs: InputDefinition[] = useMemo(() => [
-    {
+  const inputs: InputDefinition[] = useMemo(() => {
+    // First input is always the data type dropdown
+    const typeInput = createInputDefinition.dropdown({
       id: 'dataType',
       label: 'Type',
-      type: 'dropdown',
       options: dataTypes,
       defaultValue: dataType
-    },
-    {
-      id: 'value',
-      label: 'Value',
-      type: getInputType,
-      defaultValue: value
+    });
+
+    // Second input depends on the selected data type
+    let valueInput: InputDefinition;
+    
+    switch (dataType) {
+      case 'number':
+        valueInput = createInputDefinition.number({
+          id: 'value',
+          label: 'Value',
+          defaultValue: typeof value === 'number' ? value : 0
+        });
+        break;
+      case 'boolean':
+        valueInput = createInputDefinition.dropdown({
+          id: 'value',
+          label: 'Value',
+          options: [
+            { value: 'true', label: 'True' },
+            { value: 'false', label: 'False' }
+          ],
+          defaultValue: String(value)
+        });
+        break;
+      default: // string
+        valueInput = createInputDefinition.text({
+          id: 'value',
+          label: 'Value',
+          defaultValue: String(value || '')
+        });
+        break;
     }
-  ], [dataType, value, getInputType]);
+    
+    return [typeInput, valueInput];
+  }, [dataType, value]);
 
   return (
     <TemplateNode
@@ -126,7 +126,6 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
       inputs={inputs}
       data={data}
       onInputChange={handleInputChange}
-      // customHandles={customHandles}
       output={output}
     />
   );

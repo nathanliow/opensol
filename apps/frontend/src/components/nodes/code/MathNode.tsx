@@ -1,9 +1,10 @@
 import { memo, useCallback, useState, useMemo, useEffect } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition, InputType } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 interface MathNodeData {
   label: string;
@@ -102,26 +103,44 @@ export default function MathNode({ id, data }: MathNodeProps) {
 
   // Create dynamic inputs based on selected function
   const inputs: InputDefinition[] = useMemo(() => {
-    const baseInputs: InputDefinition[] = [{
-      id: 'function',
-      label: 'Function',
-      type: 'dropdown' as InputType,
-      options: functionOptions,
-      defaultValue: selectedFunction
-    }];
+    // Base function dropdown input
+    const baseInputs: InputDefinition[] = [
+      createInputDefinition.dropdown({
+        id: 'function',
+        label: 'Function',
+        options: functionOptions,
+        defaultValue: selectedFunction,
+        searchable: true
+      })
+    ];
     
     if (selectedFunction) {
       const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
       if (template) {
-        const paramInputs: InputDefinition[] = template.metadata.parameters.map(param => ({
-          id: param.name,
-          label: param.name,
-          type: (param.type === 'number' ? 'number' : 'text') as InputType,
-          defaultValue: parameters[param.name] || '',
-          description: param.description,
-          getConnectedValue: () => getConnectedValue(param.name),
-          handleId: `param-${param.name}`,
-        }));
+        const paramInputs: InputDefinition[] = template.metadata.parameters.map(param => {
+          const connectionGetter = () => getConnectedValue(param.name) as string | number | null;
+          
+          if (param.type === 'number') {
+            return createInputDefinition.number({
+              id: param.name,
+              label: param.name,
+              defaultValue: parameters[param.name] as number || 0,
+              description: param.description,
+              getConnectedValue: connectionGetter,
+              handleId: `param-${param.name}`,
+            });
+          } else {
+            return createInputDefinition.text({
+              id: param.name,
+              label: param.name,
+              defaultValue: String(parameters[param.name] || ''),
+              description: param.description,
+              getConnectedValue: connectionGetter,
+              handleId: `param-${param.name}`,
+            });
+          }
+        });
+        
         return [...baseInputs, ...paramInputs];
       }
     }
@@ -130,17 +149,24 @@ export default function MathNode({ id, data }: MathNodeProps) {
   }, [blockTemplates, selectedFunction, parameters, getConnectedValue, functionOptions]);
 
   // Get output type from selected template
-  const output = useMemo(() => {
+  const output: OutputDefinition = useMemo(() => {
     if (selectedFunction) {
       const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
       if (template?.metadata.output) {
         return {
-          type: template.metadata.output.type,
+          id: 'output',
+          label: 'Result',
+          type: template.metadata.output.type as any,
           description: template.metadata.output.description
         };
       }
     }
-    return undefined;
+    return {
+      id: 'output',
+      label: 'Result',
+      type: 'any',
+      description: 'Result of the math operation'
+    };
   }, [selectedFunction, blockTemplates]);
 
   return (
@@ -158,4 +184,4 @@ export default function MathNode({ id, data }: MathNodeProps) {
       output={output}
     />
   );
-};
+}

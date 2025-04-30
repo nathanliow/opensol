@@ -1,11 +1,12 @@
 import { memo, useCallback, useState, useMemo } from 'react';
 import { useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition, InputType } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
 import { CustomHandle } from '../../../types/HandleTypes';
 import { useConfig } from '../../../contexts/ConfigContext';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 interface GetNodeData {
   label: string;
@@ -71,28 +72,35 @@ export default function GetNode({ id, data }: GetNodeProps) {
 
   // Create dynamic inputs based on selected function
   const inputs: InputDefinition[] = useMemo(() => {
-    const baseInputs: InputDefinition[] = [{
-      id: 'function',
-      label: 'Function',
-      type: 'dropdown' as InputType,
-      options: functionOptions,
-      defaultValue: selectedFunction
-    }];
+    // Base dropdown for selecting function
+    const baseInputs: InputDefinition[] = [
+      createInputDefinition.dropdown({
+        id: 'function',
+        label: 'Function',
+        options: functionOptions,
+        defaultValue: selectedFunction,
+        searchable: true
+      })
+    ];
     
     if (selectedFunction) {
       const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
       if (template) {
         const paramInputs: InputDefinition[] = template.metadata.parameters
           .filter(param => param.name !== 'apiKey' && param.name !== 'network')
-          .map(param => ({
-            id: param.name,
-            label: param.name,
-            type: 'text' as InputType,
-            defaultValue: parameters[param.name] || '',
-            description: param.description,
-            getConnectedValue: () => getConnectedValue(param.name),
-            handleId: `param-${param.name}`,
-          }));
+          .map(param => {
+            const connectionGetter = () => getConnectedValue(param.name) as string | null;
+            
+            return createInputDefinition.text({
+              id: param.name,
+              label: param.name,
+              defaultValue: parameters[param.name] || '',
+              description: param.description,
+              getConnectedValue: connectionGetter,
+              handleId: `param-${param.name}`,
+            });
+          });
+          
         return [...baseInputs, ...paramInputs];
       }
     }
@@ -101,17 +109,24 @@ export default function GetNode({ id, data }: GetNodeProps) {
   }, [blockTemplates, selectedFunction, parameters, getConnectedValue, functionOptions]);
 
   // Get output type from selected template
-  const output = useMemo(() => {
+  const output: OutputDefinition = useMemo(() => {
     if (selectedFunction) {
       const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
       if (template?.metadata.output) {
         return {
-          type: template.metadata.output.type,
+          id: 'output',
+          label: 'Result',
+          type: template.metadata.output.type as any,
           description: template.metadata.output.description
         };
       }
     }
-    return undefined;
+    return {
+      id: 'output',
+      label: 'Result',
+      type: 'object',
+      description: 'Blockchain data output'
+    };
   }, [selectedFunction, blockTemplates]);
 
   return (
@@ -129,4 +144,4 @@ export default function GetNode({ id, data }: GetNodeProps) {
       output={output}
     />
   );
-};
+}

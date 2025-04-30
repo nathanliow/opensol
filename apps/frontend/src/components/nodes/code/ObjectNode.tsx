@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 interface ObjectNodeProps {
   id: string;
@@ -21,15 +22,25 @@ export default function ObjectNode({ id, data }: ObjectNodeProps) {
     count: 42,
   };
   
-  // Create inputs for each object property
-  const inputs: InputDefinition[] = Object.keys(objectData).map(key => ({
-    id: key,
-    label: key,
-    type: 'display' as const,
-    defaultValue: typeof objectData[key] === 'object' 
-      ? JSON.stringify(objectData[key]) 
-      : String(objectData[key])
-  }));
+  // Create inputs for each object property using the new helper
+  const inputs: InputDefinition[] = Object.keys(objectData).map(key => 
+    createInputDefinition.display({
+      id: key,
+      label: key,
+      defaultValue: typeof objectData[key] === 'object' 
+        ? JSON.stringify(objectData[key]) 
+        : String(objectData[key]),
+      format: (value) => String(value)
+    })
+  );
+  
+  // Define the output
+  const output: OutputDefinition = {
+    id: 'output',
+    label: 'Object',
+    type: 'object',
+    description: 'Object containing the displayed properties'
+  };
   
   const handleInputChange = useCallback((inputId: string, value: any) => {
     console.log(`Object property ${inputId} changed to ${value}`);
@@ -40,6 +51,7 @@ export default function ObjectNode({ id, data }: ObjectNodeProps) {
     <TemplateNode
       metadata={nodeTypesMetadata['OBJECT']}
       inputs={inputs}
+      output={output}
       data={objectData}
       onInputChange={handleInputChange}
     />

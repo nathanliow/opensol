@@ -1,8 +1,9 @@
 import { memo, useCallback, useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 interface PrintNodeData {
   label: string;
@@ -34,23 +35,31 @@ export default function PrintNode({ id, data }: PrintNodeProps) {
     );
   }, [id, setNodes]);
 
-  // Define inputs for template node
+  // Define inputs for template node using the new helper function
   const inputs: InputDefinition[] = useMemo(() => [
-    {
+    createInputDefinition.textarea({
       id: 'template',
       label: 'Template',
-      type: 'textarea',
       defaultValue: data.template || '',
       placeholder: 'Enter template (use $output$ for value)',
       description: 'Template text, use $output$ to insert the input value',
       rows: 3
-    }
+    })
   ], [data.template]);
+
+  // Define the output
+  const output: OutputDefinition = {
+    id: 'output',
+    label: 'Formatted Text',
+    type: 'string',
+    description: 'The formatted template text'
+  };
 
   return (
     <TemplateNode
       metadata={nodeTypesMetadata['PRINT']}
       inputs={inputs}
+      output={output}
       data={data}
       onInputChange={(inputId, value) => {
         if (inputId === 'template') {
@@ -59,4 +68,4 @@ export default function PrintNode({ id, data }: PrintNodeProps) {
       }}
     />
   );
-};
+}

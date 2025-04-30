@@ -27,7 +27,7 @@ export const NodeSidebar = ({
     setIsOpen(!isOpen);
   };
 
-  const categories: NodeCategory[] = ['Code', 'Database', 'Blockchain', 'DeFi', 'Provider', 'Misc'];
+  const categories: NodeCategory[] = ['Code', 'Database', 'Blockchain', 'DeFi', 'Provider', 'Misc', 'Example'];
   
   // Group nodes by category
   const nodesByCategory = categories.reduce((acc, category) => {

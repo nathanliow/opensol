@@ -1,10 +1,11 @@
-import { useCallback, useState, ChangeEvent, memo, FormEvent } from 'react';
+import { useCallback, useState, memo } from 'react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import { useTokenMint } from '../../../lib/tokenMint';
 import { useConfig } from '../../../contexts/ConfigContext';
 import { pinata } from '@/pinataConfig';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 interface MintNodeProps {
   id: string;
@@ -24,6 +25,14 @@ interface MintNodeProps {
   };
 }
 
+// Define the output
+const output: OutputDefinition = {
+  id: 'token-output',
+  label: 'Token',
+  type: 'object',
+  description: 'The minted token information'
+};
+
 export default function MintNode({ id, data }: MintNodeProps) {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,32 +50,68 @@ export default function MintNode({ id, data }: MintNodeProps) {
   const { mintToken } = useTokenMint();
   const { network } = useConfig();
   
-  // Define inputs for token minting
+  // Handle file selection
+  const handleFileSelect = useCallback((file: File) => {
+    setUploadError(null);
+    setSelectedImageFile(file);
+    
+    // Create a preview URL for the selected image
+    const previewUrl = URL.createObjectURL(file);
+    data.image = previewUrl;
+  }, [data]);
+  
+  // Handle file removal
+  const handleFileRemove = useCallback(() => {
+    setSelectedImageFile(null);
+    data.image = undefined;
+    data.imageIpfsUrl = undefined;
+  }, [data]);
+  
+  // Define inputs for token minting using the new helper functions
   const inputs: InputDefinition[] = [
-    {
+    createInputDefinition.text({
       id: 'name',
       label: 'Token Name',
-      type: 'text',
-      defaultValue: name
-    },
-    {
+      defaultValue: name,
+      placeholder: 'Enter token name',
+      required: true
+    }),
+    
+    createInputDefinition.text({
       id: 'symbol',
       label: 'Symbol',
-      type: 'text',
-      defaultValue: symbol
-    },
-    {
+      defaultValue: symbol,
+      placeholder: 'Enter token symbol',
+      maxLength: 10,
+      required: true
+    }),
+    
+    createInputDefinition.text({
       id: 'description',
       label: 'Description',
-      type: 'text',
-      defaultValue: description
-    },
-    {
+      defaultValue: description,
+      placeholder: 'Enter token description'
+    }),
+    
+    createInputDefinition.number({
       id: 'decimals',
       label: 'Decimals',
-      type: 'number',
-      defaultValue: decimals
-    }
+      defaultValue: decimals,
+      min: 0,
+      max: 9
+    }),
+    
+    createInputDefinition.file({
+      id: 'image',
+      label: 'Token Image',
+      accept: 'image/*',
+      previewType: 'image',
+      previewUrl: data.imageIpfsUrl || data.image,
+      maxSize: 5 * 1024 * 1024, // 5MB
+      onFileSelect: handleFileSelect,
+      onFileRemove: handleFileRemove,
+      required: true
+    })
   ];
   
   const handleInputChange = useCallback((inputId: string, value: any) => {
@@ -83,11 +128,11 @@ export default function MintNode({ id, data }: MintNodeProps) {
       case 'description':
         setDescription(value);
         break;
-      case 'image':
-        setImage(value);
-        break;
       case 'decimals':
         setDecimals(value);
+        break;
+      case 'image':
+        // The file is handled by the onFileSelect callback
         break;
     }
     
@@ -95,7 +140,6 @@ export default function MintNode({ id, data }: MintNodeProps) {
     if (inputId === 'name') data.name = value;
     else if (inputId === 'symbol') data.symbol = value;
     else if (inputId === 'description') data.description = value;
-    else if (inputId === 'image') data.image = value;
     else if (inputId === 'decimals') data.decimals = value;
   }, [data]);
 
@@ -146,24 +190,6 @@ export default function MintNode({ id, data }: MintNodeProps) {
       console.error('Error uploading to Pinata:', error);
       throw error;
     }
-  };
-  
-  const handleImageSelection = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    // Only accept image files
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please upload an image file');
-      return;
-    }
-    
-    setUploadError(null);
-    setSelectedImageFile(file);
-    
-    // Create a preview URL for the selected image
-    const previewUrl = URL.createObjectURL(file);
-    data.image = previewUrl;
   };
 
   const handleMintToken = async () => {
@@ -312,50 +338,8 @@ export default function MintNode({ id, data }: MintNodeProps) {
     );
   };
   
-  // Additional content to show below the standard inputs
   const additionalContent = (
-    <div className="px-3 pb-3">
-      {(() => {
-        console.log('Debug disabled state:', {
-          isLoading,
-          name: name,
-          symbol: symbol,
-          hasSelectedFile: !!selectedImageFile,
-          hasIpfsUrl: !!data.imageIpfsUrl,
-          disabledStatus: isLoading || !name || !symbol || (!selectedImageFile && !data.imageIpfsUrl)
-        });
-        return null;
-      })()}
-      {/* Image upload input */}
-      <div className="mt-2">
-        <label className="block text-xs font-medium mb-1">
-          Upload Token Image
-        </label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageSelection}
-          disabled={isLoading}
-          className="block w-full text-xs text-gray-500 file:mr-4 file:rounded-md file:border-0 file:bg-blue-50 file:py-1 file:px-4 file:text-xs file:font-semibold file:text-blue-700 hover:file:bg-blue-100 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        />
-        {uploadError && (
-          <p className="mt-1 text-xs text-red-500">{uploadError}</p>
-        )}
-        {selectedImageFile && !data.imageIpfsUrl && (
-          <p className="mt-1 text-xs text-blue-500">Image selected - will be uploaded when minting</p>
-        )}
-        {data.imageIpfsUrl && (
-          <p className="mt-1 text-xs text-green-500 truncate">
-            Image uploaded to IPFS: {data.imageIpfsUrl}
-          </p>
-        )}
-      </div>
-      
-      {/* Network display */}
-      <div className="mt-2">
-        <p className="text-xs">Network: <span className="font-semibold">{network === 'mainnet' ? 'Mainnet' : 'Devnet'}</span></p>
-      </div>
-      
+    <div className="px-3 pb-3">      
       {/* Mint button */}
       <div className="mt-4">
         <button
@@ -384,14 +368,11 @@ export default function MintNode({ id, data }: MintNodeProps) {
       <TemplateNode
         metadata={nodeTypesMetadata['MINT']}
         inputs={inputs}
+        output={output}
         data={data}
         onInputChange={handleInputChange}
-        output={{
-          type: 'object',
-          description: 'Minted token with address and metadata'
-        }}
+        additionalContent={additionalContent}
       />
-      {additionalContent}
     </>
   );
 };

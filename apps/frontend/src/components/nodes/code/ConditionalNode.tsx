@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypesMetadata } from '../../../types/NodeTypes';
 import { CustomHandle } from '../../../types/HandleTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
 
 interface ConditionalNodeProps {
   id: string;
@@ -15,17 +16,25 @@ interface ConditionalNodeProps {
 
 const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
   const inputs: InputDefinition[] = useMemo(() => [
-    {
+    createInputDefinition.text({
       id: 'condition',
       label: 'Condition',
       description: 'Boolean expression to evaluate',
-      type: 'text',
       placeholder: 'Enter condition expression',
-      required: true,
-    }
+      required: true
+    })
   ], []);
 
-  const outputs: CustomHandle[] = useMemo(() => [
+  // Define the main output
+  const output: OutputDefinition = {
+    id: 'output',
+    label: 'Output',
+    type: 'any',
+    description: 'Result of the conditional execution'
+  };
+
+  // Define custom handles for the then/else branches
+  const customHandles: CustomHandle[] = useMemo(() => [
     {
       id: 'then',
       label: 'Then',
@@ -39,13 +48,6 @@ const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
       description: 'Execute when condition is false',
       position: 'right',
       type: 'source',
-    },
-    {
-      id: 'output',
-      label: 'Output',
-      description: 'Combined output after conditional execution',
-      position: 'bottom',
-      type: 'source',
     }
   ], []);
 
@@ -53,8 +55,9 @@ const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
     <TemplateNode
       metadata={nodeTypesMetadata['CONDITIONAL']}
       inputs={inputs}
+      output={output}
       data={data}
-      customHandles={outputs}
+      customHandles={customHandles}
     />
   );
 };

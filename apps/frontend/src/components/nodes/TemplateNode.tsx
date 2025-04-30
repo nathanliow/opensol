@@ -1,57 +1,452 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, FC, useRef, ReactNode } from 'react';
 import { Handle, useUpdateNodeInternals } from '@xyflow/react';
 import { Position } from '@xyflow/system';
-import { InputDefinition } from '../../types/InputTypes';
+import { InputDefinition, FileInputDefinition } from '../../types/InputTypes';
+import { OutputDefinition } from '../../types/OutputTypes';
 import { CustomHandle, HandlePosition } from '@/types/HandleTypes';
 import SearchableDropdown from '../ui/SearchableDropdown';
 import { NodeTypeMetadata } from '@/types/NodeTypes';
 
-export interface NodeOutput {
-  type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
-  description: string;
-}
-
+// Template node props interface
 export interface TemplateNodeProps {
   metadata: NodeTypeMetadata;
   inputs: InputDefinition[];
-  output?: NodeOutput;
+  output?: OutputDefinition;  
   data: Record<string, any>;
-
   onInputChange?: (inputId: string, value: any) => void;
+  onOutputChange?: (outputId: string, value: any) => void;
   hideTopHandle?: boolean;
   hideBottomHandle?: boolean;
   hideInputHandles?: boolean;
-  hideOutputHandle?: boolean;
+  hideOutputHandles?: boolean;
   customHandles?: CustomHandle[];
+  additionalContent?: ReactNode;
 }
 
-export default function TemplateNode({
-  metadata,
-  inputs,
-  output,
-  data,
+// Handle style configuration
+const HANDLE_STYLES = {
+  base: {
+    background: '#343434',
+    borderColor: '#343434',
+    backgroundColor: '#343434',
+    borderRadius: 5,
+    zIndex: -1,
+  },
+  positions: {
+    left: { width: 15, height: 20, left: -5 },
+    right: { width: 15, height: 20, right: -5 },
+    top: { width: 40, height: 15, top: -3 },
+    bottom: { width: 40, height: 15, bottom: -3 },
+  }
+};
 
-  onInputChange,
-  hideInputHandles = false,
-  hideTopHandle = false,
-  hideBottomHandle = false,
-  hideOutputHandle = false,
-  customHandles = [],
-}: TemplateNodeProps) {
+/**
+ * Utility functions for working with nodes
+ */
+export const NodeUtils = {
+  // Get a value from node data with optional default
+  getValue: (data: Record<string, any>, id: string, defaultValue: any = null): any => {
+    return data[id] !== undefined ? data[id] : defaultValue;
+  },
+
+  // Check if an input has a connected value
+  isInputConnected: (input: InputDefinition): boolean => {
+    const connectedValue = input.getConnectedValue?.();
+    return connectedValue !== null && connectedValue !== undefined;
+  },
+
+  // Get the connected value for an input or return null
+  getConnectedValue: (input: InputDefinition): any => {
+    return input.getConnectedValue?.() ?? null;
+  },
+
+  // Convert a HandlePosition to a ReactFlow Position
+  toReactFlowPosition: (position: HandlePosition): Position => {
+    switch (position) {
+      case 'left': return Position.Left;
+      case 'right': return Position.Right;
+      case 'top': return Position.Top;
+      case 'bottom': return Position.Bottom;
+      default: return Position.Left;
+    }
+  },
+
+  // Get handle style for a specific position
+  getHandleStyle: (position: HandlePosition, offsetY: number = 0) => {
+    const style = {
+      ...HANDLE_STYLES.base,
+      ...HANDLE_STYLES.positions[position],
+    } as any; // Use type assertion to avoid TypeScript errors
+
+    // if (position === 'right') {
+    //   style.top = -offsetY;
+    // }
+  
+    return style;
+  },
+
+  // Validate flow connections
+  validateFlowConnection: (connection: any) => {
+    return connection.targetHandle === 'flow-bottom' || connection.targetHandle === 'flow-top';
+  },
+
+  // Validate output connections
+  validateOutputConnection: (connection: any) => {
+    return connection.targetHandle?.startsWith('param-') || 
+           connection.targetHandle === 'flow' || 
+           connection.targetHandle === 'template';
+  },
+};
+
+/**
+ * File Input component for handling file uploads
+ */
+const FileInput: FC<{
+  input: FileInputDefinition;
+  value: any;
+  onChange: (value: any) => void;
+  disabled?: boolean;
+}> = ({ input, value, onChange, disabled }) => {
+  const [preview, setPreview] = useState<string | null>(input.previewUrl || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Clear file input when disabled changes
+  useEffect(() => {
+    if (disabled && fileInputRef.current) {
+      fileInputRef.current.value = '';
+      setPreview(null);
+    }
+  }, [disabled]);
+
+  // Update preview when previewUrl changes
+  useEffect(() => {
+    if (input.previewUrl) {
+      setPreview(input.previewUrl);
+    }
+  }, [input.previewUrl]);
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (input.accept && !file.type.match(input.accept.replace(/\*/g, '.*'))) {
+      alert(`File type not accepted. Please upload ${input.accept} files.`);
+      return;
+    }
+    
+    // Validate file size
+    if (input.maxSize && file.size > input.maxSize) {
+      alert(`File too large. Maximum size is ${(input.maxSize / 1024 / 1024).toFixed(2)}MB.`);
+      return;
+    }
+    
+    // Create preview for images
+    if (input.previewType === 'image' && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    // Call the onChange handler with the file
+    onChange(file);
+    
+    // Call the onFileSelect callback if provided
+    if (input.onFileSelect) {
+      input.onFileSelect(file);
+    }
+  };
+  
+  const handleRemoveFile = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setPreview(null);
+    onChange(null);
+    
+    // Call the onFileRemove callback if provided
+    if (input.onFileRemove) {
+      input.onFileRemove();
+    }
+  };
+  
+  return (
+    <div className="w-full">
+      <div className="flex items-center mb-1">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={input.accept}
+          onChange={handleFileChange}
+          disabled={disabled}
+          className="block w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:text-xs file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          multiple={input.multiple}
+        />
+        {preview && (
+          <button 
+            type="button" 
+            onClick={handleRemoveFile}
+            className="ml-1 text-xs text-red-500 hover:text-red-700"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+      
+      {/* Image preview */}
+      {preview && input.previewType === 'image' && (
+        <div className="mt-1 relative w-full h-24 bg-gray-100 rounded-md overflow-hidden">
+          <img 
+            src={preview} 
+            alt="Preview" 
+            className="h-full object-contain mx-auto"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Input rendering component
+ */
+const NodeInput: FC<{
+  input: InputDefinition;
+  value: any;
+  onChange: (value: any) => void;
+  textColor: string;
+  backgroundColor: string;
+}> = ({ input, value, onChange, textColor, backgroundColor }) => {
+  
+  const isConnected = NodeUtils.isInputConnected(input);
+  const displayValue = NodeUtils.getConnectedValue(input);
+  
+  // If there's a custom component provided, use it
+  if (input.component) {
+    return <>{input.component}</>;
+  }
+  
+  switch (input.type) {
+    case 'dropdown':
+      return (
+        <SearchableDropdown
+          options={input.options}
+          value={value || ''}
+          onChange={onChange}
+          disabled={isConnected || input.disabled}
+          placeholder={input.placeholder || 'Select an option'}
+          searchable={input.searchable}
+          clearable={input.clearable}
+        />
+      );
+    case 'textarea':
+      return (
+        <div className="relative">
+          <textarea
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={isConnected || input.disabled}
+            rows={input.rows || 3}
+            maxLength={input.maxLength}
+            className={`w-full p-1 text-xs rounded border resize-none ${isConnected ? 'bg-gray-100' : 'bg-white'} text-black`}
+            placeholder={input.placeholder}
+          />
+          {isConnected && (
+            <div className={`absolute inset-0 flex items-center justify-center text-xs ${textColor} bg-opacity-75 ${backgroundColor}`}>
+              {String(displayValue)}
+            </div>
+          )}
+        </div>
+      );
+    case 'text':
+      return (
+        <div className="relative flex-1">
+          <input
+            type="text"
+            value={value || ''}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={isConnected || input.disabled}
+            maxLength={input.maxLength}
+            className={`w-full p-1 text-xs rounded-md border text-black ${isConnected ? 'opacity-0' : 'bg-white border-gray-300'}`}
+            placeholder={input.placeholder}
+          />
+          {isConnected && (
+            <div className={`absolute inset-0 flex items-center px-1 text-xs text-black bg-blue-50/30 rounded-md border border-blue-200/50 truncate`}>
+              {String(displayValue)}
+            </div>
+          )}
+        </div>
+      );
+    case 'number':
+      return (
+        <div className="relative flex-1">
+          <input
+            type="number"
+            value={value || ''}
+            onChange={(e) => onChange(e.target.valueAsNumber || e.target.value)}
+            disabled={isConnected || input.disabled}
+            min={input.min}
+            max={input.max}
+            step={input.step}
+            className={`w-full p-1 text-xs rounded-md border text-black ${isConnected ? 'opacity-0' : 'bg-white border-gray-300'}`}
+            placeholder={input.placeholder}
+          />
+          {isConnected && (
+            <div className={`absolute inset-0 flex items-center px-1 text-xs text-black bg-blue-50/30 rounded-md border border-blue-200/50 truncate`}>
+              {String(displayValue)}
+            </div>
+          )}
+        </div>
+      );
+    case 'display':
+      const formattedValue = input.format ? input.format(value) : String(value || displayValue || '');
+      return (
+        <div className="text-xs bg-gray-100 p-1 rounded border border-gray-200 text-black">
+          {formattedValue}
+        </div>
+      );
+    case 'file':
+      return (
+        <FileInput
+          input={input}
+          value={value}
+          onChange={onChange}
+          disabled={isConnected || input.disabled}
+        />
+      );
+    default:
+      return null;
+  }
+};
+
+/**
+ * Flow handle component
+ */
+const FlowHandle: FC<{
+  type: 'source' | 'target';
+  position: Position;
+  id: string;
+  style?: React.CSSProperties;
+  hidden?: boolean;
+}> = ({ type, position, id, style, hidden }) => {
+  if (hidden) return null;
+  
+  const handlePosition = position === Position.Top ? 'top' : 'bottom';
+  const baseStyle = NodeUtils.getHandleStyle(handlePosition);
+  
+  return (
+    <Handle
+      type={type}
+      position={position}
+      style={{...baseStyle, ...style}}
+      id={id}
+      isValidConnection={NodeUtils.validateFlowConnection}
+    />
+  );
+};
+
+/**
+ * Input handle component
+ */
+const InputHandle: FC<{
+  input: InputDefinition;
+  hidden?: boolean;
+}> = ({ input, hidden }) => {
+  if (hidden || input.type === 'dropdown') return null;
+  
+  return (
+    <Handle
+      id={input.handleId || input.id}
+      type="target"
+      position={Position.Left}
+      style={NodeUtils.getHandleStyle('left')}
+    />
+  );
+};
+
+/**
+ * Custom handle component
+ */
+const CustomHandleComponent: FC<{
+  handle: CustomHandle;
+}> = ({ handle }) => {
+  const position = NodeUtils.toReactFlowPosition(handle.position);
+  
+  return (
+    <Handle
+      key={handle.id}
+      type={handle.type}
+      position={position}
+      style={NodeUtils.getHandleStyle(handle.position)}
+      id={handle.id}
+      className={handle.className}
+    />
+  );
+};
+
+/**
+ * Output handle component
+ */
+const OutputHandle: FC<{
+  output: OutputDefinition;
+  hidden?: boolean;
+  nodeHeight?: number;
+  totalOutputs?: number;
+  outputIndex?: number;
+}> = ({ output, hidden, nodeHeight = 0, totalOutputs = 1, outputIndex = 0 }) => {
+  if (hidden) return null;
+  
+  let offsetY;
+  
+  if (totalOutputs === 1) {
+    // Position in the middle for a single output
+    offsetY = nodeHeight * 0.5;
+  } else {
+    // Distribute evenly for multiple outputs
+    // Leave some padding at top and bottom (10%)
+    const availableHeight = nodeHeight * 0.8;
+    const step = availableHeight / (totalOutputs - 1 || 1);
+    offsetY = (nodeHeight * 0.1) + (step * outputIndex);
+  }
+  
+  return (
+    // <div className="relative">
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{
+          ...NodeUtils.getHandleStyle('right'),
+          // top: -offsetY
+        }}
+        id={output.handleId || output.id}
+        isValidConnection={NodeUtils.validateOutputConnection}
+      />
+    // </div>
+  );
+};
+
+/**
+ * Hook for managing input state
+ */
+const useNodeInputs = (
+  inputs: InputDefinition[], 
+  data: Record<string, any>,
+  onInputChange?: (inputId: string, value: any) => void
+) => {
+  // Initialize values from data or defaults
   const initialValues = useMemo(() => {
     const values: Record<string, any> = {};
     inputs.forEach(input => {
-      values[input.id] = data[input.id] !== undefined 
-        ? data[input.id] 
-        : input.defaultValue;
+      values[input.id] = NodeUtils.getValue(data, input.id, input.defaultValue);
     });
     return values;
   }, [inputs, data]);
   
   const [inputValues, setInputValues] = useState<Record<string, any>>(initialValues);
-  const updateNodeInternals = useUpdateNodeInternals();
   
-  // Only update when specific input values change in data
+  // Update when data changes
   useEffect(() => {
     let hasChanged = false;
     const newValues = {...inputValues};
@@ -68,11 +463,7 @@ export default function TemplateNode({
     }
   }, [data, inputs, inputValues]);
   
-  // Update node internals when inputs change to reposition handles
-  useEffect(() => {
-    updateNodeInternals(metadata.id);
-  }, [metadata.id, updateNodeInternals, inputs.length]);
-  
+  // Handle input change
   const handleInputChange = (inputId: string, value: any) => {
     setInputValues(prev => ({ ...prev, [inputId]: value }));
     if (onInputChange) {
@@ -80,99 +471,46 @@ export default function TemplateNode({
     }
   };
   
-  const positionToReactFlowPosition = (position: HandlePosition): Position => {
-    switch (position) {
-      case 'left': return Position.Left;
-      case 'right': return Position.Right;
-      case 'top': return Position.Top;
-      case 'bottom': return Position.Bottom;
-      default: return Position.Left;
-    }
-  };
+  return { inputValues, handleInputChange };
+};
 
-  const positionToReactFlowWidth = (position: HandlePosition): number => {
-    switch (position) {
-      case 'left': return 15;
-      case 'right': return 15;
-      case 'top': return 40;
-      case 'bottom': return 40;
-      default: return 15;
-    }
-  };
-
-  const positionToReactFlowHeight = (position: HandlePosition): number => {
-    switch (position) {
-      case 'left': return 20;
-      case 'right': return 20;
-      case 'top': return 15;
-      case 'bottom': return 15;
-      default: return 15;
-    }
-  };
+/**
+ * TemplateNode component
+ */
+const TemplateNode: FC<TemplateNodeProps> = ({
+  metadata,
+  inputs,
+  output,
+  data,
+  onInputChange,
+  onOutputChange,
+  hideInputHandles = false,
+  hideTopHandle = false,
+  hideBottomHandle = false,
+  hideOutputHandles = false,
+  customHandles = [],
+  additionalContent = null,
+}) => {
+  const { inputValues, handleInputChange } = useNodeInputs(inputs, data, onInputChange);
+  const updateNodeInternals = useUpdateNodeInternals();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const [nodeHeight, setNodeHeight] = useState(0);
   
-  const renderInput = (input: InputDefinition) => {
-    if (input.component) {
-      return input.component;
+  // Update node internals when inputs or outputs change to reposition handles
+  useEffect(() => {
+    updateNodeInternals(metadata.id);
+  }, [metadata.id, updateNodeInternals, inputs.length]);
+  
+  // Measure node height for positioning outputs
+  useEffect(() => {
+    if (nodeRef.current) {
+      setNodeHeight(nodeRef.current.clientHeight);
     }
-
-    const displayValue = input.getConnectedValue?.();
-    const isConnected = displayValue !== null && displayValue !== undefined;
-
-    switch (input.type) {
-      case 'dropdown':
-        return (
-          <SearchableDropdown
-            options={input.options || []}
-            value={inputValues[input.id] || ''}
-            onChange={(value) => handleInputChange(input.id, value)}
-            disabled={isConnected}
-            placeholder={input.placeholder || 'Select an option'}
-          />
-        );
-      case 'textarea':
-        return (
-          <div className="relative">
-            <textarea
-              value={inputValues[input.id] || ''}
-              onChange={(e) => handleInputChange(input.id, e.target.value)}
-              disabled={isConnected}
-              rows={input.rows || 3}
-              className={`w-full p-1 text-xs rounded border resize-none ${isConnected ? 'bg-gray-100' : 'bg-white'} text-black`}
-              placeholder={input.placeholder}
-            />
-            {isConnected && (
-              <div className={`absolute inset-0 flex items-center justify-center text-xs ${metadata.textColor} bg-opacity-75 ${metadata.backgroundColor}`}>
-                {String(displayValue)}
-              </div>
-            )}
-          </div>
-        );
-      case 'text':
-      case 'number':
-        return (
-          <div className="relative flex-1">
-            <input
-              type={input.type}
-              value={inputValues[input.id] || ''}
-              onChange={(e) => handleInputChange(input.id, e.target.value)}
-              disabled={isConnected}
-              className={`w-full p-1 text-xs rounded-md border text-black ${isConnected ? 'opacity-0' : 'bg-white border-gray-300'}`}
-              placeholder={input.placeholder}
-            />
-            {isConnected && (
-              <div className={`absolute inset-0 flex items-center px-1 text-xs text-black bg-blue-50/30 rounded-md border border-blue-200/50 truncate`}>
-                {String(displayValue)}
-              </div>
-            )}
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
+  }, [inputs.length, inputValues]);
 
   return (
     <div 
+      ref={nodeRef}
       className={`${metadata.backgroundColor} p-1 rounded-md border ${metadata.borderColor}`}
       style={{ 
         boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1)'
@@ -182,120 +520,65 @@ export default function TemplateNode({
         {metadata.label}
       </div>
 
-      {/* Flow handles (top and bottom) */}
-      {!hideTopHandle && (
-        <Handle
+      {/* Flow handles */}
+      <FlowHandle
           type="target"
           position={Position.Top}
-          style={{ 
-            top: -3,
-            background: `#343434`,
-            borderColor: `#343434`,
-            backgroundColor: `#343434`,
-            width: positionToReactFlowWidth('top'),
-            height: positionToReactFlowHeight('top'),
-            borderRadius: 5,
-            zIndex: -1
-          }}
           id="flow-top"
-          isValidConnection={(connection) => {  
-            return connection.targetHandle === 'flow-bottom';
-          }}
+        hidden={hideTopHandle}
         />
-      )}
 
-      {!hideBottomHandle && (
-        <Handle
+      <FlowHandle
           type="source"
           position={Position.Bottom}
-          style={{ 
-            bottom: -3,
-            background: `#343434`,
-            borderColor: `#343434`,
-            backgroundColor: `#343434`,
-            width: positionToReactFlowWidth('bottom'),
-            height: positionToReactFlowHeight('bottom'),
-            borderRadius: 5,
-            zIndex: -1
-          }}
           id="flow-bottom"
-          isValidConnection={(connection) => {  
-            return connection.targetHandle === 'flow-top';
-          }}
+        hidden={hideBottomHandle}
         />
-      )}
       
       {/* Inputs and handles */}
       <div className="text-xs text-gray-700">
         {inputs.map((input) => (
           <div key={input.id} className="flex items-center mb-2 relative">
-            <div className={`ml-1 font-medium ${metadata.textColor} w-[90px]`}>{input.label}:</div>
-            <div className="w-full mr-1 max-w-[150px]">
-              {renderInput(input)}
+            <div className={`ml-1 font-medium ${metadata.textColor} w-[90px]`}>
+              {input.label}:
             </div>
-            {!hideInputHandles && input.type !== 'dropdown' && (
-              <Handle
-                id={input.handleId || input.id}
-                type="target"
-                position={Position.Left}
-                style={{ 
-                  left: -5, 
-                  background: `#343434`,
-                  borderColor: `#343434`,
-                  backgroundColor: `#343434`,
-                  width: positionToReactFlowWidth('left'),
-                  height: positionToReactFlowHeight('left'),
-                  borderRadius: 5,
-                  zIndex: -1
-                }}
+            <div className="w-full mr-1 max-w-[150px]">
+              <NodeInput
+                input={input}
+                value={inputValues[input.id]}
+                onChange={(value) => handleInputChange(input.id, value)}
+                textColor={metadata.textColor}
+                backgroundColor={metadata.backgroundColor}
               />
-            )}
+            </div>
+            
+            <InputHandle input={input} hidden={hideInputHandles} />
           </div>
         ))}
       </div>
 
       {/* Custom handles */}
-      {customHandles?.map((handle) => (
-        <Handle
-          key={handle.id}
-          type={handle.type}
-          position={positionToReactFlowPosition(handle.position)}
-          style={{ 
-            [handle.position === Position.Left ? 'left' : 'right']: -8,
-            background: `#343434`,
-            borderColor: `#343434`,
-            backgroundColor: `#343434`,
-            width: positionToReactFlowWidth(handle.position),
-            height: positionToReactFlowHeight(handle.position),
-            borderRadius: 5,
-            zIndex: -1
-          }}
-          id={handle.id}
-        />
+      {customHandles.map(handle => (
+        <CustomHandleComponent key={handle.id} handle={handle} />
       ))}
       
-      {/* Output handle - only show if output type exists */}
-      {!hideOutputHandle && output?.type && (
+      {/* Output handles */}
+      {!hideOutputHandles && (
         <Handle
           type="source"
           position={Position.Right}
           style={{ 
-            right: -1, 
-            background: `#343434`,
-            borderColor: `#343434`,
-            backgroundColor: `#343434`,
-            width: positionToReactFlowWidth('right'),
-            height: positionToReactFlowHeight('right'),
-            borderRadius: 5,
-            zIndex: -1
+          ...NodeUtils.getHandleStyle('right'),
           }}
-          id="output"
-          isValidConnection={(connection) => {
-            // Allow connections to param-* handles and flow inputs
-            return connection.targetHandle?.startsWith('param-') || connection.targetHandle === 'flow' || connection.targetHandle === 'template';
-          }}
+          id={output?.handleId || output?.id}
+          isValidConnection={NodeUtils.validateOutputConnection}
         />
       )}
+
+      {/* Additional content */}
+      {additionalContent}
     </div>
   );
-}
+};
+
+export default TemplateNode;

@@ -8,8 +8,9 @@ import PrintNode from "../components/nodes/code/PrintNode";
 import HeliusNode from "../components/nodes/provider/HeliusNode";
 import MathNode from "../components/nodes/code/MathNode";
 import ConditionalNode from "../components/nodes/code/ConditionalNode";
+import ExampleNode from "../components/nodes/example/ExampleNode";
 
-export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
+export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc' | 'Example';
 
 export interface NodeTypeMetadata {
   id: string;
@@ -46,6 +47,9 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   HELIUS: HeliusNode,
 
   // Misc
+
+  // Example
+  EXAMPLE: ExampleNode,
 } satisfies NodeTypes);
 
 // Data for node types (NEEDS TO MATCH THE NODE TYPES IN THE CANVAS)
@@ -166,4 +170,16 @@ export const nodeTypesMetadata: Record<string, NodeTypeMetadata> = {
   /* -------------------------------------------------------------- */
   /* ---------------------------- Misc ---------------------------- */
   /* -------------------------------------------------------------- */
+
+  // Example
+  EXAMPLE: {
+    id: 'EXAMPLE',
+    label: 'Example',
+    category: 'Example',
+    backgroundColor: 'bg-green-100',
+    borderColor: 'border-green-300',
+    primaryColor: 'green-100',
+    secondaryColor: 'green-300',
+    textColor: 'text-green-800'
+  },
 };
