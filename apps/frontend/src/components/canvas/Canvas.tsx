@@ -19,6 +19,7 @@ import {
   SelectionMode,
   Edge,
   Panel,
+  Connection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { edgeTypes } from "../../types/EdgeTypes";
@@ -37,6 +38,7 @@ import {
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { Icons } from "../icons/icons";
 import { Project } from "@/types/ProjectTypes";
+import { OutputValueType } from "@/types/OutputTypes";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -54,6 +56,7 @@ function Flow() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
+  const [connectionDragging, setConnectionDragging] = useState<Connection | null>(null);
 
   // Refs
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -217,21 +220,217 @@ function Flow() {
     setNodes((nds) => [...nds, newNode]);
   }, [setNodes, isProjectOwner]);
 
+  // Function to check if a connection is valid based on handle types
+  const isValidConnection = useCallback((connection: Connection): boolean => {
+    if (!connection.source || !connection.target) return false;
+
+    // Can't connect node to itself
+    if (connection.source === connection.target) return false;
+
+    // Connections between flow handles (top to bottom, vice versa) are always valid
+    if (connection.sourceHandle === "flow-bottom" && connection.targetHandle === "flow-top") {
+      return true;
+    }
+    if (connection.sourceHandle === "flow-top" && connection.targetHandle === "flow-bottom") {
+      return true;
+    }
+
+    // Connections between flow handles and input or output handles are not valid
+    if (connection.sourceHandle === "flow-top" && (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
+      return false;
+    }
+    if (connection.targetHandle === "flow-top" && (connection.sourceHandle?.startsWith("input-") || connection.sourceHandle?.startsWith("output"))) {
+      return false;
+    }
+    if (connection.sourceHandle === "flow-bottom" && (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
+      return false;
+    }
+    if (connection.targetHandle === "flow-bottom" && (connection.sourceHandle?.startsWith("input-") || connection.sourceHandle?.startsWith("output"))) {
+      return false;
+    }
+
+    // Find the nodes involved in the connection
+    const sourceNode = nodes.find((node: any) => node.id === connection.source);
+    const targetNode = nodes.find((node: any) => node.id === connection.target);
+    console.log("nodes", nodes);
+    console.log("sourceNode", sourceNode);
+    console.log("targetNode", targetNode);
+    console.log("connection", connection);
+    
+    if (!sourceNode || !targetNode) return false;
+    
+    // Determine the type of the source handle (output)
+    const outputType = sourceNode.data?.output?.type as OutputValueType || 'any';
+    console.log("outputType", outputType);
+    
+    // Find the target input handle and its expected type
+    const targetInput = targetNode.data?.inputs?.find((input: any) => 
+      input.handleId === connection.targetHandle || input.id === connection.targetHandle
+    );
+    
+    // If no matching input found, or if it's a flow connection (which are always valid)
+    if (!targetInput) {
+      // For flow connections (top/bottom handles), always valid
+      if (connection.targetHandle === 'flow-top' || connection.targetHandle === 'flow-bottom') {
+        return true;
+      }
+      return false;
+    }
+    
+    // Type compatibility rules
+    // 'any' type is compatible with any input
+    if (outputType === 'any') return true;
+    
+    // Define compatibility rules for each output type
+    // This can be customized based on your specific requirements
+    switch (outputType) {
+      case 'string':
+        // String can connect to string, any, or object inputs
+        return ['string', 'any', 'object'].includes(targetInput.type);
+      
+      case 'number':
+        // Number can connect to number, any, or object inputs
+        return ['number', 'any', 'object'].includes(targetInput.type);
+      
+      case 'boolean':
+        // Boolean can connect to boolean, any, or object inputs
+        return ['boolean', 'any', 'object'].includes(targetInput.type);
+      
+      case 'object':
+        // Object can connect to object or any inputs
+        return ['object', 'any'].includes(targetInput.type);
+      
+      case 'array':
+        // Array can connect to array, object, or any inputs
+        return ['array', 'object', 'any'].includes(targetInput.type);
+      
+      default:
+        // Default fallback for unknown types
+        return targetInput.type === 'any';
+    }
+  }, [nodes]);
+
+  // Add connection start handler
+  const onConnectStart = useCallback((_: any, { nodeId, handleId, handleType }: any) => {
+    setConnectionDragging({
+      source: handleType === 'source' ? nodeId : null,
+      sourceHandle: handleType === 'source' ? handleId : null,
+      target: handleType === 'target' ? nodeId : null,
+      targetHandle: handleType === 'target' ? handleId : null,
+    });
+  }, []);
+  
+  // Add connection end handler
+  const onConnectEnd = useCallback(() => {
+    setConnectionDragging(null);
+  }, []);
+
   const onConnect: OnConnect = useCallback(
     (connection) => {
       if (!isProjectOwner) return;
-      setEdges((edges) => addEdge({
-        ...connection,
-        type: 'smoothstep',
-        animated: true,
-        style: {
-          strokeWidth: 2,
-          stroke: 'white',
-        },
-      } as Edge, edges));
+      if (isValidConnection(connection)) {
+        setEdges((edges) => addEdge({
+          ...connection,
+          type: 'smoothstep',
+          animated: true,
+          style: {
+            strokeWidth: 2,
+            stroke: 'white',
+          },
+        } as Edge, edges));
+      }
     },
-    [setEdges, isProjectOwner]
+    [setEdges, isProjectOwner, isValidConnection]
   );
+
+  // Update handle styles when connection is being dragged
+  useEffect(() => {
+    if (!connectionDragging) return;
+    
+    // Add a CSS class to the root element to indicate a connection is being dragged
+    document.documentElement.classList.add('connection-dragging');
+    
+    // Add style tag to highlight valid handles
+    const styleElement = document.createElement('style');
+    styleElement.id = 'valid-handles-style';
+    
+    // Add CSS for handle highlighting
+    styleElement.innerHTML = `
+      .connection-dragging .react-flow__handle {
+        /* Default style for handles during dragging - more muted */
+        background-color: #555 !important;
+        border-color: #555 !important;
+      }
+      
+      .connection-dragging .react-flow__handle.valid-connection {
+        /* Style for permissible handles - green */
+        background-color: #4CAF50 !important;
+        border-color: #4CAF50 !important;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.7) !important;
+      }
+    `;
+    
+    document.head.appendChild(styleElement);
+    
+    // Store validation results to avoid rechecking
+    const validHandleMap = new Map();
+    
+    // Apply valid-connection class to permissible handles (run once)
+    const handles = document.querySelectorAll('.react-flow__handle');
+    handles.forEach(handle => {
+      const handleElement = handle as HTMLElement;
+      const nodeId = handleElement.closest('.react-flow__node')?.getAttribute('data-id');
+      const handleId = handleElement.getAttribute('data-handleid');
+      const handleType = handleElement.classList.contains('source') ? 'source' : 'target';
+      
+      // Skip the handle being dragged
+      if ((connectionDragging.source === nodeId && connectionDragging.sourceHandle === handleId) ||
+          (connectionDragging.target === nodeId && connectionDragging.targetHandle === handleId)) {
+        return;
+      }
+      
+      // Generate a unique key for this handle
+      const handleKey = `${nodeId}-${handleId}-${handleType}`;
+      
+      // Check if we already validated this handle
+      if (!validHandleMap.has(handleKey)) {
+        // Check if this connection would be valid
+        const testConnection = {
+          source: handleType === 'target' ? connectionDragging.source : nodeId,
+          sourceHandle: handleType === 'target' ? connectionDragging.sourceHandle : handleId,
+          target: handleType === 'target' ? nodeId : connectionDragging.target,
+          targetHandle: handleType === 'target' ? handleId : connectionDragging.targetHandle,
+        };
+        
+        // If the source is dragging, check handles that could be targets
+        // If the target is dragging, check handles that could be sources
+        if ((connectionDragging.source && handleType === 'target') || 
+            (connectionDragging.target && handleType === 'source')) {
+          const isValid = isValidConnection(testConnection as Connection);
+          validHandleMap.set(handleKey, isValid);
+          
+          if (isValid) {
+            handleElement.classList.add('valid-connection');
+          }
+        }
+      }
+    });
+    
+    return () => {
+      // Clean up
+      document.documentElement.classList.remove('connection-dragging');
+      const styleElement = document.getElementById('valid-handles-style');
+      if (styleElement) {
+        styleElement.remove();
+      }
+      
+      // Remove any added classes
+      const handles = document.querySelectorAll('.react-flow__handle');
+      handles.forEach(handle => {
+        handle.classList.remove('valid-connection');
+      });
+    };
+  }, [connectionDragging, isValidConnection]);
 
   const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -320,6 +519,8 @@ function Flow() {
         onNodesChange={isProjectOwner ? onNodesChange : undefined}
         onEdgesChange={isProjectOwner ? onEdgesChange : undefined}
         onConnect={isProjectOwner ? onConnect : undefined}
+        onConnectStart={isProjectOwner ? onConnectStart : undefined}
+        onConnectEnd={isProjectOwner ? onConnectEnd : undefined}
         onDrop={isProjectOwner ? onDrop : undefined}
         onDragOver={onDragOver}
         onDragEnd={onDragEnd}
@@ -331,6 +532,7 @@ function Flow() {
           hideAttribution: true
         }}
         fitView
+        isValidConnection={isValidConnection}
       >
         {isLoading ? (
           <div className="flex flex-col min-h-screen min-w-screen items-center justify-center text-white">

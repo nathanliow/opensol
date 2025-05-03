@@ -1,7 +1,7 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 import { Connection, Keypair, PublicKey, clusterApiUrl } from '@solana/web3.js';
 
-export const mintToken: BlockTemplate = {
+export const mintToken: BlockFunctionTemplate = {
   metadata: {
     name: 'mintToken',
     description:
@@ -76,9 +76,6 @@ export const mintToken: BlockTemplate = {
       if (!apiKey) {
         throw new Error('Helius API key is required.');
       }
-      
-      // This function provides the data needed to create a token, but actual signing
-      // should be done on the frontend using the Privy wallet
       
       return {
         success: true,

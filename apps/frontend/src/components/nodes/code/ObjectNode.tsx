@@ -25,7 +25,7 @@ export default function ObjectNode({ id, data }: ObjectNodeProps) {
   // Create inputs for each object property using the new helper
   const inputs: InputDefinition[] = Object.keys(objectData).map(key => 
     createInputDefinition.display({
-      id: key,
+      id: `input-${key}`,
       label: key,
       defaultValue: typeof objectData[key] === 'object' 
         ? JSON.stringify(objectData[key]) 

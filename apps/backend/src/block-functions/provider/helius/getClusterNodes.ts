@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getClusterNodes: BlockTemplate = {
+export const getClusterNodes: BlockFunctionTemplate = {
   metadata: {
     name: 'getClusterNodes',
     description:

@@ -1,17 +1,17 @@
 import { FlowNode, FlowEdge } from './types';
-import { BlockTemplate } from '../../../../../frontend/src/components/services/blockTemplateService';
+import { BlockFunctionTemplate } from '../../../../../frontend/src/components/services/blockTemplateService';
 
 export class FlowCompiler {
   private nodes: FlowNode[];
   private edges: FlowEdge[];
-  private templates: Record<string, BlockTemplate>;
+  private templates: Record<string, BlockFunctionTemplate>;
   private nodeOutputs: Map<string, string> = new Map();
   private varCounter: number = 0;
   private printOutputs: string[] = [];
   private getFunctions: Map<string, string> = new Map();
   private templateToFunctionName: Map<string, string> = new Map();
 
-  constructor(nodes: FlowNode[], edges: FlowEdge[], templates: Record<string, BlockTemplate>) {
+  constructor(nodes: FlowNode[], edges: FlowEdge[], templates: Record<string, BlockFunctionTemplate>) {
     this.nodes = nodes;
     this.edges = edges;
     this.templates = templates;

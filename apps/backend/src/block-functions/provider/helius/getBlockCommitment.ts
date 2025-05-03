@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getBlockCommitment: BlockTemplate = {
+export const getBlockCommitment: BlockFunctionTemplate = {
   metadata: {
     name: 'getBlockCommitment',
     description:

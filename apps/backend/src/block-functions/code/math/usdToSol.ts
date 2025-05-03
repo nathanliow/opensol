@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const usdToSol: BlockTemplate = {
+export const usdToSol: BlockFunctionTemplate = {
   metadata: {
     name: 'usdToSol',
     description: 'Convert USD amount to SOL using current price',

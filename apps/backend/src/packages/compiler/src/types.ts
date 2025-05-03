@@ -1,5 +1,5 @@
 export interface FlowNode {
-  id: string;
+  id: string; // {node type}-{unix timestamp at creation}
   type: string;
   position: { x: number; y: number };
   data: {
@@ -12,8 +12,8 @@ export interface FlowNode {
 
 export interface FlowEdge {
   id: string;
-  source: string;
-  target: string;
+  source: string; // id of the source node
+  target: string; // id of the target node
   sourceHandle?: string;
   targetHandle?: string;
 }

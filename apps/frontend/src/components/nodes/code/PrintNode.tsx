@@ -38,7 +38,7 @@ export default function PrintNode({ id, data }: PrintNodeProps) {
   // Define inputs for template node using the new helper function
   const inputs: InputDefinition[] = useMemo(() => [
     createInputDefinition.textarea({
-      id: 'template',
+      id: 'input-template',
       label: 'Template',
       defaultValue: data.template || '',
       placeholder: 'Enter template (use $output$ for value)',

@@ -52,7 +52,6 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   EXAMPLE: ExampleNode,
 } satisfies NodeTypes);
 
-// Data for node types (NEEDS TO MATCH THE NODE TYPES IN THE CANVAS)
 export const nodeTypesMetadata: Record<string, NodeTypeMetadata> = {
 
   /* ------------------------------------------------------------ */

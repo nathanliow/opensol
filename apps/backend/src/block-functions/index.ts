@@ -1,7 +1,7 @@
 import { getUserSolBalance } from './blockchain/get/getUserSolBalance';
 import { usdToSol } from './code/math/usdToSol';
 import { solToUsd } from './code/math/solToUsd';
-import { BlockTemplate } from '../../../frontend/src/components/services/blockTemplateService';
+import { BlockFunctionTemplate } from '../../../frontend/src/components/services/blockTemplateService';
 import { getAccountInfo } from './provider/helius/getAccountInfo';
 import { getAsset } from './provider/helius/getAsset';
 import { getAssetProof } from './provider/helius/getAssetProof';
@@ -54,7 +54,7 @@ import { minimumLedgerSlot } from './provider/helius/minimumLedgerSlot';
 import { mintToken } from './blockchain/mint/mintToken';
 
 // Group templates by their block type
-export const templates: Record<string, Record<string, BlockTemplate>> = {
+export const templates: Record<string, Record<string, BlockFunctionTemplate>> = {
   GET: {
     getUserSolBalance
   },
@@ -119,8 +119,8 @@ export const templates: Record<string, Record<string, BlockTemplate>> = {
 };
 
 // Helper to get all templates flattened into a single record
-export const getFlattenedTemplates = (): Record<string, BlockTemplate> => {
-  const flattened: Record<string, BlockTemplate> = {};
+export const getFlattenedTemplates = (): Record<string, BlockFunctionTemplate> => {
+  const flattened: Record<string, BlockFunctionTemplate> = {};
   Object.entries(templates).forEach(([blockType, blockTemplates]) => {
     Object.entries(blockTemplates).forEach(([name, template]) => {
       flattened[name] = {

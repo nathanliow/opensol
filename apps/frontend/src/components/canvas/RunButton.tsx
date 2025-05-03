@@ -3,7 +3,7 @@ import { useNodes, useEdges } from '@xyflow/react';
 import { FlowCompiler } from '../../../../backend/src/packages/compiler/src/FlowCompiler';
 import blockTemplateService from '../services/blockTemplateService';
 import { FlowNode, FlowEdge } from '../../../../backend/src/packages/compiler/src/types';
-import { BlockTemplate } from '../services/blockTemplateService';
+import { BlockFunctionTemplate } from '../services/blockTemplateService';
 import { useConfig } from '../../contexts/ConfigContext';
 
 interface RunButtonProps {
@@ -159,7 +159,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       onDebugGenerated(JSON.stringify(debugInfo, null, 2));
 
       // Get templates from service
-      const templates: Record<string, BlockTemplate> = Object.entries(blockTemplateService.getTemplates()).reduce((acc, [_, template]) => {
+      const templates: Record<string, BlockFunctionTemplate> = Object.entries(blockTemplateService.getTemplates()).reduce((acc, [_, template]) => {
         acc[template.metadata.name] = {
           metadata: { 
             name: template.metadata.name,
@@ -173,7 +173,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
           execute: template.execute
         };
         return acc;
-      }, {} as Record<string, BlockTemplate>);
+      }, {} as Record<string, BlockFunctionTemplate>);
 
       // Compile and execute the flow
       console.log('relevantNodes', relevantNodes);

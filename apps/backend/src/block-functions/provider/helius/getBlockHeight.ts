@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getBlockHeight: BlockTemplate = {
+export const getBlockHeight: BlockFunctionTemplate = {
   metadata: {
     name: 'getBlockHeight',
     description:

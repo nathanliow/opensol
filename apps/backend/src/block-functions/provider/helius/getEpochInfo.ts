@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getEpochInfo: BlockTemplate = {
+export const getEpochInfo: BlockFunctionTemplate = {
   metadata: {
     name: 'getEpochInfo',
     description:

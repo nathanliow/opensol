@@ -17,7 +17,7 @@ interface ConditionalNodeProps {
 const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
   const inputs: InputDefinition[] = useMemo(() => [
     createInputDefinition.text({
-      id: 'condition',
+      id: 'input-condition',
       label: 'Condition',
       description: 'Boolean expression to evaluate',
       placeholder: 'Enter condition expression',

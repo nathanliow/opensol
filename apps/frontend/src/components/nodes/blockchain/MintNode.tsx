@@ -27,7 +27,7 @@ interface MintNodeProps {
 
 // Define the output
 const output: OutputDefinition = {
-  id: 'token-output',
+  id: 'output',
   label: 'Token',
   type: 'object',
   description: 'The minted token information'
@@ -70,7 +70,7 @@ export default function MintNode({ id, data }: MintNodeProps) {
   // Define inputs for token minting using the new helper functions
   const inputs: InputDefinition[] = [
     createInputDefinition.text({
-      id: 'name',
+      id: 'input-name',
       label: 'Token Name',
       defaultValue: name,
       placeholder: 'Enter token name',
@@ -78,7 +78,7 @@ export default function MintNode({ id, data }: MintNodeProps) {
     }),
     
     createInputDefinition.text({
-      id: 'symbol',
+      id: 'input-symbol',
       label: 'Symbol',
       defaultValue: symbol,
       placeholder: 'Enter token symbol',
@@ -87,14 +87,14 @@ export default function MintNode({ id, data }: MintNodeProps) {
     }),
     
     createInputDefinition.text({
-      id: 'description',
+      id: 'input-description',
       label: 'Description',
       defaultValue: description,
       placeholder: 'Enter token description'
     }),
     
     createInputDefinition.number({
-      id: 'decimals',
+      id: 'input-decimals',
       label: 'Decimals',
       defaultValue: decimals,
       min: 0,
@@ -102,7 +102,7 @@ export default function MintNode({ id, data }: MintNodeProps) {
     }),
     
     createInputDefinition.file({
-      id: 'image',
+      id: 'input-image',
       label: 'Token Image',
       accept: 'image/*',
       previewType: 'image',

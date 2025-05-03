@@ -3,9 +3,9 @@ import { Handle, useUpdateNodeInternals } from '@xyflow/react';
 import { Position } from '@xyflow/system';
 import { InputDefinition, FileInputDefinition } from '../../types/InputTypes';
 import { OutputDefinition } from '../../types/OutputTypes';
-import { CustomHandle, HandlePosition } from '@/types/HandleTypes';
+import { CustomHandle, HandlePosition } from '../../types/HandleTypes';
 import SearchableDropdown from '../ui/SearchableDropdown';
-import { NodeTypeMetadata } from '@/types/NodeTypes';
+import { NodeTypeMetadata } from '../../types/NodeTypes';
 
 // Template node props interface
 export interface TemplateNodeProps {
@@ -18,7 +18,7 @@ export interface TemplateNodeProps {
   hideTopHandle?: boolean;
   hideBottomHandle?: boolean;
   hideInputHandles?: boolean;
-  hideOutputHandles?: boolean;
+  hideOutputHandle?: boolean;
   customHandles?: CustomHandle[];
   additionalContent?: ReactNode;
 }
@@ -412,18 +412,16 @@ const OutputHandle: FC<{
   }
   
   return (
-    // <div className="relative">
-      <Handle
-        type="source"
-        position={Position.Right}
-        style={{
-          ...NodeUtils.getHandleStyle('right'),
-          // top: -offsetY
-        }}
-        id={output.handleId || output.id}
-        isValidConnection={NodeUtils.validateOutputConnection}
-      />
-    // </div>
+    <Handle
+      type="source"
+      position={Position.Right}
+      style={{
+        ...NodeUtils.getHandleStyle('right'),
+        // top: -offsetY
+      }}
+      id={output.handleId || output.id}
+      isValidConnection={NodeUtils.validateOutputConnection}
+    />
   );
 };
 
@@ -487,7 +485,7 @@ const TemplateNode: FC<TemplateNodeProps> = ({
   hideInputHandles = false,
   hideTopHandle = false,
   hideBottomHandle = false,
-  hideOutputHandles = false,
+  hideOutputHandle = false,
   customHandles = [],
   additionalContent = null,
 }) => {
@@ -522,18 +520,18 @@ const TemplateNode: FC<TemplateNodeProps> = ({
 
       {/* Flow handles */}
       <FlowHandle
-          type="target"
-          position={Position.Top}
-          id="flow-top"
+        type="target"
+        position={Position.Top}
+        id="flow-top"
         hidden={hideTopHandle}
-        />
+      />
 
       <FlowHandle
-          type="source"
-          position={Position.Bottom}
-          id="flow-bottom"
+        type="source"
+        position={Position.Bottom}
+        id="flow-bottom"
         hidden={hideBottomHandle}
-        />
+      />
       
       {/* Inputs and handles */}
       <div className="text-xs text-gray-700">
@@ -563,7 +561,7 @@ const TemplateNode: FC<TemplateNodeProps> = ({
       ))}
       
       {/* Output handles */}
-      {!hideOutputHandles && (
+      {!hideOutputHandle && (
         <Handle
           type="source"
           position={Position.Right}

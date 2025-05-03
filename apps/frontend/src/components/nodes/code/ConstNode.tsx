@@ -92,14 +92,14 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
     switch (dataType) {
       case 'number':
         valueInput = createInputDefinition.number({
-          id: 'value',
+          id: 'input-value',
           label: 'Value',
           defaultValue: typeof value === 'number' ? value : 0
         });
         break;
       case 'boolean':
         valueInput = createInputDefinition.dropdown({
-          id: 'value',
+          id: 'input-value',
           label: 'Value',
           options: [
             { value: 'true', label: 'True' },
@@ -110,7 +110,7 @@ export default function ConstNode({ id, data }: ConstNodeProps) {
         break;
       default: // string
         valueInput = createInputDefinition.text({
-          id: 'value',
+          id: 'input-value',
           label: 'Value',
           defaultValue: String(value || '')
         });

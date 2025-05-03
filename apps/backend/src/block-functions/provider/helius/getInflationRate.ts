@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getInflationRate: BlockTemplate = {
+export const getInflationRate: BlockFunctionTemplate = {
   metadata: {
     name: 'getInflationRate',
     description:

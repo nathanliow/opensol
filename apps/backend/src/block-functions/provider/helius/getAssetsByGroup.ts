@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getAssetsByGroup: BlockTemplate = {
+export const getAssetsByGroup: BlockFunctionTemplate = {
   metadata: {
     name: 'getAssetsByGroup',
     description:

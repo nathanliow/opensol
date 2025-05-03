@@ -33,7 +33,7 @@ export default function FunctionNode({ id, data }: LabelNodeProps) {
   // Define input for the name field using the new helper
   const inputs: InputDefinition[] = useMemo(() => [
     createInputDefinition.text({
-      id: 'name',
+      id: 'input-name',
       label: 'Name',
       defaultValue: data.name || 'Untitled Function',
       placeholder: 'Enter Function name...'
@@ -46,12 +46,13 @@ export default function FunctionNode({ id, data }: LabelNodeProps) {
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {
-        if (inputId === 'name') {
+        if (inputId === 'input-name') {
           handleNameChange(value);
         }
       }}
       hideTopHandle={true}
       hideInputHandles={true}
+      hideOutputHandle={true}
     />
   );
 }

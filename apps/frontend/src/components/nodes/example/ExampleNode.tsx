@@ -8,14 +8,14 @@ import { OutputDefinition } from '@/types/OutputTypes';
 // Define the node's input/output schema using the new helper functions
 const inputs: InputDefinition[] = [
   createInputDefinition.text({
-    id: 'text',
+    id: 'input-text',
     label: 'Text',
     defaultValue: 'Hello World',
     placeholder: 'Enter text here'
   }),
   
   createInputDefinition.number({
-    id: 'number',
+    id: 'input-number',
     label: 'Number',
     defaultValue: 42,
     placeholder: 'Enter a number',
@@ -24,7 +24,7 @@ const inputs: InputDefinition[] = [
   }),
   
   createInputDefinition.dropdown({
-    id: 'options',
+    id: 'input-options',
     label: 'Options',
     options: [
       { value: 'option1', label: 'Option 1' },

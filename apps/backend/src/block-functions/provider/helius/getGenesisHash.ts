@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getGenesisHash: BlockTemplate = {
+export const getGenesisHash: BlockFunctionTemplate = {
   metadata: {
     name: 'getGenesisHash',
     description:

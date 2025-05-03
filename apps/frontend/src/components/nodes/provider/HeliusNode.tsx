@@ -21,7 +21,7 @@ interface HeliusNodeProps {
 export default function HeliusNode({ id, data }: HeliusNodeProps) {
   const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
   const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
-  const blockTemplates = blockTemplateService.getTemplatesByType('HELIUS');
+  const blockFunctionTemplates = blockTemplateService.getTemplatesByType('HELIUS');
   const edges = useEdges();
   const nodes = useNodes();
   const { network, getApiKey } = useConfig();
@@ -42,7 +42,7 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);
     const newParameters = { 
-      network: network || 'devnet'  // Default to devnet if network is empty
+      network: network || 'devnet'  
     }; 
     data.selectedFunction = value;
     data.parameters = newParameters;
@@ -51,7 +51,7 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
   const handleParameterChange = useCallback((paramName: string, value: string) => {
     const newParameters = { 
       ...parameters, 
-      network: network || 'devnet'  // Default to devnet if network is empty
+      network: network || 'devnet'  
     };
     newParameters[paramName] = value;
     setParameters(newParameters);
@@ -62,19 +62,19 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
   const functionOptions = useMemo(() => {
     return [
       { value: '', label: 'Select Function' },
-      ...blockTemplates.map(template => ({
-        value: template.metadata.name,
-        label: template.metadata.name
+      ...blockFunctionTemplates.map(functionTemplate => ({
+        value: functionTemplate.metadata.name,
+        label: functionTemplate.metadata.name
       }))
     ];
-  }, [blockTemplates]);
+  }, [blockFunctionTemplates]);
 
   // Create dynamic inputs based on selected function
   const inputs: InputDefinition[] = useMemo(() => {
     // Base function dropdown
     const baseInputs: InputDefinition[] = [
       createInputDefinition.dropdown({
-        id: 'function',
+        id: 'input-function',
         label: 'Function',
         options: functionOptions,
         defaultValue: selectedFunction,
@@ -83,15 +83,15 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
     ];
     
     if (selectedFunction) {
-      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
-      if (template) {
-        const paramInputs = template.metadata.parameters
+      const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === selectedFunction);
+      if (functionTemplate) {
+        const paramInputs = functionTemplate.metadata.parameters
           .filter(param => param.name !== 'apiKey' && param.name !== 'network')
           .map(param => {
             const connectionGetter = () => getConnectedValue(param.name) as string | null;
             
             return createInputDefinition.text({
-              id: param.name,
+              id: `input-${param.name}`,
               label: param.name,
               defaultValue: parameters[param.name] || '',
               description: param.description,
@@ -105,18 +105,18 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
     }
     
     return baseInputs;
-  }, [blockTemplates, selectedFunction, parameters, getConnectedValue, functionOptions]);
+  }, [blockFunctionTemplates, selectedFunction, parameters, getConnectedValue, functionOptions]);
 
   // Get output type from selected template
   const output: OutputDefinition = useMemo(() => {
     if (selectedFunction) {
-      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
-      if (template?.metadata.output) {
+      const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === selectedFunction);
+      if (functionTemplate?.metadata.output) {
         return {
           id: 'output',
           label: 'Result',
-          type: template.metadata.output.type as any,
-          description: template.metadata.output.description
+          type: functionTemplate.metadata.output.type as any,
+          description: functionTemplate.metadata.output.description
         };
       }
     }
@@ -126,7 +126,7 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
       type: 'object',
       description: 'Helius API result'
     };
-  }, [selectedFunction, blockTemplates]);
+  }, [selectedFunction, blockFunctionTemplates]);
 
   return (
     <TemplateNode
@@ -134,7 +134,7 @@ export default function HeliusNode({ id, data }: HeliusNodeProps) {
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {
-        if (inputId === 'function') {
+        if (inputId === 'input-function') {
           handleFunctionChange(value);
         } else {
           handleParameterChange(inputId, value);

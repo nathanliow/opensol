@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getFirstAvailableBlock: BlockTemplate = {
+export const getFirstAvailableBlock: BlockFunctionTemplate = {
   metadata: {
     name: 'getFirstAvailableBlock',
     description:

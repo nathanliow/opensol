@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getRecentPerformanceSamples: BlockTemplate = {
+export const getRecentPerformanceSamples: BlockFunctionTemplate = {
   metadata: {
     name: 'getRecentPerformanceSamples',
     description:

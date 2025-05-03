@@ -106,7 +106,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
     // Base function dropdown input
     const baseInputs: InputDefinition[] = [
       createInputDefinition.dropdown({
-        id: 'function',
+        id: 'input-function',
         label: 'Function',
         options: functionOptions,
         defaultValue: selectedFunction,
@@ -122,7 +122,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
           
           if (param.type === 'number') {
             return createInputDefinition.number({
-              id: param.name,
+              id: `input-${param.name}`,
               label: param.name,
               defaultValue: parameters[param.name] as number || 0,
               description: param.description,
@@ -131,7 +131,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
             });
           } else {
             return createInputDefinition.text({
-              id: param.name,
+              id: `input-${param.name}`,
               label: param.name,
               defaultValue: String(parameters[param.name] || ''),
               description: param.description,
@@ -175,7 +175,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
       inputs={inputs}
       data={data}
       onInputChange={(inputId, value) => {
-        if (inputId === 'function') {
+        if (inputId === 'input-function') {
           handleFunctionChange(value);
         } else {
           handleParameterChange(inputId, value);

@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getStakeMinimumDelegation: BlockTemplate = {
+export const getStakeMinimumDelegation: BlockFunctionTemplate = {
   metadata: {
     name: 'getStakeMinimumDelegation',
     description:

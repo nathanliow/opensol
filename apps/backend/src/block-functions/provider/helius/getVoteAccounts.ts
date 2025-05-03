@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getVoteAccounts: BlockTemplate = {
+export const getVoteAccounts: BlockFunctionTemplate = {
   metadata: {
     name: 'getVoteAccounts',
     description:
