@@ -102,14 +102,14 @@
       "source": "const-1742861612991",
       "sourceHandle": "output",
       "target": "helius-1742861555250",
-      "targetHandle": "param-assetId",
+      "targetHandle": "input-assetId",
       "type": "smoothstep",
       "animated": true,
       "style": {
         "strokeWidth": 2,
         "stroke": "white"
       },
-      "id": "xy-edge__const-1742861612991output-helius-1742861555250param-assetId"
+      "id": "xy-edge__const-1742861612991output-helius-1742861555250input-assetId"
     },
     {
       "source": "helius-1742861555250",

@@ -1,26 +1,32 @@
-import { useMemo } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useCallback, useMemo } from 'react';
+import { useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
 import { CustomHandle } from '../../../types/HandleTypes';
 import { OutputDefinition } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface ConditionalNodeProps {
   id: string;
-  data: {
-    label?: string;
-    parameters?: Record<string, any>;
-  };
 }
 
-const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
+const ConditionalNode = ({ id }: ConditionalNodeProps) => {
+  const { setNodes } = useReactFlow();
+  const nodes = useNodes() as FlowNode[];
+  
+  const handleConditionChange = useCallback((value: string) => {
+    nodeUtils.updateNodeInput(id, 'condition', 'input-condition', 'string', value, setNodes);
+  }, [id, setNodes]);
+
   const inputs: InputDefinition[] = useMemo(() => [
     createInputDefinition.text({
       id: 'input-condition',
       label: 'Condition',
       description: 'Boolean expression to evaluate',
       placeholder: 'Enter condition expression',
+      defaultValue: '',
       required: true
     })
   ], []);
@@ -53,10 +59,16 @@ const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['CONDITIONAL']}
+      id={id}
+      metadata={nodeTypes['CONDITIONAL'].metadata}
       inputs={inputs}
       output={output}
-      data={data}
+      data={nodeUtils.getNodeData(nodes, id)}
+      onInputChange={(inputId, value) => {
+        if (inputId === 'input-condition') {
+          handleConditionChange(value);
+        }
+      }}
       customHandles={customHandles}
     />
   );

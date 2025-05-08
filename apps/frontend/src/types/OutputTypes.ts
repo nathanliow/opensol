@@ -1,7 +1,15 @@
 import { ReactNode } from "react";
 
 // Basic output value types
-export type OutputValueType = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'any';
+export type OutputValueType = string | number | boolean | object | null;
+
+export type OutputValueTypeString = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'any' | 'null';
+
+export type Output = {
+  handleId?: string; // output handle id
+  type: OutputValueTypeString; // output type
+  value: OutputValueType; // output value
+};
 
 // Common properties for all output definitions
 interface BaseOutputDefinition {
@@ -24,13 +32,14 @@ export const createOutput = (props: OutputDefinition): OutputDefinition => ({
 });
 
 // Output type descriptions
-export const outputTypeDescriptions: Record<OutputValueType, string> = {
+export const outputTypeDescriptions: Record<OutputValueTypeString, string> = {
   string: 'Text value',
   number: 'Numeric value',
   boolean: 'True/False value',
   object: 'Object containing properties',
   array: 'List of values',
-  any: 'Any type of value'
+  any: 'Any type of value',
+  null: 'No value'
 };
 
 // Common output definitions

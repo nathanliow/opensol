@@ -101,27 +101,27 @@
       "source": "const-1742786439908",
       "sourceHandle": "output",
       "target": "get-1742785990720",
-      "targetHandle": "param-address",
+      "targetHandle": "input-address",
       "type": "smoothstep",
       "animated": true,
       "style": {
         "strokeWidth": 2,
         "stroke": "white"
       },
-      "id": "xy-edge__const-1742786439908output-get-1742785990720param-address"
+      "id": "xy-edge__const-1742786439908output-get-1742785990720input-address"
     },
     {
       "source": "get-1742785990720",
       "sourceHandle": "output",
       "target": "print-1742786454099",
-      "targetHandle": "template",
+      "targetHandle": "input-template",
       "type": "smoothstep",
       "animated": true,
       "style": {
         "strokeWidth": 2,
         "stroke": "white"
       },
-      "id": "xy-edge__get-1742785990720output-print-1742786454099template"
+      "id": "xy-edge__get-1742785990720output-print-1742786454099input-template"
     }
   ],
   "viewport": {

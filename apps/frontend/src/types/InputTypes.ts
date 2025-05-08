@@ -1,10 +1,23 @@
 import { ReactNode } from "react";
 
-// Basic input types
-export type InputType = 'dropdown' | 'text' | 'number' | 'display' | 'textarea' | 'file';
+/*
+ * FRONTEND/BACKEND TYPES FOR INPUTS
+ */
+
+export type FrontendInputType = 'dropdown' | 'text' | 'number' | 'display' | 'textarea' | 'file';
 
 // Value types that match input types
-export type InputValueType = string | number | boolean | object | null | File;
+export type InputValueType = string | number | boolean | object | File | null;
+
+export type InputValueTypeString = 'string' | 'number' | 'boolean' | 'object' | 'file' | 'null';
+
+export type Inputs = {
+  [name: string]: { // input name
+    handleId?: string; // input handle id
+    type?: InputValueTypeString; // input type
+    value?: InputValueType | null; // input value
+  }  
+};
 
 // Common properties for all input definitions
 interface BaseInputDefinition {

@@ -1,19 +1,21 @@
-import { useState, useEffect, useMemo, FC, useRef, ReactNode } from 'react';
-import { Handle, useUpdateNodeInternals } from '@xyflow/react';
+import { useState, useEffect, useMemo, FC, useRef, ReactNode, useCallback } from 'react';
+import { Handle, useUpdateNodeInternals, useReactFlow, useEdges, useNodes } from '@xyflow/react';
 import { Position } from '@xyflow/system';
 import { InputDefinition, FileInputDefinition } from '../../types/InputTypes';
 import { OutputDefinition } from '../../types/OutputTypes';
-import { CustomHandle, HandlePosition } from '../../types/HandleTypes';
+import { CustomHandle } from '../../types/HandleTypes';
 import SearchableDropdown from '../ui/SearchableDropdown';
 import { NodeTypeMetadata } from '../../types/NodeTypes';
+import { nodeUtils } from '../../utils/nodeUtils';
 
 // Template node props interface
 export interface TemplateNodeProps {
+  id: string;
   metadata: NodeTypeMetadata;
   inputs: InputDefinition[];
   output?: OutputDefinition;  
   data: Record<string, any>;
-  onInputChange?: (inputId: string, value: any) => void;
+  onInputChange?: (inputId: string, value: any, fromConnection?: boolean) => void;
   onOutputChange?: (outputId: string, value: any) => void;
   hideTopHandle?: boolean;
   hideBottomHandle?: boolean;
@@ -21,82 +23,8 @@ export interface TemplateNodeProps {
   hideOutputHandle?: boolean;
   customHandles?: CustomHandle[];
   additionalContent?: ReactNode;
+  disableConnectionHandling?: boolean;
 }
-
-// Handle style configuration
-const HANDLE_STYLES = {
-  base: {
-    background: '#343434',
-    borderColor: '#343434',
-    backgroundColor: '#343434',
-    borderRadius: 5,
-    zIndex: -1,
-  },
-  positions: {
-    left: { width: 15, height: 20, left: -5 },
-    right: { width: 15, height: 20, right: -5 },
-    top: { width: 40, height: 15, top: -3 },
-    bottom: { width: 40, height: 15, bottom: -3 },
-  }
-};
-
-/**
- * Utility functions for working with nodes
- */
-export const NodeUtils = {
-  // Get a value from node data with optional default
-  getValue: (data: Record<string, any>, id: string, defaultValue: any = null): any => {
-    return data[id] !== undefined ? data[id] : defaultValue;
-  },
-
-  // Check if an input has a connected value
-  isInputConnected: (input: InputDefinition): boolean => {
-    const connectedValue = input.getConnectedValue?.();
-    return connectedValue !== null && connectedValue !== undefined;
-  },
-
-  // Get the connected value for an input or return null
-  getConnectedValue: (input: InputDefinition): any => {
-    return input.getConnectedValue?.() ?? null;
-  },
-
-  // Convert a HandlePosition to a ReactFlow Position
-  toReactFlowPosition: (position: HandlePosition): Position => {
-    switch (position) {
-      case 'left': return Position.Left;
-      case 'right': return Position.Right;
-      case 'top': return Position.Top;
-      case 'bottom': return Position.Bottom;
-      default: return Position.Left;
-    }
-  },
-
-  // Get handle style for a specific position
-  getHandleStyle: (position: HandlePosition, offsetY: number = 0) => {
-    const style = {
-      ...HANDLE_STYLES.base,
-      ...HANDLE_STYLES.positions[position],
-    } as any; // Use type assertion to avoid TypeScript errors
-
-    // if (position === 'right') {
-    //   style.top = -offsetY;
-    // }
-  
-    return style;
-  },
-
-  // Validate flow connections
-  validateFlowConnection: (connection: any) => {
-    return connection.targetHandle === 'flow-bottom' || connection.targetHandle === 'flow-top';
-  },
-
-  // Validate output connections
-  validateOutputConnection: (connection: any) => {
-    return connection.targetHandle?.startsWith('param-') || 
-           connection.targetHandle === 'flow' || 
-           connection.targetHandle === 'template';
-  },
-};
 
 /**
  * File Input component for handling file uploads
@@ -218,10 +146,8 @@ const NodeInput: FC<{
   onChange: (value: any) => void;
   textColor: string;
   backgroundColor: string;
-}> = ({ input, value, onChange, textColor, backgroundColor }) => {
-  
-  const isConnected = NodeUtils.isInputConnected(input);
-  const displayValue = NodeUtils.getConnectedValue(input);
+  isConnected: boolean;
+}> = ({ input, value, onChange, textColor, backgroundColor, isConnected }) => {
   
   // If there's a custom component provided, use it
   if (input.component) {
@@ -255,7 +181,7 @@ const NodeInput: FC<{
           />
           {isConnected && (
             <div className={`absolute inset-0 flex items-center justify-center text-xs ${textColor} bg-opacity-75 ${backgroundColor}`}>
-              {String(displayValue)}
+              {String(value)}
             </div>
           )}
         </div>
@@ -274,7 +200,7 @@ const NodeInput: FC<{
           />
           {isConnected && (
             <div className={`absolute inset-0 flex items-center px-1 text-xs text-black bg-blue-50/30 rounded-md border border-blue-200/50 truncate`}>
-              {String(displayValue)}
+              {String(value)}
             </div>
           )}
         </div>
@@ -295,13 +221,13 @@ const NodeInput: FC<{
           />
           {isConnected && (
             <div className={`absolute inset-0 flex items-center px-1 text-xs text-black bg-blue-50/30 rounded-md border border-blue-200/50 truncate`}>
-              {String(displayValue)}
+              {String(value)}
             </div>
           )}
         </div>
       );
     case 'display':
-      const formattedValue = input.format ? input.format(value) : String(value || displayValue || '');
+      const formattedValue = input.format ? input.format(value) : String(value || '');
       return (
         <div className="text-xs bg-gray-100 p-1 rounded border border-gray-200 text-black">
           {formattedValue}
@@ -334,7 +260,7 @@ const FlowHandle: FC<{
   if (hidden) return null;
   
   const handlePosition = position === Position.Top ? 'top' : 'bottom';
-  const baseStyle = NodeUtils.getHandleStyle(handlePosition);
+  const baseStyle = nodeUtils.getHandleStyle(handlePosition);
   
   return (
     <Handle
@@ -342,7 +268,7 @@ const FlowHandle: FC<{
       position={position}
       style={{...baseStyle, ...style}}
       id={id}
-      isValidConnection={NodeUtils.validateFlowConnection}
+      isValidConnection={nodeUtils.validateFlowConnection}
     />
   );
 };
@@ -361,7 +287,7 @@ const InputHandle: FC<{
       id={input.handleId || input.id}
       type="target"
       position={Position.Left}
-      style={NodeUtils.getHandleStyle('left')}
+      style={nodeUtils.getHandleStyle('left')}
     />
   );
 };
@@ -372,14 +298,14 @@ const InputHandle: FC<{
 const CustomHandleComponent: FC<{
   handle: CustomHandle;
 }> = ({ handle }) => {
-  const position = NodeUtils.toReactFlowPosition(handle.position);
+  const position = nodeUtils.toReactFlowPosition(handle.position);
   
   return (
     <Handle
       key={handle.id}
       type={handle.type}
       position={position}
-      style={NodeUtils.getHandleStyle(handle.position)}
+      style={nodeUtils.getHandleStyle(handle.position)}
       id={handle.id}
       className={handle.className}
     />
@@ -416,11 +342,11 @@ const OutputHandle: FC<{
       type="source"
       position={Position.Right}
       style={{
-        ...NodeUtils.getHandleStyle('right'),
+        ...nodeUtils.getHandleStyle('right'),
         // top: -offsetY
       }}
       id={output.handleId || output.id}
-      isValidConnection={NodeUtils.validateOutputConnection}
+      isValidConnection={nodeUtils.validateOutputConnection}
     />
   );
 };
@@ -431,13 +357,13 @@ const OutputHandle: FC<{
 const useNodeInputs = (
   inputs: InputDefinition[], 
   data: Record<string, any>,
-  onInputChange?: (inputId: string, value: any) => void
+  onInputChange?: (inputId: string, value: any, fromConnection?: boolean) => void
 ) => {
   // Initialize values from data or defaults
   const initialValues = useMemo(() => {
     const values: Record<string, any> = {};
     inputs.forEach(input => {
-      values[input.id] = NodeUtils.getValue(data, input.id, input.defaultValue);
+      values[input.id] = nodeUtils.getValue(data, input.id, input.defaultValue);
     });
     return values;
   }, [inputs, data]);
@@ -460,9 +386,38 @@ const useNodeInputs = (
       setInputValues(newValues);
     }
   }, [data, inputs, inputValues]);
+
+  // Update connected values
+  useEffect(() => {
+    const newValues = {...inputValues};
+    let hasChanged = false;
+    
+    inputs.forEach(input => {
+      // If input has a connection, update the input value with connected value
+      if (nodeUtils.isInputConnected(input)) {
+        const connectedValue = nodeUtils.getConnectedValue(input);
+        if (connectedValue !== null && connectedValue !== undefined && connectedValue !== inputValues[input.id]) {
+          newValues[input.id] = connectedValue;
+          hasChanged = true;
+        }
+      }
+    });
+    
+    if (hasChanged) {
+      setInputValues(newValues);
+    }
+  }, [inputs, inputValues]);
   
   // Handle input change
   const handleInputChange = (inputId: string, value: any) => {
+    // Find the input definition
+    const input = inputs.find(i => i.id === inputId);
+    
+    // Don't update manually if this input is connected (unless explicitly from a connection)
+    if (input && nodeUtils.isInputConnected(input)) {
+      return;
+    }
+    
     setInputValues(prev => ({ ...prev, [inputId]: value }));
     if (onInputChange) {
       onInputChange(inputId, value);
@@ -476,6 +431,7 @@ const useNodeInputs = (
  * TemplateNode component
  */
 const TemplateNode: FC<TemplateNodeProps> = ({
+  id,
   metadata,
   inputs,
   output,
@@ -488,16 +444,24 @@ const TemplateNode: FC<TemplateNodeProps> = ({
   hideOutputHandle = false,
   customHandles = [],
   additionalContent = null,
+  disableConnectionHandling = false,
 }) => {
   const { inputValues, handleInputChange } = useNodeInputs(inputs, data, onInputChange);
   const updateNodeInternals = useUpdateNodeInternals();
   const nodeRef = useRef<HTMLDivElement>(null);
   const [nodeHeight, setNodeHeight] = useState(0);
+  const edges = useEdges();
+  const nodes = useNodes();
+  
+  // Track connected inputs
+  const [connectedInputIds, setConnectedInputIds] = useState<string[]>([]);
   
   // Update node internals when inputs or outputs change to reposition handles
   useEffect(() => {
-    updateNodeInternals(metadata.id);
-  }, [metadata.id, updateNodeInternals, inputs.length]);
+    if (id) {
+      updateNodeInternals(id);
+    }
+  }, [id, updateNodeInternals, inputs.length]);
   
   // Measure node height for positioning outputs
   useEffect(() => {
@@ -505,6 +469,27 @@ const TemplateNode: FC<TemplateNodeProps> = ({
       setNodeHeight(nodeRef.current.clientHeight);
     }
   }, [inputs.length, inputValues]);
+
+  // Handle connected inputs if enabled
+  useEffect(() => {
+    if (disableConnectionHandling || !id || !onInputChange) return;
+    
+    // Find inputs with connections
+    const connected = inputs.filter(input => nodeUtils.isInputConnected(input));
+    setConnectedInputIds(connected.map(input => input.id));
+    
+    // Update values for connected inputs
+    connected.forEach(input => {
+      const connectedValue = nodeUtils.getConnectedValue(input);
+      if (connectedValue !== null && connectedValue !== undefined) {
+        const currentValue = inputValues[input.id];
+        if (connectedValue !== currentValue) {
+          // Call onInputChange with the fromConnection flag set to true
+          onInputChange(input.id, connectedValue, true);
+        }
+      }
+    });
+  }, [edges, nodes, inputs, id, onInputChange, inputValues, disableConnectionHandling]);
 
   return (
     <div 
@@ -547,6 +532,7 @@ const TemplateNode: FC<TemplateNodeProps> = ({
                 onChange={(value) => handleInputChange(input.id, value)}
                 textColor={metadata.textColor}
                 backgroundColor={metadata.backgroundColor}
+                isConnected={connectedInputIds.includes(input.id)}
               />
             </div>
             
@@ -566,10 +552,10 @@ const TemplateNode: FC<TemplateNodeProps> = ({
           type="source"
           position={Position.Right}
           style={{ 
-          ...NodeUtils.getHandleStyle('right'),
+          ...nodeUtils.getHandleStyle('right'),
           }}
           id={output?.handleId || output?.id}
-          isValidConnection={NodeUtils.validateOutputConnection}
+          isValidConnection={nodeUtils.validateOutputConnection}
         />
       )}
 

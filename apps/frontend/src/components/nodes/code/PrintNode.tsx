@@ -1,38 +1,23 @@
 import { memo, useCallback, useMemo } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
 import { OutputDefinition } from '@/types/OutputTypes';
-
-interface PrintNodeData {
-  label: string;
-  template: string;
-  parameters?: Record<string, any>;
-}
+import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface PrintNodeProps {
   id: string;
-  data: PrintNodeData;
 }
 
-export default function PrintNode({ id, data }: PrintNodeProps) {
+export default function PrintNode({ id }: PrintNodeProps) {
   const { setNodes } = useReactFlow();
-
+  const nodes = useNodes() as FlowNode[];
+  
   const handleTemplateChange = useCallback((value: string) => {
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                template: value
-              }
-            }
-          : node
-      )
-    );
+    nodeUtils.updateNodeInput(id, 'template', 'input-template', 'string', value, setNodes);
+    nodeUtils.updateNodeOutput(id, 'string', value, setNodes);
   }, [id, setNodes]);
 
   // Define inputs for template node using the new helper function
@@ -40,12 +25,12 @@ export default function PrintNode({ id, data }: PrintNodeProps) {
     createInputDefinition.textarea({
       id: 'input-template',
       label: 'Template',
-      defaultValue: data.template || '',
+      defaultValue: '',
       placeholder: 'Enter template (use $output$ for value)',
       description: 'Template text, use $output$ to insert the input value',
       rows: 3
     })
-  ], [data.template]);
+  ], []);
 
   // Define the output
   const output: OutputDefinition = {
@@ -57,12 +42,13 @@ export default function PrintNode({ id, data }: PrintNodeProps) {
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['PRINT']}
+      id={id}
+      metadata={nodeTypes['PRINT'].metadata}
       inputs={inputs}
       output={output}
-      data={data}
+      data={nodeUtils.getNodeData(nodes, id)}
       onInputChange={(inputId, value) => {
-        if (inputId === 'template') {
+        if (inputId === 'input-template') {
           handleTemplateChange(value);
         }
       }}

@@ -133,8 +133,8 @@ export class FlowCompiler {
     incoming.forEach(edge => {
       const sourceVar = this.nodeOutputs.get(edge.source);
       if (sourceVar) {
-        const paramName = edge.targetHandle?.startsWith('param-')
-          ? edge.targetHandle.replace('param-', '')
+        const paramName = edge.targetHandle?.startsWith('input-')
+          ? edge.targetHandle.replace('input-', '')
           : edge.targetHandle || 'flow';
         inputs[paramName] = sourceVar;
       }

@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { Panel } from "@xyflow/react";
-import { NodeCategory, NodeTypeMetadata } from "../../types/NodeTypes";
+import { NodeCategory, NodeType } from "../../types/NodeTypes";
 import { Icons } from "../icons/icons";
 
 interface NodeSidebarProps {
-  nodeTypesMetadata: Record<string, NodeTypeMetadata>;
+  nodeTypes: Record<string, NodeType>;
   addNewNode: (type: any, position?: { x: number; y: number }) => void;
   isReadOnly?: boolean;
   onDragStart?: () => void;
@@ -12,7 +12,7 @@ interface NodeSidebarProps {
 }
 
 export const NodeSidebar = ({
-  nodeTypesMetadata,
+  nodeTypes,
   addNewNode,
   isReadOnly = false,
   onDragStart,
@@ -31,11 +31,11 @@ export const NodeSidebar = ({
   
   // Group nodes by category
   const nodesByCategory = categories.reduce((acc, category) => {
-    acc[category] = Object.values(nodeTypesMetadata).filter(
-      (type) => type.category === category
+    acc[category] = Object.values(nodeTypes).filter(
+      (type) => type.metadata.category === category
     );
     return acc;
-  }, {} as Record<NodeCategory, NodeTypeMetadata[]>);
+  }, {} as Record<NodeCategory, NodeType[]>);
 
   // Set category refs
   const setCategoryRef = (element: HTMLDivElement | null, category: string) => {
@@ -174,28 +174,28 @@ export const NodeSidebar = ({
                         )}
                         {nodesByCategory[category].map((type) => (
                           <div
-                            key={type.id}
+                            key={type.metadata.id}
                             className={`flex flex-col items-center p-2 rounded transition-colors ${
                               isReadOnly
                                 ? "opacity-50 cursor-not-allowed"
                                 : "hover:bg-gray-700 cursor-grab"
                             }`}
-                            onClick={isReadOnly ? undefined : () => addNewNode(type.id)}
+                            onClick={isReadOnly ? undefined : () => addNewNode(type.metadata.id)}
                             draggable={!isReadOnly}
                             onDragStart={
                               isReadOnly 
                                 ? undefined 
-                                : (event) => onDragStartHandler(event, type.id)
+                                : (event) => onDragStartHandler(event, type.metadata.id)
                             }
                             onDragEnd={isReadOnly ? undefined : onDragEndHandler}
                           >
                             <div
-                              className={`w-full h-[40px] flex items-center justify-center ${type.backgroundColor} rounded border ${type.borderColor}`}
+                              className={`w-full h-[40px] flex items-center justify-center ${type.metadata.backgroundColor} rounded border ${type.metadata.borderColor}`}
                             >
                               <span
-                                className={`text-xs ${type.textColor} font-medium`}
+                                className={`text-xs ${type.metadata.textColor} font-medium`}
                               >
-                                {type.label}
+                                {type.metadata.label}
                               </span>
                             </div>
                           </div>

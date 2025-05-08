@@ -1,25 +1,20 @@
-import { memo, useCallback, useState, useMemo, useEffect } from 'react';
-import { useEdges, useNodes } from '@xyflow/react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
+import { useEdges, useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { InputDefinition, InputValueTypeString, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
 import { OutputDefinition } from '@/types/OutputTypes';
-
-interface MathNodeData {
-  label: string;
-  selectedFunction?: string;
-  parameters?: Record<string, string | number>;
-}
+import { nodeUtils } from '@/utils/nodeUtils';
 
 interface MathNodeProps {
   id: string;
-  data: MathNodeData;
 }
 
-export default function MathNode({ id, data }: MathNodeProps) {
-  const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
-  const [parameters, setParameters] = useState<Record<string, string | number>>(data.parameters || {});
+export default function MathNode({ id }: MathNodeProps) {
+  const { setNodes } = useReactFlow();
+  const [selectedFunction, setSelectedFunction] = useState<string>('');
+  const [parameters, setParameters] = useState<Record<string, string | number>>({});
   const blockTemplates = blockTemplateService.getTemplatesByType('MATH');
   const edges = useEdges();
   const nodes = useNodes();
@@ -27,7 +22,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
       e.target === id && 
-      e.targetHandle === `param-${paramName}`
+      e.targetHandle === `input-${paramName}`
     );
     
     if (!edge) return null;
@@ -63,32 +58,39 @@ export default function MathNode({ id, data }: MathNodeProps) {
         // Update the state and data if parameters have changed
         if (JSON.stringify(newParameters) !== JSON.stringify(parameters)) {
           setParameters(newParameters);
-          data.parameters = newParameters;
+          // Update each parameter individually using nodeUtils
+          Object.entries(newParameters).forEach(([paramName, paramValue]) => {
+            const valueType = typeof paramValue === 'number' ? 'number' : 'string';
+            nodeUtils.updateNodeInput(id, `${paramName}`, `input-${paramName}`, valueType, paramValue, setNodes);
+          });
         }
       }
     }
-  }, [selectedFunction, blockTemplates, parameters, getConnectedValue, data, edges, nodes]);
+  }, [selectedFunction, blockTemplates, parameters, getConnectedValue, id, edges, nodes, setNodes]);
 
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);
-    const newParameters = {}; 
-    data.selectedFunction = value;
-    data.parameters = newParameters;
-  }, [data]);
+    setParameters({});
+    nodeUtils.updateNodeInput(id, 'function', 'input-function', 'string', value, setNodes);
+  }, [id, setNodes]);
 
   const handleParameterChange = useCallback((paramName: string, value: string | number) => {
     const newParameters = { ...parameters };
+    let processedValue = value;
+    let valueType: InputValueTypeString = 'string';
     
     // Convert string numbers to actual numbers
     if (typeof value === 'string' && !isNaN(Number(value))) {
-      newParameters[paramName] = Number(value);
-    } else {
-      newParameters[paramName] = value;
+      processedValue = Number(value);
+      valueType = 'number';
     }
     
+    newParameters[paramName] = processedValue;
     setParameters(newParameters);
-    data.parameters = newParameters;
-  }, [parameters, data]);
+    
+    // Update node data using nodeUtils
+    nodeUtils.updateNodeInput(id, `${paramName}`, `input-${paramName}`, valueType, processedValue, setNodes);
+  }, [parameters, id, setNodes]);
 
   // Convert function options into dropdown options
   const functionOptions = useMemo(() => {
@@ -127,7 +129,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
               defaultValue: parameters[param.name] as number || 0,
               description: param.description,
               getConnectedValue: connectionGetter,
-              handleId: `param-${param.name}`,
+              handleId: `input-${param.name}`,
             });
           } else {
             return createInputDefinition.text({
@@ -136,7 +138,7 @@ export default function MathNode({ id, data }: MathNodeProps) {
               defaultValue: String(parameters[param.name] || ''),
               description: param.description,
               getConnectedValue: connectionGetter,
-              handleId: `param-${param.name}`,
+              handleId: `input-${param.name}`,
             });
           }
         });
@@ -171,14 +173,19 @@ export default function MathNode({ id, data }: MathNodeProps) {
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['MATH']}
+      id={id}
+      metadata={nodeTypes['MATH'].metadata}
       inputs={inputs}
-      data={data}
+      data={nodeUtils.getNodeData(nodes, id)}
       onInputChange={(inputId, value) => {
         if (inputId === 'input-function') {
           handleFunctionChange(value);
         } else {
-          handleParameterChange(inputId, value);
+          // Extract parameter name from input ID
+          const paramMatch = inputId.match(/^input-(.+)$/);
+          if (paramMatch) {
+            handleParameterChange(paramMatch[1], value);
+          }
         }
       }}
       output={output}

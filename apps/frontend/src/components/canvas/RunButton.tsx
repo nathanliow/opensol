@@ -80,11 +80,8 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       // Transform edges to the format expected by FlowCompiler
       const transformedEdges: FlowEdge[] = edges.map(edge => ({
         id: edge.id || `${edge.source}-${edge.target}`,
-        source: edge.source || '',
-        target: edge.target || '',
-        sourceHandle: edge.sourceHandle || '',
-        targetHandle: edge.targetHandle || ''
-      }));
+        connection: edge
+      } as FlowEdge));
 
       // Get all nodes connected to the selected function
       const connectedNodes = new Set<string>();
@@ -96,17 +93,17 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
         
         // Add source nodes (nodes that provide input)
         transformedEdges.forEach(edge => {
-          if (edge.target === currentId && !connectedNodes.has(edge.source)) {
-            connectedNodes.add(edge.source);
-            nodesToProcess.push(edge.source);
+          if (edge.connection.target === currentId && !connectedNodes.has(edge.connection.source)) {
+            connectedNodes.add(edge.connection.source);
+            nodesToProcess.push(edge.connection.source);
           }
         });
 
         // Add target nodes (nodes that receive output)
         transformedEdges.forEach(edge => {
-          if (edge.source === currentId && !connectedNodes.has(edge.target)) {
-            connectedNodes.add(edge.target);
-            nodesToProcess.push(edge.target);
+          if (edge.connection.source === currentId && !connectedNodes.has(edge.connection.target)) {
+            connectedNodes.add(edge.connection.target);
+            nodesToProcess.push(edge.connection.target);
           }
         });
       }
@@ -114,7 +111,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       // Filter nodes and edges to only include connected ones
       const relevantNodes = transformedNodes.filter(node => connectedNodes.has(node.id));
       const relevantEdges = transformedEdges.filter(edge => 
-        connectedNodes.has(edge.source) && connectedNodes.has(edge.target)
+        connectedNodes.has(edge.connection.source) && connectedNodes.has(edge.connection.target)
       );
 
       // Generate debug info
@@ -126,32 +123,32 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
           data: node.data,
           connections: {
             inputs: relevantEdges
-              .filter(e => e.target === node.id)
+              .filter(e => e.connection.target === node.id)
               .map(e => ({
-                from: e.source,
-                type: relevantNodes.find(n => n.id === e.source)?.type,
-                handleId: e.targetHandle
+                from: e.connection.source,
+                type: relevantNodes.find(n => n.id === e.connection.source)?.type,
+                handleId: e.connection.targetHandle
               })),
             outputs: relevantEdges
-              .filter(e => e.source === node.id)
+              .filter(e => e.connection.source === node.id)
               .map(e => ({
-                to: e.target,
-                type: relevantNodes.find(n => n.id === e.target)?.type,
-                handleId: e.sourceHandle
+                to: e.connection.target,
+                type: relevantNodes.find(n => n.id === e.connection.target)?.type,
+                handleId: e.connection.sourceHandle
               }))
           }
         })),
         edges: relevantEdges.map(edge => ({
           from: {
-            id: edge.source,
-            type: relevantNodes.find(node => node.id === edge.source)?.type
+            id: edge.connection.source,
+            type: relevantNodes.find(node => node.id === edge.connection.source)?.type
           },
           to: {
-            id: edge.target,
-            type: relevantNodes.find(node => node.id === edge.target)?.type
+            id: edge.connection.target,
+            type: relevantNodes.find(node => node.id === edge.connection.target)?.type
           },
-          sourceHandle: edge.sourceHandle,
-          targetHandle: edge.targetHandle
+          sourceHandle: edge.connection.sourceHandle,
+          targetHandle: edge.connection.targetHandle
         }))
       };
 

@@ -1,28 +1,16 @@
-import { useCallback, useState, memo } from 'react';
+import { useCallback, useState, memo, useMemo } from 'react';
+import { useReactFlow, useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { InputDefinition, InputValueTypeString, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
 import { useTokenMint } from '../../../lib/tokenMint';
 import { useConfig } from '../../../contexts/ConfigContext';
 import { pinata } from '@/pinataConfig';
 import { OutputDefinition } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
 
 interface MintNodeProps {
   id: string;
-  data: {
-    label?: string;
-    name?: string;
-    symbol?: string;
-    description?: string;
-    image?: string;
-    decimals?: number;
-    network?: 'devnet' | 'mainnet-beta' | 'testnet';
-    mintAddress?: string;
-    mintStatus?: string;
-    signature?: string;
-    metadataUri?: string;
-    imageIpfsUrl?: string;
-  };
 }
 
 // Define the output
@@ -33,19 +21,24 @@ const output: OutputDefinition = {
   description: 'The minted token information'
 };
 
-export default function MintNode({ id, data }: MintNodeProps) {
+export default function MintNode({ id }: MintNodeProps) {
+  const { setNodes } = useReactFlow();
+  const edges = useEdges();
+  const nodes = useNodes();
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isUploadingMetadata, setIsUploadingMetadata] = useState(false);
-  
-  // Local state to ensure UI updates
-  const [name, setName] = useState(data.name || '');
-  const [symbol, setSymbol] = useState(data.symbol || '');
-  const [description, setDescription] = useState(data.description || '');
-  const [decimals, setDecimals] = useState(data.decimals || 9);
+  const [name, setName] = useState('');
+  const [symbol, setSymbol] = useState('');
+  const [description, setDescription] = useState('');
+  const [decimals, setDecimals] = useState(9);
+  const [mintAddress, setMintAddress] = useState('');
+  const [signature, setSignature] = useState('');
+  const [metadataUri, setMetadataUri] = useState('');
+  const [imageIpfsUrl, setImageIpfsUrl] = useState('');
   
   const { mintToken } = useTokenMint();
   const { network } = useConfig();
@@ -57,24 +50,26 @@ export default function MintNode({ id, data }: MintNodeProps) {
     
     // Create a preview URL for the selected image
     const previewUrl = URL.createObjectURL(file);
-    data.image = previewUrl;
-  }, [data]);
+    nodeUtils.updateNodeInput(id, 'image', 'input-image', 'string', previewUrl, setNodes);
+  }, [id, setNodes]);
   
   // Handle file removal
   const handleFileRemove = useCallback(() => {
     setSelectedImageFile(null);
-    data.image = undefined;
-    data.imageIpfsUrl = undefined;
-  }, [data]);
+    nodeUtils.updateNodeInput(id, 'image', 'input-image', 'null', null, setNodes);
+    nodeUtils.updateNodeInput(id, 'imageIpfsUrl', 'input-image-ipfs', 'null', null, setNodes);
+  }, [id, setNodes]);
   
   // Define inputs for token minting using the new helper functions
-  const inputs: InputDefinition[] = [
+  const inputs: InputDefinition[] = useMemo(() => [
     createInputDefinition.text({
       id: 'input-name',
       label: 'Token Name',
       defaultValue: name,
       placeholder: 'Enter token name',
-      required: true
+      required: true,
+      getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, 'name'),
+      handleId: 'input-name'
     }),
     
     createInputDefinition.text({
@@ -83,14 +78,18 @@ export default function MintNode({ id, data }: MintNodeProps) {
       defaultValue: symbol,
       placeholder: 'Enter token symbol',
       maxLength: 10,
-      required: true
+      required: true,
+      getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, 'symbol'),
+      handleId: 'input-symbol'
     }),
     
     createInputDefinition.text({
       id: 'input-description',
       label: 'Description',
       defaultValue: description,
-      placeholder: 'Enter token description'
+      placeholder: 'Enter token description',
+      getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, 'description'),
+      handleId: 'input-description'
     }),
     
     createInputDefinition.number({
@@ -98,7 +97,9 @@ export default function MintNode({ id, data }: MintNodeProps) {
       label: 'Decimals',
       defaultValue: decimals,
       min: 0,
-      max: 9
+      max: 9,
+      getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, 'decimals'),
+      handleId: 'input-decimals'
     }),
     
     createInputDefinition.file({
@@ -106,42 +107,50 @@ export default function MintNode({ id, data }: MintNodeProps) {
       label: 'Token Image',
       accept: 'image/*',
       previewType: 'image',
-      previewUrl: data.imageIpfsUrl || data.image,
+      previewUrl: '',
       maxSize: 5 * 1024 * 1024, // 5MB
       onFileSelect: handleFileSelect,
       onFileRemove: handleFileRemove,
-      required: true
+      required: true,
+      handleId: 'input-image'
     })
-  ];
+  ], [name, symbol, description, decimals, edges, nodes, id, handleFileSelect, handleFileRemove]);
   
-  const handleInputChange = useCallback((inputId: string, value: any) => {
-    console.log(`Mint parameter ${inputId} changed to ${value}`);
+  const handleInputChange = useCallback((inputId: string, value: any, fromConnection: boolean = false) => {
+    // Find the input definition
+    const input = inputs.find(i => i.id === inputId);
     
-    // Update local state for UI
+    // If this input is connected to another node, don't update the value
+    // when manually changed, but do update when triggered by connection
+    if (input && nodeUtils.isInputConnected(input) && !fromConnection) {
+      return;
+    }
+    
+    let valueType: InputValueTypeString = 'string';
+    
     switch(inputId) {
-      case 'name':
+      case 'input-name':
         setName(value);
+        nodeUtils.updateNodeInput(id, 'name', inputId, valueType, value, setNodes);
         break;
-      case 'symbol':
+      case 'input-symbol':
         setSymbol(value);
+        nodeUtils.updateNodeInput(id, 'symbol', inputId, valueType, value, setNodes);
         break;
-      case 'description':
+      case 'input-description':
         setDescription(value);
+        nodeUtils.updateNodeInput(id, 'description', inputId, valueType, value, setNodes);
         break;
-      case 'decimals':
+      case 'input-decimals':
         setDecimals(value);
+        valueType = 'number';
+        nodeUtils.updateNodeInput(id, 'decimals', inputId, valueType, value, setNodes);
         break;
-      case 'image':
+      case 'input-image':
         // The file is handled by the onFileSelect callback
         break;
     }
-    
-    // Update data object directly (similar to HeliusNode) with type-safe access
-    if (inputId === 'name') data.name = value;
-    else if (inputId === 'symbol') data.symbol = value;
-    else if (inputId === 'description') data.description = value;
-    else if (inputId === 'decimals') data.decimals = value;
-  }, [data]);
+  }, [id, setNodes, inputs]);
 
   const uploadImageToPinata = async (file: File): Promise<string> => {
     try {
@@ -155,7 +164,6 @@ export default function MintNode({ id, data }: MintNodeProps) {
       const upload = await pinata.upload.public
         .file(file)
         .url(urlResponse.url); // Upload the file with the signed URL
-      console.log(upload);
 
       return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
     } catch (error) {
@@ -183,7 +191,6 @@ export default function MintNode({ id, data }: MintNodeProps) {
       const upload = await pinata.upload.public
         .json(jsonMetadata)
         .url(urlResponse.url); // Upload the file with the signed URL
-      console.log(upload);
       
       return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
     } catch (error) {
@@ -198,23 +205,37 @@ export default function MintNode({ id, data }: MintNodeProps) {
     setUploading(true);
     
     try {
+      // Get values from local state or connected inputs
+      const nameInputDef = inputs.find(i => i.id === 'input-name');
+      const symbolInputDef = inputs.find(i => i.id === 'input-symbol');
+      const descriptionInputDef = inputs.find(i => i.id === 'input-description');
+      const decimalsInputDef = inputs.find(i => i.id === 'input-decimals');
+      
+      const nameValue = nodeUtils.isInputConnected(nameInputDef!) ? 
+        nodeUtils.getConnectedValue(nameInputDef!) : name;
+      const symbolValue = nodeUtils.isInputConnected(symbolInputDef!) ? 
+        nodeUtils.getConnectedValue(symbolInputDef!) : symbol;
+      const descriptionValue = nodeUtils.isInputConnected(descriptionInputDef!) ? 
+        nodeUtils.getConnectedValue(descriptionInputDef!) : description;
+      const decimalsValue = nodeUtils.isInputConnected(decimalsInputDef!) ? 
+        nodeUtils.getConnectedValue(decimalsInputDef!) : decimals;
+      
       // Check if we have a selected image file
-      if (!selectedImageFile && !data.imageIpfsUrl) {
+      if (!selectedImageFile) {
         setError('Please select an image first');
         setIsLoading(false);
         setUploading(false);
         return;
       }
       
-      // If we have a selected image that hasn't been uploaded yet
-      let imageIpfsUrl = data.imageIpfsUrl;
-      if (selectedImageFile && !data.imageIpfsUrl) {
+      let imageIpfsUrl = '';
+      if (selectedImageFile) {
         try {
           // Upload image to Pinata IPFS
           imageIpfsUrl = await uploadImageToPinata(selectedImageFile);
           
           // Update state with the IPFS URL
-          data.imageIpfsUrl = imageIpfsUrl;
+          nodeUtils.updateNodeInput(id, 'imageIpfsUrl', 'input-image-ipfs', 'string', imageIpfsUrl, setNodes);
         } catch (error) {
           console.error('Image upload error:', error);
           setError('Failed to upload image to IPFS');
@@ -229,7 +250,7 @@ export default function MintNode({ id, data }: MintNodeProps) {
       
       // Create and upload metadata with the image IPFS URL
       try {
-        if (!name || !symbol) {
+        if (!nameValue || !symbolValue) {
           setError('Missing required fields for metadata');
           setIsLoading(false);
           setIsUploadingMetadata(false);
@@ -238,44 +259,52 @@ export default function MintNode({ id, data }: MintNodeProps) {
         
         // Create metadata JSON object
         const metadata = {
-          name: name,
-          symbol: symbol,
-          description: description || '',
+          name: nameValue,
+          symbol: symbolValue,
+          description: descriptionValue || '',
           image: imageIpfsUrl as string,
           showName: true,
           createdOn: "openSOL"
         };
           
-        // Upload the metadata JSON to IPFS
         const metadataIpfsUrl = await uploadMetadataToPinata(metadata);
         
-        console.log('Metadata uploaded to IPFS:', metadataIpfsUrl);
-        console.log('Metadata content:', metadata);
-        
-        // Store the metadata IPFS URL
-        data.metadataUri = metadataIpfsUrl;
-        
-        // Convert network format if needed ('mainnet' to 'mainnet-beta')
+        nodeUtils.updateNodeInput(id, 'metadataUri', 'input-metadata-uri', 'string', metadataIpfsUrl, setNodes);
+
         const solanaNetwork = network === 'mainnet' ? 'mainnet-beta' : network;
         
         const res = await mintToken(
-          name || '',
-          symbol || '',
-          description || '',
+          nameValue || '',
+          symbolValue || '',
+          descriptionValue || '',
           imageIpfsUrl || '', // Use IPFS image URL
-          decimals || 9,
+          decimalsValue || 9,
           solanaNetwork,
           100, // Default amount
           metadataIpfsUrl // Use the IPFS metadata URI
         );
 
-        if (res.success) {
-          data.mintAddress = res.mintAddress;
-          data.signature = res.signature;
-          data.mintStatus = 'success';
+        if (res.success) {    
+          setMintAddress(res.mintAddress || '');
+          setSignature(res.signature || '');
+          setMetadataUri(metadataIpfsUrl || '');
+          setImageIpfsUrl(imageIpfsUrl || '');
+          // Update the node's output with the minted token data
+          const outputData = {
+            mintAddress: res.mintAddress,
+            signature: res.signature,
+            name: nameValue,
+            symbol: symbolValue,
+            description: descriptionValue,
+            decimals: decimalsValue,
+            imageUrl: imageIpfsUrl,
+            metadataUri: metadataIpfsUrl
+          };
+          
+          // Update the node output so other nodes can access this data
+          nodeUtils.updateNodeOutput(id, 'object', outputData, setNodes);
         } else {
           setError(res.error || 'Unknown error occurred');
-          data.mintStatus = 'error';
         }
       } catch (error) {
         console.error('Error uploading metadata to IPFS:', error);
@@ -284,7 +313,6 @@ export default function MintNode({ id, data }: MintNodeProps) {
     } catch (err) {
       const errorMessage = (err as Error).message || 'Unknown error occurred';
       setError(errorMessage);
-      data.mintStatus = 'error';
     } finally {
       setIsLoading(false);
       setUploading(false);
@@ -294,19 +322,24 @@ export default function MintNode({ id, data }: MintNodeProps) {
   
   // Show token mint result if minting is complete
   const renderMintResult = () => {
-    if (!data.mintAddress) return null;
+    if (!mintAddress) return null;
+    
+    // Get the current name value (either from local state or connected)
+    const nameInputDef = inputs.find(i => i.id === 'input-name');
+    const displayName = nodeUtils.isInputConnected(nameInputDef!) ? 
+      nodeUtils.getConnectedValue(nameInputDef!) : name;
     
     return (
       <div className="p-3 bg-green-100 dark:bg-green-900 rounded-md mt-2">
         <h3 className="text-sm font-semibold mb-1">Token Minted!</h3>
-        <p className="text-xs truncate">Address: {data.mintAddress}</p>
-        {data.signature && (
-          <p className="text-xs truncate mt-1">Transaction: {data.signature}</p>
+        <p className="text-xs truncate">Address: {mintAddress}</p>
+        {signature && (
+          <p className="text-xs truncate mt-1">Transaction: {signature}</p>
         )}
-        {data.metadataUri && (
+        {metadataUri && (
           <p className="text-xs truncate mt-1">
             <a 
-              href={data.metadataUri} 
+              href={metadataUri} 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline"
@@ -315,11 +348,11 @@ export default function MintNode({ id, data }: MintNodeProps) {
             </a>
           </p>
         )}
-        {data.imageIpfsUrl && (
+        {imageIpfsUrl && (
           <div className="mt-2 flex justify-center">
             <img 
-              src={data.imageIpfsUrl} 
-              alt={name || 'Token'} 
+              src={imageIpfsUrl} 
+              alt={displayName || 'Token'} 
               className="w-24 h-24 object-cover rounded-md border border-gray-300"
             />
           </div>
@@ -338,13 +371,25 @@ export default function MintNode({ id, data }: MintNodeProps) {
     );
   };
   
+  // Check if required inputs are provided (either directly or via connections)
+  const hasRequiredInputs = useCallback(() => {
+    const nameInputDef = inputs.find(i => i.id === 'input-name');
+    const symbolInputDef = inputs.find(i => i.id === 'input-symbol');
+    
+    const hasName = name || (nameInputDef && nodeUtils.isInputConnected(nameInputDef));
+    const hasSymbol = symbol || (symbolInputDef && nodeUtils.isInputConnected(symbolInputDef));
+    const hasImage = selectedImageFile;
+    
+    return hasName && hasSymbol && hasImage;
+  }, [name, symbol, selectedImageFile, inputs]);
+
   const additionalContent = (
-    <div className="px-3 pb-3">      
+    <div className="px-3 pb-3">            
       {/* Mint button */}
       <div className="mt-4">
         <button
           onClick={handleMintToken}
-          disabled={isLoading || !name || !symbol || (!selectedImageFile && !data.imageIpfsUrl)}
+          disabled={isLoading || !hasRequiredInputs()}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 
@@ -366,10 +411,11 @@ export default function MintNode({ id, data }: MintNodeProps) {
   return (
     <>
       <TemplateNode
-        metadata={nodeTypesMetadata['MINT']}
+        id={id}
+        metadata={nodeTypes['MINT'].metadata}
         inputs={inputs}
         output={output}
-        data={data}
+        data={nodeUtils.getNodeData(nodes, id)}
         onInputChange={handleInputChange}
         additionalContent={additionalContent}
       />

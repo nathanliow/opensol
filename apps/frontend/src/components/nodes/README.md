@@ -258,25 +258,31 @@ const inputGroup = createInputGroup(
 
 ## Utility Functions
 
-### NodeUtils
+### nodeUtils
 
-The `NodeUtils` object provides various helper functions for working with nodes:
+The `nodeUtils` utility (imported from `'../../utils/nodeUtils'`) provides various helper functions for working with nodes:
 
 ```tsx
+import { nodeUtils } from '../../utils/nodeUtils';
+
 // Find a node by ID
-const node = NodeUtils.findNodeById(nodes, 'node-123');
+const node = nodeUtils.findNodeById(nodes, 'node-123');
 
 // Check if an input is connected
-const isConnected = NodeUtils.isInputConnected(input);
+const isConnected = nodeUtils.isInputConnected(input);
 
 // Get the connected value for an input
-const connectedValue = NodeUtils.getConnectedValue(input);
+const connectedValue = nodeUtils.getConnectedValue(input);
 
 // Get handle style for a position
-const style = NodeUtils.getHandleStyle('left');
+const style = nodeUtils.getHandleStyle('left');
 
 // Create inputs from a schema
-const inputs = NodeUtils.createInputsFromSchema(schema);
+const inputs = nodeUtils.createInputsFromSchema(schema);
+
+// Flow-wide node operations
+const connectedNodes = nodeUtils.findNodesConnectedToOutput(nodes, edges, sourceNodeId);
+const executionPath = nodeUtils.getExecutionPath(nodes, edges, startNodeId);
 ```
 
 ### useNodeData Hook

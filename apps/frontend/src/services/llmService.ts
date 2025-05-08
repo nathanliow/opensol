@@ -280,14 +280,14 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "source": "const-1742539084023",
                 "sourceHandle": "output",
                 "target": "get-1742539131042",
-                "targetHandle": "param-address",
+                "targetHandle": "input-address",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
                   "strokeWidth": 2,
                   "stroke": "white"
                 },
-                "id": "xy-edge__const-1742539084023output-get-1742539131042param-address"
+                "id": "xy-edge__const-1742539084023output-get-1742539131042input-address"
               },
               {
                 "source": "get-1742539131042",
@@ -319,14 +319,14 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
                 "source": "const-1742539543785",
                 "sourceHandle": "output",
                 "target": "helius-1742539536871",
-                "targetHandle": "param-assetId",
+                "targetHandle": "input-assetId",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
                   "strokeWidth": 2,
                   "stroke": "white"
                 },
-                "id": "xy-edge__const-1742539543785output-helius-1742539536871param-assetId"
+                "id": "xy-edge__const-1742539543785output-helius-1742539536871input-assetId"
               },
               {
                 "source": "get-1742539131042",

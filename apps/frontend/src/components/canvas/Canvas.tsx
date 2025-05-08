@@ -17,15 +17,15 @@ import {
   type OnConnect,
   useReactFlow,
   SelectionMode,
-  Edge,
   Panel,
   Connection,
+  Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { edgeTypes } from "../../types/EdgeTypes";
 import { 
   createNodeTypes, 
-  nodeTypesMetadata 
+  nodeTypes 
 } from "../../types/NodeTypes";
 import { Toolbar } from "./Toolbar";
 import { NodeSidebar } from "./NodeSidebar";
@@ -38,7 +38,8 @@ import {
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { Icons } from "../icons/icons";
 import { Project } from "@/types/ProjectTypes";
-import { OutputValueType } from "@/types/OutputTypes";
+import { OutputValueTypeString } from "@/types/OutputTypes";
+import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/src/types";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -46,8 +47,8 @@ function Flow() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [isProjectOwner, setIsProjectOwner] = useState<boolean>(false);
   const [projectData, setProjectData] = useState<any>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>([]);
   const [debug, setDebug] = useState<string>('');
   const [output, setOutput] = useState<string>('');
   const [code, setCode] = useState<string>('');
@@ -69,7 +70,7 @@ function Flow() {
   const { supabaseUser } = useUserAccountContext();
   
   // Create node types with setNodes
-  const nodeTypes = useMemo(() => createNodeTypes(setNodes), [setNodes]);
+  const nodeTypesData = useMemo(() => createNodeTypes(setNodes), [setNodes]);
 
   // Handle project change notification from Menu component
   const handleProjectChange = useCallback(() => {
@@ -210,13 +211,14 @@ function Flow() {
     // If position is provided, use it; otherwise use viewport center
     let nodePosition = position;
 
-    const newNode = {
+    const newNode: FlowNode = {
       id: `${type.toLowerCase()}-${Date.now()}`,
-      type,
+      type: type,
       position: nodePosition || { x: 0, y: 0 },
-      data: type === 'FUNCTION' 
-        ? { name: 'Untitled Function', label: 'FUNCTION' }
-        : { label: type, selectedFunction: '', parameters: {} }
+      data: {
+        inputs: nodeTypes[type].defaultInputs,
+        output: nodeTypes[type].defaultOutput
+      }
     };
   
     setNodes((nds) => [...nds, newNode]);
@@ -254,19 +256,14 @@ function Flow() {
     // Find the nodes involved in the connection
     const sourceNode = nodes.find((node: any) => node.id === connection.source);
     const targetNode = nodes.find((node: any) => node.id === connection.target);
-    console.log("nodes", nodes);
-    console.log("sourceNode", sourceNode);
-    console.log("targetNode", targetNode);
-    console.log("connection", connection);
     
     if (!sourceNode || !targetNode) return false;
     
     // Determine the type of the source handle (output)
-    const outputType = sourceNode.data?.output?.type as OutputValueType || 'any';
-    console.log("outputType", outputType);
+    const outputType = sourceNode.data?.output?.type as OutputValueTypeString || 'any';
     
     // Find the target input handle and its expected type
-    const targetInput = targetNode.data?.inputs?.find((input: any) => 
+    const targetInput = Object.values(targetNode.data?.inputs || {}).find((input: any) => 
       input.handleId === connection.targetHandle || input.id === connection.targetHandle
     );
     
@@ -282,33 +279,27 @@ function Flow() {
     // Type compatibility rules
     // 'any' type is compatible with any input
     if (outputType === 'any') return true;
+ 
+    const targetType = targetInput.type || 'any';
     
-    // Define compatibility rules for each output type
-    // This can be customized based on your specific requirements
     switch (outputType) {
       case 'string':
-        // String can connect to string, any, or object inputs
-        return ['string', 'any', 'object'].includes(targetInput.type);
+        return ['string', 'any', 'object'].includes(targetType as string);
       
       case 'number':
-        // Number can connect to number, any, or object inputs
-        return ['number', 'any', 'object'].includes(targetInput.type);
+        return ['number', 'any', 'object'].includes(targetType as string);
       
       case 'boolean':
-        // Boolean can connect to boolean, any, or object inputs
-        return ['boolean', 'any', 'object'].includes(targetInput.type);
+        return ['boolean', 'any', 'object'].includes(targetType as string);
       
       case 'object':
-        // Object can connect to object or any inputs
-        return ['object', 'any'].includes(targetInput.type);
+        return ['object', 'any'].includes(targetType as string);
       
       case 'array':
-        // Array can connect to array, object, or any inputs
-        return ['array', 'object', 'any'].includes(targetInput.type);
+        return ['array', 'object', 'any'].includes(targetType as string);
       
       default:
-        // Default fallback for unknown types
-        return targetInput.type === 'any';
+        return targetType === 'any';
     }
   }, [nodes]);
 
@@ -339,7 +330,7 @@ function Flow() {
             strokeWidth: 2,
             stroke: 'white',
           },
-        } as Edge, edges));
+        } as FlowEdge, edges));
       }
     },
     [setEdges, isProjectOwner, isValidConnection]
@@ -511,8 +502,6 @@ function Flow() {
     setProjectMenuOpen(isOpen);
   }, []);
 
-
-  //fix annoying drag update :<
   const handleNodesChange = useCallback((changes: any[]) => {
     const isDragStart = changes.some((change: any) => change.type === 'position' && change.dragging === true);
     const isDragEnd = changes.some((change: any) => change.type === 'position' && change.dragging === false);
@@ -531,7 +520,7 @@ function Flow() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        nodeTypes={nodeTypes}
+        nodeTypes={nodeTypesData}
         edgeTypes={edgeTypes}
         onNodesChange={isProjectOwner ? handleNodesChange : undefined}
         onEdgesChange={isProjectOwner ? onEdgesChange : undefined}
@@ -549,7 +538,7 @@ function Flow() {
           hideAttribution: true
         }}
         fitView
-        isValidConnection={isValidConnection}
+        isValidConnection={(params) => isValidConnection(params as Connection)}
       >
         {isLoading ? (
           <div className="flex flex-col min-h-screen min-w-screen items-center justify-center text-white">
@@ -582,7 +571,7 @@ function Flow() {
           onProjectMenuToggle={handleProjectMenuToggle}
         />
         <NodeSidebar
-          nodeTypesMetadata={nodeTypesMetadata}
+          nodeTypes={nodeTypes}
           addNewNode={addNewNode}
           isReadOnly={!isProjectOwner}
           onDragStart={() => setIsDragging(true)}
