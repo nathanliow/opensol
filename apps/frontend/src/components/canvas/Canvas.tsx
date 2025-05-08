@@ -52,6 +52,7 @@ function Flow() {
   const [output, setOutput] = useState<string>('');
   const [code, setCode] = useState<string>('');
   const [isDragging, setIsDragging] = useState(false);
+  const [isNodeDragging, setIsNodeDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -142,6 +143,7 @@ function Flow() {
   // Auto-save changes to Supabase
   useEffect(() => {
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;
+    if (isNodeDragging) return; // Don't save while dragging nodes
     
     const storedProjectId = localStorage.getItem('currentProjectId');
     if (storedProjectId !== projectId) return; 
@@ -158,7 +160,7 @@ function Flow() {
         
         // Debounce saves to prevent too many API calls
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-        
+        console.log('Saving canvas changes...');
         saveTimeoutRef.current = setTimeout(() => {
           saveCanvasChanges(projectId, nodes, edges).catch(err => {
             console.error('Failed to save canvas changes:', err);
@@ -174,7 +176,7 @@ function Flow() {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [nodes, edges, projectId, supabaseUser, isLoading]);
+  }, [nodes, edges, projectId, supabaseUser, isLoading, isNodeDragging]);
 
   const handleClear = useCallback(() => {
     setOutput('');
@@ -509,6 +511,21 @@ function Flow() {
     setProjectMenuOpen(isOpen);
   }, []);
 
+
+  //fix annoying drag update :<
+  const handleNodesChange = useCallback((changes: any[]) => {
+    const isDragStart = changes.some((change: any) => change.type === 'position' && change.dragging === true);
+    const isDragEnd = changes.some((change: any) => change.type === 'position' && change.dragging === false);
+    
+    if (isDragStart) {
+      setIsNodeDragging(true);
+    } else if (isDragEnd) {
+      setIsNodeDragging(false);
+    }
+    
+    onNodesChange(changes);
+  }, [onNodesChange]);
+
   return (
     <div className="w-full h-screen" ref={reactFlowWrapper}>
       <ReactFlow
@@ -516,7 +533,7 @@ function Flow() {
         edges={edges}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        onNodesChange={isProjectOwner ? onNodesChange : undefined}
+        onNodesChange={isProjectOwner ? handleNodesChange : undefined}
         onEdgesChange={isProjectOwner ? onEdgesChange : undefined}
         onConnect={isProjectOwner ? onConnect : undefined}
         onConnectStart={isProjectOwner ? onConnectStart : undefined}
