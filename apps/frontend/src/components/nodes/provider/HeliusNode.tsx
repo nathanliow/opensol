@@ -7,6 +7,7 @@ import blockTemplateService from '../../services/blockTemplateService';
 import { useConfig } from '../../../contexts/ConfigContext';
 import { OutputDefinition } from '@/types/OutputTypes';
 import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface HeliusNodeProps {
   id: string;
@@ -18,7 +19,7 @@ export default function HeliusNode({ id }: HeliusNodeProps) {
   const [parameters, setParameters] = useState<Record<string, string>>({});
   const blockFunctionTemplates = blockTemplateService.getTemplatesByType('HELIUS');
   const edges = useEdges();
-  const nodes = useNodes();
+  const nodes = useNodes() as FlowNode[];
   const { network, getApiKey } = useConfig();
 
   const handleFunctionChange = useCallback((value: string) => {
@@ -34,9 +35,7 @@ export default function HeliusNode({ id }: HeliusNodeProps) {
     const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === value);
     if (functionTemplate) {
       functionTemplate.metadata.parameters.forEach((param) => {
-        if (param.name !== 'apiKey' && param.name !== 'network') {
-          nodeUtils.updateNodeInput(id, param.name, `input-${param.name}`, 'string', '', setNodes);
-        }
+        nodeUtils.updateNodeInput(id, param.name, `input-${param.name}`, 'string', '', setNodes);
       });
     }
   }, [network, id, setNodes, blockFunctionTemplates]);

@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 // Basic output value types
-export type OutputValueType = string | number | boolean | object | null;
+export type OutputValueType = string | number | boolean | object | Array<any> | any | null;
 
 export type OutputValueTypeString = 'string' | 'number' | 'boolean' | 'object' | 'array' | 'any' | 'null';
 

@@ -7,9 +7,7 @@ import {
   SystemProgram
 } from '@solana/web3.js';
 import {
-  createMint,
   getMinimumBalanceForRentExemptMint,
-  getMint,
   createInitializeMintInstruction,
   TOKEN_PROGRAM_ID,
   MINT_SIZE,
@@ -23,13 +21,14 @@ import {
 } from '@metaplex-foundation/mpl-token-metadata';
 import { usePrivy } from '@privy-io/react-auth';
 import { useSolanaWallets } from '@privy-io/react-auth/solana';
-
+import { useConfig } from '@/contexts/ConfigContext';
 export const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
 export const useTokenMint = () => {
   const { authenticated } = usePrivy();
   const { ready, wallets } = useSolanaWallets();
   const solanaWallet = wallets[0];
+  const { network } = useConfig();
 
   const mintToken = async (
     name: string,
@@ -37,7 +36,6 @@ export const useTokenMint = () => {
     description: string,
     imageUri: string,
     decimals: number = 9,
-    networkType: 'mainnet-beta' | 'devnet' | 'testnet' = 'devnet',
     amount: number = 100,
     metadataUri?: string
   ) => {
@@ -51,6 +49,7 @@ export const useTokenMint = () => {
       }
 
       // Create connection to Solana network
+      const networkType = network === 'mainnet' ? 'mainnet-beta' : network;
       const connection = new Connection(clusterApiUrl(networkType));
 
       // Generate a new keypair for the mint account

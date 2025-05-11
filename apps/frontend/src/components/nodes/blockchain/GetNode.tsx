@@ -30,7 +30,7 @@ export default function GetNode({ id }: GetNodeProps) {
     setParameters(newParameters);
     
     nodeUtils.updateNodeInput(id, 'function', 'input-function', 'string', value, setNodes);
-    nodeUtils.updateNodeInput(id, 'network', 'input-network', 'string', network || 'devnet', setNodes);
+    // nodeUtils.updateNodeInput(id, 'network', 'input-network', 'string', network || 'devnet', setNodes);
     const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === value);
     if (functionTemplate) {
       functionTemplate.metadata.parameters.forEach((param) => {

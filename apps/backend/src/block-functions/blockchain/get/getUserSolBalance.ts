@@ -13,16 +13,6 @@ export const getUserSolBalance: BlockFunctionTemplate = {
         type: 'string',
         description: 'Wallet address to check'
       },
-      {
-        name: 'apiKey',
-        type: 'string',
-        description: 'Helius API key'
-      },
-      {
-        name: 'network',
-        type: 'string',
-        description: 'Network to use'
-      }
     ],
     requiredKeys: ['helius'],
     output: {

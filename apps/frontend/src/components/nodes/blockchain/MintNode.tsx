@@ -1,13 +1,15 @@
-import { useCallback, useState, memo, useMemo } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { useReactFlow, useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, InputValueTypeString, createInputDefinition } from '../../../types/InputTypes';
 import { nodeTypes } from '../../../types/NodeTypes';
 import { useTokenMint } from '../../../lib/tokenMint';
-import { useConfig } from '../../../contexts/ConfigContext';
 import { pinata } from '@/pinataConfig';
 import { OutputDefinition } from '@/types/OutputTypes';
 import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
+import { uploadImageToPinata } from '@/ipfs/uploadImageToPinata';
+import { uploadMetadataToPinata } from '@/ipfs/uploadMetadataToPinata';
 
 interface MintNodeProps {
   id: string;
@@ -24,7 +26,7 @@ const output: OutputDefinition = {
 export default function MintNode({ id }: MintNodeProps) {
   const { setNodes } = useReactFlow();
   const edges = useEdges();
-  const nodes = useNodes();
+  const nodes = useNodes() as FlowNode[];
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -41,7 +43,6 @@ export default function MintNode({ id }: MintNodeProps) {
   const [imageIpfsUrl, setImageIpfsUrl] = useState('');
   
   const { mintToken } = useTokenMint();
-  const { network } = useConfig();
   
   // Handle file selection
   const handleFileSelect = useCallback((file: File) => {
@@ -152,53 +153,6 @@ export default function MintNode({ id }: MintNodeProps) {
     }
   }, [id, setNodes, inputs]);
 
-  const uploadImageToPinata = async (file: File): Promise<string> => {
-    try {
-      const urlRequest = await fetch("/api/pinata/url");
-      if (!urlRequest.ok) {
-        throw new Error('Failed to get Pinata upload credentials'); 
-      }
-      
-      const urlResponse = await urlRequest.json();
-      
-      const upload = await pinata.upload.public
-        .file(file)
-        .url(urlResponse.url); // Upload the file with the signed URL
-
-      return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
-    } catch (error) {
-      console.error('Error uploading to Pinata:', error);
-      throw error;
-    }
-  }
-  
-  const uploadMetadataToPinata = async (jsonMetadata: {
-    name: string;
-    symbol: string;
-    description: string;
-    image: string;
-    showName: boolean;
-    createdOn: string;
-  }): Promise<string> => {
-    try {
-      const urlRequest = await fetch("/api/pinata/url");
-      if (!urlRequest.ok) {
-        throw new Error('Failed to get Pinata upload credentials');
-      }
-      
-      const urlResponse = await urlRequest.json();
-      
-      const upload = await pinata.upload.public
-        .json(jsonMetadata)
-        .url(urlResponse.url); // Upload the file with the signed URL
-      
-      return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
-    } catch (error) {
-      console.error('Error uploading to Pinata:', error);
-      throw error;
-    }
-  };
-
   const handleMintToken = async () => {
     setIsLoading(true);
     setError(null);
@@ -270,8 +224,6 @@ export default function MintNode({ id }: MintNodeProps) {
         const metadataIpfsUrl = await uploadMetadataToPinata(metadata);
         
         nodeUtils.updateNodeInput(id, 'metadataUri', 'input-metadata-uri', 'string', metadataIpfsUrl, setNodes);
-
-        const solanaNetwork = network === 'mainnet' ? 'mainnet-beta' : network;
         
         const res = await mintToken(
           nameValue || '',
@@ -279,7 +231,6 @@ export default function MintNode({ id }: MintNodeProps) {
           descriptionValue || '',
           imageIpfsUrl || '', // Use IPFS image URL
           decimalsValue || 9,
-          solanaNetwork,
           100, // Default amount
           metadataIpfsUrl // Use the IPFS metadata URI
         );

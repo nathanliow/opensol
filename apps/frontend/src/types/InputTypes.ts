@@ -13,9 +13,9 @@ export type InputValueTypeString = 'string' | 'number' | 'boolean' | 'object' | 
 
 export type Inputs = {
   [name: string]: { // input name
-    handleId?: string; // input handle id
-    type?: InputValueTypeString; // input type
-    value?: InputValueType | null; // input value
+    handleId: string; // input handle id ('input-name')
+    type: InputValueTypeString; // input type
+    value: InputValueType | null; // input value
   }  
 };
 

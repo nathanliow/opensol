@@ -299,7 +299,7 @@ function Flow() {
         return ['array', 'object', 'any'].includes(targetType as string);
       
       default:
-        return targetType === 'any';
+        return false;
     }
   }, [nodes]);
 

@@ -8,17 +8,19 @@ export interface BlockFunctionTemplateMetadata {
   description: string;
   blockType: string;
   blockCategory?: NodeCategory;
-  parameters: {
-    name: string;
-    description: string;
-    type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
-    defaultValue?: any;
-  }[];
+  parameters: BlockFunctionTemplateParameters[];
   requiredKeys?: ApiKeyType[];
   output?: {
     type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
     description: string;
   };
+}
+
+export interface BlockFunctionTemplateParameters {
+  name: string;
+  description: string;
+  type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
+  defaultValue?: any;
 }
 
 export interface BlockFunctionTemplate {

@@ -1,5 +1,8 @@
 import { FlowNode, FlowEdge } from './types';
-import { BlockFunctionTemplate } from '../../../../../frontend/src/components/services/blockTemplateService';
+import { BlockFunctionTemplate, BlockFunctionTemplateParameters } from '../../../../../frontend/src/components/services/blockTemplateService';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { ApiKeyType } from '@/types/KeyTypes';
+import { NetworkType } from '@/types/NetworkTypes';
 
 export class FlowCompiler {
   private nodes: FlowNode[];
@@ -7,38 +10,79 @@ export class FlowCompiler {
   private templates: Record<string, BlockFunctionTemplate>;
   private nodeOutputs: Map<string, string> = new Map();
   private varCounter: number = 0;
+  private imports: {
+    importName: string;
+    importPath: string;
+  }[] = []; // function to path mapping (getUserSolBalance -> @opensol/templates)
   private printOutputs: string[] = [];
   private getFunctions: Map<string, string> = new Map();
-  private templateToFunctionName: Map<string, string> = new Map();
+  private apiKeys: Record<ApiKeyType, string> = {"helius": "", "openai": "", "birdeye": ""};
+  private network: NetworkType = 'devnet';
+  private noImports: boolean = false;
 
-  constructor(nodes: FlowNode[], edges: FlowEdge[], templates: Record<string, BlockFunctionTemplate>) {
+  constructor(
+    nodes: FlowNode[], 
+    edges: FlowEdge[], 
+    templates: Record<string, BlockFunctionTemplate>,
+    apiKeys: Record<ApiKeyType, string> = {"helius": "", "openai": "", "birdeye": ""},
+    network: NetworkType = 'devnet',
+    options: { noImports?: boolean } = {}
+  ) {
     this.nodes = nodes;
     this.edges = edges;
     this.templates = templates;
+    this.apiKeys = apiKeys;
+    this.network = network;
+    this.noImports = options.noImports || false;
   }
 
   /**
    * Helper function that formats parameters for code generation.
-   * If the parameter is for "apiKey" and its value is exactly "HELIUS_API_KEY",
-   * then output a variable reference (without quotes).
+   * If the parameter is a key type listed in the template's requiredKeys,
+   * it will use the appropriate API key from the context.
    */
-  private formatParam(key: string, value: any): string {
-    if (key === 'apiKey' && value === "HELIUS_API_KEY") {
-      return `${key}: HELIUS_API_KEY`;
+  private formatParam(key: string, value: any, requiredKeys?: ApiKeyType[]): string {
+    // Handle API keys from context
+    if (key === 'apiKey') {
+      if (requiredKeys?.includes('helius' as ApiKeyType) && this.apiKeys['helius']) {
+        return `${key}: HELIUS_API_KEY`;
+      }
+      if (requiredKeys?.includes('openai' as ApiKeyType) && this.apiKeys['openai']) {
+        return `${key}: OPENAI_API_KEY`;
+      }
+      if (requiredKeys?.includes('birdeye' as ApiKeyType) && this.apiKeys['birdeye']) {
+        return `${key}: BIRDEYE_API_KEY`;
+      }
     }
+    
+    // Handle network from context
+    if (key === 'network') {
+      return `${key}: ${JSON.stringify(this.network)}`;
+    }
+
+    // Handle node connection variables
     if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
       return `${key}: ${value}`;
     }
+    
     return `${key}: ${JSON.stringify(value)}`;
   }
 
-  private generateGetFunctionName(templateName: string): string {
-    let functionName = this.templateToFunctionName.get(templateName);
-    if (functionName) {
-      return functionName;
+  private setFunctionImport(template?: BlockFunctionTemplate | null, functionName?: string, functionPath?: string): string {
+    if (!functionName) {
+      functionName = template?.metadata.name ?? '';
     }
-    functionName = templateName.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    this.templateToFunctionName.set(templateName, functionName);
+    if (!functionPath) {
+      functionPath = `@opensol/templates/${template?.metadata.blockCategory?.toLowerCase()}/${template?.metadata.blockType.toLowerCase()}`;
+    }
+    
+    if (!this.noImports && !this.imports.find((importItem) => importItem.importName === functionName)) {
+      this.imports.push({ 
+        importName: functionName, 
+        importPath: functionPath 
+      });
+    }
+    
     return functionName;
   }
 
@@ -57,12 +101,19 @@ export class FlowCompiler {
     if (!template) {
       throw new Error(`Template not found for function: ${templateName}`);
     }
-    const functionName = this.generateGetFunctionName(templateName);
+    const functionName = this.setFunctionImport(template);
     const functionBody = template.execute
       .toString()
       .split('\n')
       .slice(1, -1)
       .join('\n');
+    
+    // For the mintToken function, we don't need to create a function body
+    // since we'll be injecting the real functions
+    if (templateName === 'mintToken' && this.noImports) {
+      return '';
+    }
+    
     const functionCode = `async function ${functionName}(params) {
       try {
         const { address, apiKey, network } = params;
@@ -77,53 +128,20 @@ export class FlowCompiler {
   }
 
   private getNodeOutputType(nodeId: string): string {
-    const node = this.nodes.find(n => n.id === nodeId);
+    const node = nodeUtils.getNode(this.nodes, nodeId);
     if (!node) return 'any';
 
-    switch (node.type) {
-      case 'GET':
-      case 'HELIUS': {
-        const selectedFunction = node.data.selectedFunction;
-        if (!selectedFunction) return 'any';
-        const template = this.templates[selectedFunction];
-        return template?.metadata?.output?.type ?? 'any';
-      }
-      case 'CONST': {
-        return node.data.dataType || 'string';
-      }
-      case 'STRING': {
-        return 'string';
-      }
-      case 'CONDITIONAL': {
-        return 'any';
-      }
-      default:
-        return 'any';
-    }
-  }
-
-  private validateNodeConnection(sourceId: string, targetId: string, targetParam: string): void {
-    const sourceType = this.getNodeOutputType(sourceId);
-    const targetNode = this.nodes.find(n => n.id === targetId);
-    if (!targetNode) return;
-
-    if (targetNode.type === 'GET' || targetNode.type === 'HELIUS') {
-      const selectedFunction = targetNode.data.selectedFunction;
-      if (!selectedFunction) return;
+    const selectedFunction = node.data.inputs?.['function']?.value;
+    if (selectedFunction) {
+      if (!selectedFunction || typeof selectedFunction !== 'string') return 'any';
       const template = this.templates[selectedFunction];
-      if (!template) return;
 
-      const param = template.metadata.parameters.find((p: { name: string; type: string }) => p.name === targetParam);
-      if (!param) return;
-
-      // For safety, only validate if we have explicit, non-'any' types
-      const sourceTypeStr = String(sourceType);
-      const paramTypeStr = String(param.type);
-      
-      if (sourceTypeStr !== 'any' && paramTypeStr !== 'any' && sourceTypeStr !== paramTypeStr) {
-        throw new Error(`Type mismatch: ${targetNode.type} node parameter '${targetParam}' expects ${paramTypeStr} but got ${sourceTypeStr} from source node`);
-      }
+      return template?.metadata?.output?.type ?? 'any';
     }
+
+    if (!node.data.output) return 'any';
+
+    return node.data.output.type;
   }
 
   private getNodeInputs(nodeId: string): Record<string, string> {
@@ -135,7 +153,7 @@ export class FlowCompiler {
       if (sourceVar) {
         const paramName = edge.targetHandle?.startsWith('input-')
           ? edge.targetHandle.replace('input-', '')
-          : edge.targetHandle || 'flow';
+          : edge.targetHandle || '';
         inputs[paramName] = sourceVar;
       }
     });
@@ -168,14 +186,19 @@ export class FlowCompiler {
       default:
         outputExpr = `(typeof ${inputVar} === 'object' ? JSON.stringify(${inputVar}, null, 2) : String(${inputVar}))`;
     }
-
-    const template = node.data.template || '';
-    if (!template.includes('$output$')) {
-      return `printOutput += \`${template}\\n\`;`;
+    const template = node.data.inputs?.['template']?.value || '';
+    // Check if template is a string before using string methods
+    if (typeof template === 'string') {
+      if (!template.includes('$output$')) {
+        return `printOutput += \`${template}\\n\`;`;
+      }
+      
+      const formattedTemplate = template.replace(/\$output\$/g, `\${${outputExpr}}`);
+      return `printOutput += \`${formattedTemplate}\\n\`;`;
+    } else {
+      // Handle non-string template values
+      return `printOutput += \`${String(template)}\\n\`;`;
     }
-
-    const formattedTemplate = template.replace(/\$output\$/g, `\${${outputExpr}}`);
-    return `printOutput += \`${formattedTemplate}\\n\`;`;
   }
 
   private generateNodeCode(node: FlowNode): string {
@@ -185,40 +208,71 @@ export class FlowCompiler {
     switch (node.type) {
       case 'GET':
       case 'HELIUS':
-      case 'MATH':
-      case 'MINT': {
-        const templateName = node.data.selectedFunction || '';
-        const functionName = this.generateGetFunctionName(templateName);
+      case 'MATH': {
+        const templateName = node.data.inputs?.['function']?.value || '';
+        if (!templateName || typeof templateName !== 'string') return '';
+        const functionName = this.setFunctionImport(this.templates[templateName]);
         // Generate function body if needed (for inlining)
         this.maybeGenerateFunctionBody(templateName, true);
 
-        const parameters = { ...node.data.parameters };
+        const templateParams = this.getTemplateParams(templateName);
         const inputs = this.getNodeInputs(node.id);
-        Object.entries(inputs).forEach(([handle, value]) => {
-          if (handle !== 'flow' && handle !== 'flow-top' && handle !== 'flow-bottom') {
-            parameters[handle] = value;
+        const parameters: Record<string, any> = {};
+        const requiredKeys = this.getTemplateKeys(templateName);
+        
+        // Add network and API keys automatically if they're required
+        for (const key of requiredKeys) {
+          if (requiredKeys?.includes(key)) {
+            parameters['apiKey'] = `${key.toUpperCase()}_API_KEY`; 
+          }
+        }
+
+        parameters['network'] = this.network;
+        
+        templateParams.forEach(param => {
+          const inputKey = param.name;
+          const inputNodeKey = inputKey;
+          // Skip apiKey and network since we're handling those automatically
+          if (inputKey !== 'apiKey' && inputKey !== 'network' && inputs[inputNodeKey]) {
+            parameters[inputKey] = inputs[inputNodeKey];
           }
         });
 
-        // For GET/HELIUS/MINT nodes, ensure the apiKey parameter is set.
-        if (node.type === 'GET' || node.type === 'HELIUS' || node.type === 'MINT') {
-          parameters['apiKey'] = "HELIUS_API_KEY";
-        }
-
         const paramsString = Object.entries(parameters)
-          .map(([key, value]) => this.formatParam(key, value))
+          .map(([key, value]) => this.formatParam(key, value, requiredKeys))
           .join(', ');
 
         return `const ${varName} = await ${functionName}({ ${paramsString} });`;
       }
 
+      case 'MINT': {
+        const inputs = this.getNodeInputs(node.id);
+        
+        // Get values directly from node data inputs
+        const name = node.data.inputs?.['name']?.value || '';
+        const symbol = node.data.inputs?.['symbol']?.value || '';
+        const description = node.data.inputs?.['description']?.value || '';
+        const image = node.data.inputs?.['image']?.value || '';
+        const decimals = node.data.inputs?.['decimals']?.value || 9;
+        
+        // For mintToken, we're going to use an injected function
+        return `const ${varName} = await mintToken(
+  ${JSON.stringify(name)}, 
+  ${JSON.stringify(symbol)}, 
+  ${JSON.stringify(description)}, 
+  ${JSON.stringify(image)},
+  ${decimals}, 
+  100, 
+  ${JSON.stringify(node.data.inputs?.['metadataUri']?.value || '')}
+);`;
+      }
+
       case 'STRING': {
-        return `const ${varName} = ${JSON.stringify(node.data.value)};`;
+        return `const ${varName} = ${JSON.stringify(node.data.inputs?.['value']?.value || '')};`;
       }
 
       case 'PRINT': {
-        const inputs = this.getNodeInputs(node.id);
-        const inputVar = inputs['flow'] || Object.values(inputs)[0];
+        const inputVar = Object.values(this.getNodeInputs(node.id))[0];
         if (!inputVar) {
           throw new Error(`Print node ${node.id} has no input`);
         }
@@ -298,14 +352,15 @@ if (${conditionStr}) {
       }
 
       case 'CONST': {
-        const dataType = node.data.dataType || 'string';
+        const dataType = node.data.inputs?.['dataType']?.value || 'string';
         let formattedValue;
         if (dataType === 'number') {
-          formattedValue = Number(node.data.value);
+          formattedValue = Number(node.data.inputs?.['value']?.value || 0);
         } else if (dataType === 'boolean') {
-          formattedValue = node.data.value === 'true' || node.data.value === true;
+          const value = node.data.inputs?.['value']?.value;
+          formattedValue = value === 'true' || value === true;
         } else {
-          formattedValue = String(node.data.value);
+          formattedValue = String(node.data.inputs?.['value']?.value || '');
         }
         const constName = `const_${this.varCounter++}`;
         this.nodeOutputs.set(node.id, constName);
@@ -315,6 +370,18 @@ if (${conditionStr}) {
       default:
         return `// Node type ${node.type} is not handled yet.`;
     }
+  }
+
+  private getTemplateParams(templateName: string): BlockFunctionTemplateParameters[] {
+    const template = this.templates[templateName];
+    if (!template) return [];
+    return template.metadata.parameters;
+  }
+
+  private getTemplateKeys(templateName: string): ApiKeyType[] {
+    const template = this.templates[templateName];
+    if (!template) return [];
+    return template.metadata.requiredKeys || [];
   }
 
   /**
@@ -328,27 +395,19 @@ if (${conditionStr}) {
       functionBodies = Array.from(this.getFunctions.values()).join('\n\n');
     }
 
-    const functionImports = !inlineFunctions
-      ? Array.from(this.templateToFunctionName.values())
-          .map(fn => `import { ${fn} } from '@opensol/templates';`)
-          .join('\n')
+    // Only include import statements in display code, not executable code
+    const functionImports = (!this.noImports && !inlineFunctions) 
+      ? this.imports.map(importItem => `import { ${importItem.importName} } from '${importItem.importPath}';`).join('\n')
       : '';
 
     let defineApiKey = '';
-    if (hideApiKey) {
-      defineApiKey = `const HELIUS_API_KEY = process.env.HELIUS_API_KEY;`;
-    } else {
-      const userKeyNode = this.nodes.find(n => {
-        if ((n.type === 'GET' || n.type === 'HELIUS') && n.data?.parameters?.apiKey) {
-          return true;
+    for (const key of Object.keys(this.apiKeys)) {
+      if (this.apiKeys[key as ApiKeyType] !== '') {
+        if (hideApiKey) {
+          defineApiKey += `const ${key.toUpperCase()}_API_KEY = process.env.${key.toUpperCase()}_API_KEY;\n`;
+        } else if (this.apiKeys[key as ApiKeyType]) {
+          defineApiKey += `const ${key.toUpperCase()}_API_KEY = ${JSON.stringify(this.apiKeys[key as ApiKeyType])};\n`;
         }
-        return false;
-      });
-      if (userKeyNode && userKeyNode.data.parameters) {
-        const providedKey = userKeyNode.data.parameters.apiKey;
-        defineApiKey = `const HELIUS_API_KEY = ${JSON.stringify(providedKey)};`;
-      } else {
-        defineApiKey = `const HELIUS_API_KEY = process.env.HELIUS_API_KEY;`;
       }
     }
 
@@ -386,7 +445,7 @@ ${codeBlock}
     this.varCounter = 0;
     this.printOutputs = [];
     this.getFunctions.clear();
-    this.templateToFunctionName.clear();
+    this.imports = [];
 
     const rootNodes = this.nodes.filter(node => !this.edges.some(edge => edge.target === node.id));
     if (rootNodes.length === 0) {
@@ -421,17 +480,43 @@ ${codeBlock}
     const nodeCodeJoined = nodeCodeLines.join('\n');
     const printLinesJoined = this.printOutputs.map(line => `  ${line}`).join('\n');
 
-    // Generate inline function code (actual key shown)
+    // Imports for "MINT"
+    if (this.nodes.some(n => n.type === 'MINT')) {
+      this.imports.push({ 
+        importName: 'mintToken', 
+        importPath: '@opensol/blockchain/mint'
+      });
+      if (!this.imports.some(imp => imp.importName === 'uploadImageToPinata')) {
+        this.imports.push({
+          importName: 'uploadImageToPinata',
+          importPath: '@opensol/ipfs/uploadImageToPinata'
+        });
+      }
+      if (!this.imports.some(imp => imp.importName === 'uploadMetadataToPinata')) {
+        this.imports.push({
+          importName: 'uploadMetadataToPinata',
+          importPath: '@opensol/ipfs/uploadMetadataToPinata'
+        });
+      }
+    }
+
+    // Generate inline function code for execution (API key shown, no imports)
+    const savedNoImports = this.noImports;
+    this.noImports = true;
     const functionCodeRaw = this.generateFinalCode(true, false);
     const functionCode = functionCodeRaw
       .replace('NODE_CODE_HERE', nodeCodeJoined)
       .replace('PRINT_OUTPUT_HERE', printLinesJoined);
 
-    // Generate display code (helper functions imported, API key hidden)
+    // Generate display code (imports shown, API key hidden)
+    this.noImports = false;
     const displayCodeRaw = this.generateFinalCode(false, true);
     const displayCode = displayCodeRaw
       .replace('NODE_CODE_HERE', nodeCodeJoined)
       .replace('PRINT_OUTPUT_HERE', printLinesJoined);
+    
+    // Restore original noImports value
+    this.noImports = savedNoImports;
 
     // Wrap the function code to build a real executable function.
     const wrappedFunctionCode = `
@@ -443,6 +528,7 @@ return { execute, FlowCompilerOutput: execute };
       FlowCompilerOutput: () => Promise<any>;
     };
     console.log('functionCode', functionCode);
+    console.log('displayCode', displayCode);
     return {
       execute: runtimeFn.execute,
       functionCode,

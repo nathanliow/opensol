@@ -3,7 +3,6 @@ import { PrivyProvider } from '@privy-io/react-auth';
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 
 const solanaConnectors = toSolanaWalletConnectors({
-  // By default, shouldAutoConnect is enabled <-- THIS IS INSANE WHY WOULD ANYONE SET THIS TO FALSE???
   shouldAutoConnect: true,
 });
 

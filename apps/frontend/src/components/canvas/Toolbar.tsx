@@ -16,6 +16,7 @@ import { Project } from "@/types/ProjectTypes";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserData } from "@/lib/user";
 import { UserData } from "@/types/UserTypes";
+import { useConfig } from "@/contexts/ConfigContext";
 
 interface ToolbarProps {
   selectionMode: boolean;

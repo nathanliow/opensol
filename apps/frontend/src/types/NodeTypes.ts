@@ -15,7 +15,7 @@ import { Inputs } from "./InputTypes";
  * FRONTEND TYPES FOR NODES AND EDGES
  */
 
-export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc' | 'Example';
+export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
 
 export interface NodeType {
   metadata: NodeTypeMetadata;

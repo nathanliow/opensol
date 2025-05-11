@@ -51,7 +51,7 @@ import { getVersion } from './provider/helius/getVersion';
 import { getVoteAccounts } from './provider/helius/getVoteAccounts';
 import { isBlockhashValid } from './provider/helius/isBlockhashValid';
 import { minimumLedgerSlot } from './provider/helius/minimumLedgerSlot';
-import { mintToken } from './blockchain/mint/mintToken';
+// import { mintToken } from './blockchain/mint/mintToken';
 
 // Group templates by their block type
 export const templates: Record<string, Record<string, BlockFunctionTemplate>> = {
@@ -113,9 +113,9 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     solToUsd,
     usdToSol
   },
-  MINT: {
-    mintToken
-  }
+  // MINT: {
+  //   mintToken
+  // }
 };
 
 // Helper to get all templates flattened into a single record

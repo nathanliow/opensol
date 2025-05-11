@@ -1,9 +1,9 @@
 import { Edge, Node } from '@xyflow/react';
 import { Position } from '@xyflow/system';
-import { InputDefinition, InputValueTypeString, InputValueType } from '../types/InputTypes';
+import { InputDefinition, InputValueTypeString, InputValueType, Inputs } from '../types/InputTypes';
 import { HandlePosition } from '../types/HandleTypes';
 import { FlowNode } from '../../../backend/src/packages/compiler/src/types';
-import { OutputValueType, OutputValueTypeString } from '@/types/OutputTypes';
+import { Output, OutputValueType, OutputValueTypeString } from '@/types/OutputTypes';
 
 // Define handle style configuration
 const HANDLE_STYLES = {
@@ -111,7 +111,7 @@ export const nodeUtils = {
   /**
    * Get a value from node data with optional default
    */
-  getValue: (data: Record<string, any>, id: string, defaultValue: any = null): any => {
+  getValue: (data: Inputs, id: string, defaultValue: any = null): any => {
     return data[id] !== undefined ? data[id] : defaultValue;
   },
 
@@ -174,7 +174,7 @@ export const nodeUtils = {
   /**
    * Find a node by its id
    */
-  findNodeById: (nodes: Node[], nodeId: string): Node | undefined => {
+  getNode: (nodes: FlowNode[], nodeId: string): FlowNode | undefined => {
     return nodes.find(node => node.id === nodeId);
   },
 
@@ -314,20 +314,20 @@ export const nodeUtils = {
    * Returns an array of nodes in execution order
    */
   getExecutionPath: (
-    nodes: Node[],
+    nodes: FlowNode[],
     edges: Edge[],
     startNodeId: string
-  ): Node[] => {
-    const result: Node[] = [];
+  ): FlowNode[] => {
+    const result: FlowNode[] = [];
     const visited = new Set<string>();
-    const startNode = nodeUtils.findNodeById(nodes, startNodeId);
+    const startNode = nodeUtils.getNode(nodes, startNodeId);
     
     if (!startNode) return result;
     
     const traverse = (nodeId: string) => {
       if (visited.has(nodeId)) return;
       
-      const node = nodeUtils.findNodeById(nodes, nodeId);
+      const node = nodeUtils.getNode(nodes, nodeId);
       if (!node) return;
       
       visited.add(nodeId);
@@ -399,7 +399,10 @@ export const nodeUtils = {
    * @param id - The ID of the node to get data for
    * @returns The node data
    */
-  getNodeData: (nodes: Node[], id: string): Record<string, any> => {
-    return nodes.find(node => node.id === id)?.data as Record<string, any>;
+  getNodeData: (nodes: FlowNode[], id: string): { 
+    inputs: Inputs, 
+    output: Output 
+  } => {
+    return nodes.find(node => node.id === id)?.data as { inputs: Inputs, output: Output };
   },
 }; 

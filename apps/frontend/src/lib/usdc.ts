@@ -11,14 +11,16 @@ import {
 } from "@solana/spl-token";
 import { usePrivy } from '@privy-io/react-auth';
 import { useSolanaWallets } from '@privy-io/react-auth/solana';
+import { NetworkType } from '@/types/NetworkTypes';
+import { useConfig } from '@/contexts/ConfigContext';
 
 // Get the appropriate USDC mint address based on network
-const getUSDCMint = (networkType: 'mainnet-beta' | 'devnet' | 'testnet') => {
+const getUSDCMint = (networkType: NetworkType) => {
   // USDC token mint address on Solana mainnet
-  if (networkType === 'mainnet-beta') {
+  if (networkType === 'mainnet') {
     return new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
   }
-  // Devnet USDC token (using a fake address for testing)
+  // Devnet USDC token 
   return new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU');
 };
 
@@ -27,7 +29,7 @@ export const createUSDCTransferTransaction = async (
   amount: number,
   recipientAddress: string,
   senderAddress: string,
-  networkType: 'mainnet-beta' | 'devnet' | 'testnet' = 'devnet'
+  networkType: NetworkType = 'devnet'
 ): Promise<Transaction> => {
   try {
     const USDC_MINT = getUSDCMint(networkType);
@@ -90,10 +92,11 @@ export const useUSDCTransfer = () => {
   const { authenticated } = usePrivy();
   const { ready, wallets } = useSolanaWallets();
   const solanaWallet = wallets[0];
+  const { network } = useConfig();
 
   const sendUSDC = async (
     amount: number,
-    recipientAddress: string
+    recipientAddress: string,
   ) => {
     try {
       if (!authenticated) {
@@ -105,7 +108,7 @@ export const useUSDCTransfer = () => {
       }
 
       // Create connection to Solana devnet
-      const networkType = 'devnet';
+      const networkType = network === 'mainnet' ? 'mainnet-beta' : network;
       const connection = new Connection(clusterApiUrl(networkType));
 
       // Create the transaction
@@ -114,7 +117,7 @@ export const useUSDCTransfer = () => {
         amount,
         recipientAddress,
         solanaWallet.address,
-        networkType
+        network
       );
 
       // Get recent blockhash

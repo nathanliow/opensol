@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, FC, useRef, ReactNode, useCallback } from 'react';
-import { Handle, useUpdateNodeInternals, useReactFlow, useEdges, useNodes } from '@xyflow/react';
+import { useState, useEffect, useMemo, FC, useRef, ReactNode } from 'react';
+import { Handle, useUpdateNodeInternals, useEdges, useNodes } from '@xyflow/react';
 import { Position } from '@xyflow/system';
-import { InputDefinition, FileInputDefinition } from '../../types/InputTypes';
-import { OutputDefinition } from '../../types/OutputTypes';
+import { InputDefinition, FileInputDefinition, Inputs } from '../../types/InputTypes';
+import { Output, OutputDefinition } from '../../types/OutputTypes';
 import { CustomHandle } from '../../types/HandleTypes';
 import SearchableDropdown from '../ui/SearchableDropdown';
 import { NodeTypeMetadata } from '../../types/NodeTypes';
@@ -14,7 +14,10 @@ export interface TemplateNodeProps {
   metadata: NodeTypeMetadata;
   inputs: InputDefinition[];
   output?: OutputDefinition;  
-  data: Record<string, any>;
+  data: {
+    inputs: Inputs,
+    output: Output
+  };
   onInputChange?: (inputId: string, value: any, fromConnection?: boolean) => void;
   onOutputChange?: (outputId: string, value: any) => void;
   hideTopHandle?: boolean;
@@ -356,14 +359,17 @@ const OutputHandle: FC<{
  */
 const useNodeInputs = (
   inputs: InputDefinition[], 
-  data: Record<string, any>,
+  data: {
+    inputs: Inputs,
+    output: Output
+  },
   onInputChange?: (inputId: string, value: any, fromConnection?: boolean) => void
 ) => {
   // Initialize values from data or defaults
   const initialValues = useMemo(() => {
     const values: Record<string, any> = {};
     inputs.forEach(input => {
-      values[input.id] = nodeUtils.getValue(data, input.id, input.defaultValue);
+      values[input.id] = nodeUtils.getValue(data.inputs, input.id, input.defaultValue);
     });
     return values;
   }, [inputs, data]);
@@ -376,8 +382,8 @@ const useNodeInputs = (
     const newValues = {...inputValues};
     
     inputs.forEach(input => {
-      if (data[input.id] !== undefined && data[input.id] !== inputValues[input.id]) {
-        newValues[input.id] = data[input.id];
+      if (data.inputs[input.id] !== undefined && data.inputs[input.id] !== inputValues[input.id]) {
+        newValues[input.id] = data.inputs[input.id];
         hasChanged = true;
       }
     });
