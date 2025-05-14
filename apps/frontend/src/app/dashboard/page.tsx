@@ -46,7 +46,7 @@ export default function DashboardPage() {
   const [modalMode, setModalMode] = useState<'edit' | 'delete'>('edit');
 
   // New state for active tab
-  const [tab, setTab] = useState<'my' | 'public' | 'earnings'>('my');
+  const [tab, setTab] = useState<'my' | 'public' | 'earnings' | 'tutorial'>('my');
 
   // Use the selected tab to determine which projects to display
   const displayProjects = tab === 'my' ? projects : publicProjects;
@@ -366,6 +366,15 @@ export default function DashboardPage() {
     }
   };
 
+  // Tutorial units (static for now)
+  const tutorialUnits = [
+    {
+      id: 'intro-blocks',
+      title: 'Introduction to Blocks',
+      description: 'Learn how to place your first Function block and understand basic concepts.'
+    }
+  ];
+
   return (
     <>
       <div className="min-h-screen bg-[#121212] text-white p-4 md:p-6">
@@ -393,25 +402,48 @@ export default function DashboardPage() {
             setTab={setTab} 
           />
 
-          {/* Dashboard Content */}
-          <DashboardContent
-            userData={userData}
-            projects={displayProjects}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            loading={loading}
-            tab={tab}
-            handleOpenProject={handleOpenProject}
-            handleEditProject={handleEditProject}
-            handleStarToggle={handleStarToggle}
-            starredProjects={starredProjects}
-            handleNewProject={handleNewProject}
-            supabaseUser={supabaseUser}
-            sortConfig={sortConfig}
-            requestSort={requestSort}
-          />
+          {/* Dashboard Content or Tutorials */}
+          {tab === 'tutorial' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+              {tutorialUnits.map(unit => (
+                <div key={unit.id} className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">{unit.title}</h3>
+                    <p className="text-gray-400 text-sm mb-4">{unit.description}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      // Navigate to canvas in tutorial mode
+                      localStorage.removeItem('currentProjectId');
+                      router.push(`/?tutorial=${unit.id}`);
+                    }}
+                    className="mt-auto py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-md font-medium"
+                  >
+                    Start
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <DashboardContent
+              userData={userData}
+              projects={displayProjects}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              loading={loading}
+              tab={tab as 'my' | 'public' | 'earnings'}
+              handleOpenProject={handleOpenProject}
+              handleEditProject={handleEditProject}
+              handleStarToggle={handleStarToggle}
+              starredProjects={starredProjects}
+              handleNewProject={handleNewProject}
+              supabaseUser={supabaseUser}
+              sortConfig={sortConfig}
+              requestSort={requestSort}
+            />
+          )}
         </div>
       </div>
       
