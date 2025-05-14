@@ -111,7 +111,8 @@ export const nodeUtils = {
   /**
    * Get a value from node data with optional default
    */
-  getValue: (data: Inputs, id: string, defaultValue: any = null): any => {
+  getValue: (data: Inputs | undefined, id: string, defaultValue: any = null): any => {
+    if (!data) return defaultValue;
     return data[id] !== undefined ? data[id] : defaultValue;
   },
 
@@ -403,6 +404,18 @@ export const nodeUtils = {
     inputs: Inputs, 
     output: Output 
   } => {
-    return nodes.find(node => node.id === id)?.data as { inputs: Inputs, output: Output };
+    const node = nodes.find(n => n.id === id);
+    if (node && node.data) {
+      const data = node.data as any;
+      return {
+        inputs: (data.inputs || {}) as Inputs,
+        output: (data.output || { handleId: 'output', type: 'string', value: '' }) as Output,
+      };
+    }
+    // Fallback when node/data missing
+    return {
+      inputs: {} as Inputs,
+      output: { handleId: 'output', type: 'string', value: '' } as Output,
+    };
   },
 }; 

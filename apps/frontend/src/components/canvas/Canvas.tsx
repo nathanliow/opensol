@@ -40,6 +40,8 @@ import { Icons } from "../icons/icons";
 import { Project } from "@/types/ProjectTypes";
 import { OutputValueTypeString } from "@/types/OutputTypes";
 import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/src/types";
+import TutorialPanel from "@/tutorials/components/TutorialPanel";
+import { useSearchParams } from "next/navigation";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -68,9 +70,15 @@ function Flow() {
   // Hooks
   const reactFlowInstance = useReactFlow();
   const { supabaseUser } = useUserAccountContext();
+  const searchParams = useSearchParams();
+  const tutorialUnitId = searchParams.get('tutorial');
+  const tutorialMode = !!tutorialUnitId;
   
   // Create node types with setNodes
   const nodeTypesData = useMemo(() => createNodeTypes(setNodes), [setNodes]);
+
+  // Allow editing either if user owns the project OR we are in tutorial mode
+  const canEdit = tutorialMode || isProjectOwner;
 
   // Handle project change notification from Menu component
   const handleProjectChange = useCallback(() => {
@@ -80,6 +88,14 @@ function Flow() {
 
   // Load project from localStorage
   useEffect(() => {
+    if (tutorialMode) {
+      // For tutorials, start with blank canvas
+      setNodes([]);
+      setEdges([]);
+      setIsLoading(false);
+      return;
+    }
+    
     const loadProjectFromStorage = async () => {
       // If we've already loaded this project, don't reload it
       if (!supabaseUser || (projectLoadedRef.current && !localStorage.getItem('forceProjectReload'))) {
@@ -139,10 +155,12 @@ function Flow() {
     return () => {
       projectLoadedRef.current = false;
     };
-  }, [supabaseUser, setNodes, setEdges, isLoading]);
+  }, [supabaseUser, setNodes, setEdges, isLoading, tutorialMode]);
 
   // Auto-save changes to Supabase
   useEffect(() => {
+    if (tutorialMode) return; // Don't autosave during tutorial
+    
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;
     if (isNodeDragging) return; // Don't save while dragging nodes
     
@@ -177,7 +195,7 @@ function Flow() {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [nodes, edges, projectId, supabaseUser, isLoading, isNodeDragging]);
+  }, [nodes, edges, projectId, supabaseUser, isLoading, isNodeDragging, tutorialMode]);
 
   const handleClear = useCallback(() => {
     setOutput('');
@@ -206,7 +224,7 @@ function Flow() {
   }, [isProjectOwner]);
 
   const addNewNode = useCallback((type: string, position?: { x: number; y: number }) => {
-    if (!isProjectOwner) return; // Prevent edits if not owner
+    if (!canEdit) return; // Prevent edits if not allowed
     
     // If position is provided, use it; otherwise use viewport center
     let nodePosition = position;
@@ -222,7 +240,7 @@ function Flow() {
     };
   
     setNodes((nds) => [...nds, newNode]);
-  }, [setNodes, isProjectOwner]);
+  }, [setNodes, canEdit]);
 
   // Function to check if a connection is valid based on handle types
   const isValidConnection = useCallback((connection: Connection): boolean => {
@@ -320,7 +338,7 @@ function Flow() {
 
   const onConnect: OnConnect = useCallback(
     (connection) => {
-      if (!isProjectOwner) return;
+      if (!canEdit) return;
       if (isValidConnection(connection)) {
         setEdges((edges) => addEdge({
           ...connection,
@@ -333,7 +351,7 @@ function Flow() {
         } as FlowEdge, edges));
       }
     },
-    [setEdges, isProjectOwner, isValidConnection]
+    [setEdges, canEdit, isValidConnection]
   );
 
   // Update handle styles when connection is being dragged
@@ -442,7 +460,7 @@ function Flow() {
 
   const onDrop = useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
-      if (!isProjectOwner || !reactFlowWrapper.current) return;
+      if (!canEdit || !reactFlowWrapper.current) return;
 
       event.preventDefault();
       // Reset dragging state
@@ -491,7 +509,7 @@ function Flow() {
       // Add the new node at the drop position
       addNewNode(type, position);
     },
-    [isProjectOwner, reactFlowInstance, addNewNode, setIsDragging]
+    [canEdit, reactFlowInstance, addNewNode, setIsDragging]
   );
 
   const handleMenuToggle = useCallback((isOpen: boolean) => {
@@ -516,85 +534,95 @@ function Flow() {
   }, [onNodesChange]);
 
   return (
-    <div className="w-full h-screen" ref={reactFlowWrapper}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypesData}
-        edgeTypes={edgeTypes}
-        onNodesChange={isProjectOwner ? handleNodesChange : undefined}
-        onEdgesChange={isProjectOwner ? onEdgesChange : undefined}
-        onConnect={isProjectOwner ? onConnect : undefined}
-        onConnectStart={isProjectOwner ? onConnectStart : undefined}
-        onConnectEnd={isProjectOwner ? onConnectEnd : undefined}
-        onDrop={isProjectOwner ? onDrop : undefined}
-        onDragOver={onDragOver}
-        onDragEnd={onDragEnd}
-        selectionMode={selectionMode ? SelectionMode.Full : SelectionMode.Partial}
-        selectionOnDrag={selectionMode}
-        panOnDrag={!selectionMode}
-        panOnScroll={true}
-        proOptions={{
-          hideAttribution: true
-        }}
-        fitView
-        isValidConnection={(params) => isValidConnection(params as Connection)}
-      >
-        {isLoading ? (
-          <div className="flex flex-col min-h-screen min-w-screen items-center justify-center text-white">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
-            <p>Loading project...</p>
-          </div>
-        ) : (
-          <Background />
-        )}
-
-        {isDragging && isProjectOwner && (
-          <Panel position="bottom-center" className="p-[20px]" style={{ zIndex: 1000 }}>
-            <div 
-              id="node-trash-area"
-              className="w-12 h-12 flex items-center justify-center bg-[#2D2D2D] rounded-full shadow-lg transition-all hover:scale-110"
-            >
-              <Icons.FiTrash2 className="text-white" size={24} />
-            </div>
-          </Panel>
-        )}
-        <Toolbar
-          selectionMode={selectionMode}
-          toggleSelectionMode={toggleSelectionMode}
-          isReadOnly={!isProjectOwner}
-          onExport={handleExport}
-          onImport={handleImport}
-          projectId={projectId}
-          onProjectChange={handleProjectChange}
-          projectData={projectData}
-          onProjectMenuToggle={handleProjectMenuToggle}
-        />
-        <NodeSidebar
-          nodeTypes={nodeTypes}
-          addNewNode={addNewNode}
-          isReadOnly={!isProjectOwner}
-          onDragStart={() => setIsDragging(true)}
-          onDragEnd={() => setIsDragging(false)}
-        />
-        <Menu
-          onMenuToggle={handleMenuToggle}
-        />
-        <Console 
-          output={output} 
-          code={code}
-          debug={debug}
-          onOutput={setOutput}
-          onCodeGenerated={setCode}
-          onDebugGenerated={setDebug}
-          onClear={handleClear}
-          onRestoreFlow={(restoredNodes, restoredEdges) => {            
-            setNodes(restoredNodes);
-            setEdges(restoredEdges);
+    <div className="w-full h-screen flex">
+      {/* Left section: Canvas */}
+      <div className="flex-grow h-full" ref={reactFlowWrapper}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypesData}
+          edgeTypes={edgeTypes}
+          onNodesChange={canEdit ? handleNodesChange : undefined}
+          onEdgesChange={canEdit ? onEdgesChange : undefined}
+          onConnect={canEdit ? onConnect : undefined}
+          onConnectStart={canEdit ? onConnectStart : undefined}
+          onConnectEnd={canEdit ? onConnectEnd : undefined}
+          onDrop={canEdit ? onDrop : undefined}
+          onDragOver={onDragOver}
+          onDragEnd={onDragEnd}
+          selectionMode={selectionMode ? SelectionMode.Full : SelectionMode.Partial}
+          selectionOnDrag={selectionMode}
+          panOnDrag={!selectionMode}
+          panOnScroll={true}
+          proOptions={{
+            hideAttribution: true
           }}
-          forceCollapse={menuOpen || projectMenuOpen}
-        />
-      </ReactFlow>
+          fitView
+          isValidConnection={(params) => isValidConnection(params as Connection)}
+        >
+          {isLoading ? (
+            <div className="flex flex-col min-h-screen min-w-screen items-center justify-center text-white">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+              <p>Loading project...</p>
+            </div>
+          ) : (
+            <Background />
+          )}
+
+          {isDragging && canEdit && (
+            <Panel position="bottom-center" className="p-[20px]" style={{ zIndex: 1000 }}>
+              <div 
+                id="node-trash-area"
+                className="w-12 h-12 flex items-center justify-center bg-[#2D2D2D] rounded-full shadow-lg transition-all hover:scale-110"
+              >
+                <Icons.FiTrash2 className="text-white" size={24} />
+              </div>
+            </Panel>
+          )}
+          <Toolbar
+            selectionMode={selectionMode}
+            toggleSelectionMode={toggleSelectionMode}
+            isReadOnly={!canEdit}
+            onExport={handleExport}
+            onImport={handleImport}
+            projectId={projectId}
+            onProjectChange={handleProjectChange}
+            projectData={projectData}
+            onProjectMenuToggle={handleProjectMenuToggle}
+          />
+          <NodeSidebar
+            nodeTypes={nodeTypes}
+            addNewNode={addNewNode}
+            isReadOnly={!canEdit}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={() => setIsDragging(false)}
+          />
+          <Menu
+            onMenuToggle={handleMenuToggle}
+          />
+          <Console 
+            output={output} 
+            code={code}
+            debug={debug}
+            onOutput={setOutput}
+            onCodeGenerated={setCode}
+            onDebugGenerated={setDebug}
+            onClear={handleClear}
+            onRestoreFlow={(restoredNodes, restoredEdges) => {            
+              setNodes(restoredNodes);
+              setEdges(restoredEdges);
+            }}
+            forceCollapse={menuOpen || projectMenuOpen}
+          />
+        </ReactFlow>
+      </div>
+
+      {/* Right section: Tutorial Panel (30% width) */}
+      {tutorialMode && tutorialUnitId && (
+        <div style={{ width: '30%', maxWidth: '420px', height: '100%' }}>
+          <TutorialPanel unitId={tutorialUnitId} nodes={nodes} edges={edges} />
+        </div>
+      )}
     </div>
   );
 }
