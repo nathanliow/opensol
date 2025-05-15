@@ -34,7 +34,7 @@ export const uploadImageToPinataString = `export const uploadImageToPinata = asy
       .file(file)
       .url(urlResponse.url); // Upload the file with the signed URL
 
-    // Replace rose-rear-cobra-866 with your pinata gateway
+    // Replace rose-rear-cobra-866 with your pinata gateway URL
     return "https://rose-rear-cobra-866.mypinata.cloud/ipfs/" + upload.cid;
   } catch (error) {
     console.error('Error uploading to Pinata:', error);
