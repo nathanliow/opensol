@@ -14,11 +14,7 @@ export const getFirstAvailableBlock: BlockFunctionTemplate = {
       description: 'Slot of the lowest confirmed block that has not been purged from the ledger'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

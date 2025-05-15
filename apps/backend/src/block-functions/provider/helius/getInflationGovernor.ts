@@ -14,11 +14,7 @@ export const getInflationGovernor: BlockFunctionTemplate = {
       description: 'Current inflation governor'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

@@ -20,12 +20,7 @@ export const getProgramAccounts: BlockFunctionTemplate = {
       description: 'Program accounts'
     }
   },
-  execute: async (
-    params: { 
-      pubkey?: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         pubkey,

@@ -20,7 +20,7 @@ export default function HeliusNode({ id }: HeliusNodeProps) {
   const blockFunctionTemplates = blockTemplateService.getTemplatesByType('HELIUS');
   const edges = useEdges();
   const nodes = useNodes() as FlowNode[];
-  const { network, getApiKey } = useConfig();
+  const { network } = useConfig();
 
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);

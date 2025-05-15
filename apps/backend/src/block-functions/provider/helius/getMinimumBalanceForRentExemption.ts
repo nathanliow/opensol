@@ -20,12 +20,7 @@ export const getMinimumBalanceForRentExemption: BlockFunctionTemplate = {
       description: 'Minimum balance for rent exemption'
     }
   },
-  execute: async (
-    params: { 
-      accountDataLength: number;
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         accountDataLength,

@@ -20,12 +20,7 @@ export const getRecentPerformanceSamples: BlockFunctionTemplate = {
       description: 'Recent performance samples'
     }
   },
-  execute: async (
-    params: { 
-      limit: number;
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         limit,

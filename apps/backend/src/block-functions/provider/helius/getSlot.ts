@@ -14,11 +14,7 @@ export const getSlot: BlockFunctionTemplate = {
       description: 'Current slot'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

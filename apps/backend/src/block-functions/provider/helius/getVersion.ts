@@ -14,11 +14,7 @@ export const getVersion: BlockFunctionTemplate = {
       description: 'Current Solana version running on the node'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

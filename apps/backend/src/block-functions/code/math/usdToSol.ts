@@ -19,10 +19,14 @@ export const usdToSol: BlockFunctionTemplate = {
       description: 'SOL amount'
     }
   },
-  execute: async (params: { usdAmount: number }): Promise<number> => {
-    // For demonstration purposes using a fixed rate
-    // In a real application, this would call a price API
-    const mockSolPrice = 100; 
-    return params.usdAmount / mockSolPrice;
+  execute: async (params: Record<string, any>): Promise<number> => {
+    const priceResponse = await fetch(
+      'https://lite-api.jup.ag/price/v2?ids=So11111111111111111111111111111111111111112'
+    );
+    
+    const priceData = await priceResponse.json();
+    const solPrice = priceData.data.So11111111111111111111111111111111111111112.price;
+    
+    return Number((params.usdAmount / solPrice).toFixed(2));
   }
 };

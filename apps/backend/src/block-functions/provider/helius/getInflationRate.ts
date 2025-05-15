@@ -14,11 +14,7 @@ export const getInflationRate: BlockFunctionTemplate = {
       description: 'Specific inflation values for the current epoch'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

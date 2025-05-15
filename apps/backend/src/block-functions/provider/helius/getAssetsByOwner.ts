@@ -50,18 +50,7 @@ export const getAssetsByOwner: BlockFunctionTemplate = {
       description: 'List of assets owned by an address'
     }
   },
-  execute: async (
-    params: { 
-      ownerAddress: string; 
-      page: number; 
-      limit: number; 
-      sortBy: string; 
-      sortDirection: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         ownerAddress, 

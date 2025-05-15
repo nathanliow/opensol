@@ -40,16 +40,7 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
       description: 'List of transaction signatures related to a compressed asset'
     }
   },
-  execute: async (
-    params: { 
-      assetId: string; 
-      page: number; 
-      limit: number; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       // Extract parameters
       const { 

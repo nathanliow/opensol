@@ -14,11 +14,7 @@ export const getMaxRetransmitSlot: BlockFunctionTemplate = {
       description: 'Maximum retransmit slot'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

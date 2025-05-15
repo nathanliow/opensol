@@ -14,11 +14,7 @@ export const getHighestSnapshotSlot: BlockFunctionTemplate = {
       description: 'Highest slot information that the node has snapshots for'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

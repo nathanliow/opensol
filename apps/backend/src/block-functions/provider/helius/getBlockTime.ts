@@ -20,12 +20,7 @@ export const getBlockTime: BlockFunctionTemplate = {
       description: 'Timestamp of a specific block'
     }
   },
-  execute: async (
-    params: { 
-      blockNumber: number; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => { 
     try {
       const { 
         blockNumber, 

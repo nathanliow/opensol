@@ -30,14 +30,7 @@ export const getSignaturesForAddress: BlockFunctionTemplate = {
       description: 'Signatures for address'
     }
   },
-  execute: async (
-    params: { 
-      address: string;
-      before?: string;
-      limit?: number;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         address,

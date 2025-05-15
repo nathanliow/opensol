@@ -1,6 +1,7 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/NodeTypes';
 import { ApiKeyType } from '../../types/KeyTypes';
+import { OutputValueType } from '../../types/OutputTypes';
 
 // Frontend block template format
 export interface BlockFunctionTemplateMetadata {
@@ -11,7 +12,7 @@ export interface BlockFunctionTemplateMetadata {
   parameters: BlockFunctionTemplateParameters[];
   requiredKeys?: ApiKeyType[];
   output?: {
-    type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
+    type: OutputValueType;
     description: string;
   };
 }

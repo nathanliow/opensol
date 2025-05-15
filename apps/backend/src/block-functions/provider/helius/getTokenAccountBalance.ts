@@ -20,12 +20,7 @@ export const getTokenAccountBalance: BlockFunctionTemplate = {
       description: 'Token balance of the token account'
     }
   },
-  execute: async (
-    params: { 
-      address: string;
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         address,

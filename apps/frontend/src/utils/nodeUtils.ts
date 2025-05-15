@@ -38,8 +38,8 @@ export const nodeUtils = {
    */
   updateNodeInput: (
     nodeId: string, 
-    inputName: string, 
-    inputId: string, 
+    inputName: string, // name
+    inputId: string,  // input-name
     inputType: InputValueTypeString, 
     inputValue: InputValueType,
     setNodes: (updater: (nodes: Node[]) => Node[]) => void
@@ -170,13 +170,6 @@ export const nodeUtils = {
     return connection.targetHandle?.startsWith('input-') || 
            connection.targetHandle === 'flow' || 
            connection.targetHandle === 'template';
-  },
-
-  /**
-   * Find a node by its id
-   */
-  getNode: (nodes: FlowNode[], nodeId: string): FlowNode | undefined => {
-    return nodes.find(node => node.id === nodeId);
   },
 
   /**
@@ -321,14 +314,14 @@ export const nodeUtils = {
   ): FlowNode[] => {
     const result: FlowNode[] = [];
     const visited = new Set<string>();
-    const startNode = nodeUtils.getNode(nodes, startNodeId);
+    const startNode = nodeUtils.getFlowNode(nodes, startNodeId);
     
     if (!startNode) return result;
     
     const traverse = (nodeId: string) => {
       if (visited.has(nodeId)) return;
       
-      const node = nodeUtils.getNode(nodes, nodeId);
+      const node = nodeUtils.getFlowNode(nodes, nodeId);
       if (!node) return;
       
       visited.add(nodeId);

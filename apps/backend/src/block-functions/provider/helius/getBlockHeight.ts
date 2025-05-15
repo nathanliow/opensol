@@ -14,11 +14,7 @@ export const getBlockHeight: BlockFunctionTemplate = {
       description: 'Height of the last block'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

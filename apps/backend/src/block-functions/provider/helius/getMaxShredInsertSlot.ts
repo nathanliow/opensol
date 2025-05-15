@@ -14,11 +14,7 @@ export const getMaxShredInsertSlot: BlockFunctionTemplate = {
       description: 'Max slot seen from after shred insert'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

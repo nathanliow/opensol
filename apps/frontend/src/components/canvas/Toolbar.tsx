@@ -7,7 +7,7 @@ import { Panel } from "@xyflow/react";
 import { Icons } from "../icons/icons";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
-import { useUSDCTransfer } from "@/lib/usdc";
+import { useTokenTransfer } from "@/hooks/useTokenTransfer";
 import { 
   createProject, 
   copyProject, 
@@ -16,7 +16,6 @@ import { Project } from "@/types/ProjectTypes";
 import { usePrivy } from "@privy-io/react-auth";
 import { getUserData } from "@/lib/user";
 import { UserData } from "@/types/UserTypes";
-import { useConfig } from "@/contexts/ConfigContext";
 
 interface ToolbarProps {
   selectionMode: boolean;
@@ -52,7 +51,7 @@ export const Toolbar = ({
   const router = useRouter();
   const { supabaseUser } = useUserAccountContext();
   const { login } = usePrivy();
-  const { sendUSDC } = useUSDCTransfer();
+  const { transferToken } = useTokenTransfer();
 
   useEffect(() => {
     // Update isPublic when projectData changes
@@ -283,7 +282,7 @@ export const Toolbar = ({
       }
 
       // Send USDC tip
-      await sendUSDC(tipAmount, creatorData.wallet_address);
+      await transferToken("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", tipAmount, creatorData.wallet_address, 6, true);
       alert('Tip sent successfully!');
       setTipAmount(0);
     } catch (error) {

@@ -113,9 +113,6 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     solToUsd,
     usdToSol
   },
-  // MINT: {
-  //   mintToken
-  // }
 };
 
 // Helper to get all templates flattened into a single record

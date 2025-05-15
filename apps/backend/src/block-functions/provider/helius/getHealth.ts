@@ -14,11 +14,7 @@ export const getHealth: BlockFunctionTemplate = {
       description: 'Current health of the node'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

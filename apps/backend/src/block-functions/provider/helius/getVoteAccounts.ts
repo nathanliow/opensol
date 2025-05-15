@@ -14,11 +14,7 @@ export const getVoteAccounts: BlockFunctionTemplate = {
       description: 'Account info and associated stake for all the voting accounts in the current bank'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

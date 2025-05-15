@@ -20,12 +20,7 @@ export const getAccountInfo: BlockFunctionTemplate = {
       description: 'All information associated with the account of provided Pubkey'
     }
   },
-  execute: async (
-    params: { 
-      pubkey: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         pubkey,

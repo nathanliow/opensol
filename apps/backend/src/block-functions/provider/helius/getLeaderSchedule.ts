@@ -14,11 +14,7 @@ export const getLeaderSchedule: BlockFunctionTemplate = {
       description: 'Leader schedule for an epoch'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

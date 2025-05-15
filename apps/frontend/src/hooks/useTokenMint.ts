@@ -22,6 +22,7 @@ import {
 import { usePrivy } from '@privy-io/react-auth';
 import { useSolanaWallets } from '@privy-io/react-auth/solana';
 import { useConfig } from '@/contexts/ConfigContext';
+
 export const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
 export const useTokenMint = () => {
@@ -36,8 +37,8 @@ export const useTokenMint = () => {
     description: string,
     imageUri: string,
     decimals: number = 9,
-    amount: number = 100,
-    metadataUri?: string
+    supply: number = 100,
+    metadataUri: string,
   ) => {
     try {
       if (!authenticated) {
@@ -100,7 +101,7 @@ export const useTokenMint = () => {
       const tokenMetadata = {
         name: name,
         symbol: symbol,
-        uri: metadataUri || "https://ipfs.io/ipfs/QmW6eEtnCAQ53YrYBmWrMVj87sBewqZtzjjgTi86DiLQyG",
+        uri: metadataUri,
         sellerFeeBasisPoints: 0,
         creators: null,
         collection: null,
@@ -150,7 +151,7 @@ export const useTokenMint = () => {
           mintPublicKey,           // mint
           associatedTokenAddress,  // destination
           walletPublicKey,         // authority
-          amount * (10 ** decimals)  // amount (accounting for decimals)
+          supply * (10 ** decimals)  // amount (accounting for decimals)
         )
       );
 
@@ -181,13 +182,13 @@ export const useTokenMint = () => {
         signature,
         mintAddress: mintPublicKey.toString(),
         associatedTokenAddress: associatedTokenAddress.toString(),
-        amount,
+        supply,
+        metadataUri: metadataUri,
         metadata: {
           name,
           symbol,
           description,
           image: imageUri,
-          metadataUri
         }
       };
     } catch (error) {
@@ -201,3 +202,67 @@ export const useTokenMint = () => {
 
   return { mintToken };
 }; 
+
+export const mintTokenString = `async function mintToken(
+  name: string,
+  symbol: string,
+  description: string,
+  imageUri: string,
+  decimals: number = 9,
+  supply: number = 1000000000,
+  metadataUri: string,
+  nodeId?: string
+) {
+  try {
+    // Create connection to Solana network
+    const connection = new Connection(clusterApiUrl(network));
+
+    // Generate a new keypair for the mint account
+    const mintKeypair = Keypair.generate();
+    const mintPublicKey = mintKeypair.publicKey;
+
+    // Get user's wallet public key
+    const walletPublicKey = new PublicKey(walletAddress);
+
+    // Create transaction
+    const transaction = new Transaction();
+
+    // Calculate rent for mint
+    const lamports = await getMinimumBalanceForRentExemptMint(connection);
+
+    // Add instruction to create account for the mint
+    transaction.add(
+      // Create account for mint
+      SystemProgram.createAccount({
+        fromPubkey: walletPublicKey,
+        newAccountPubkey: mintPublicKey,
+        space: MINT_SIZE,
+        lamports,
+        programId: TOKEN_PROGRAM_ID
+      }),
+      
+      // Initialize the mint
+      createInitializeMintInstruction(
+        mintPublicKey,          // mint pubkey
+        decimals,               // decimals
+        walletPublicKey,        // mint authority
+        walletPublicKey,        // freeze authority
+        TOKEN_PROGRAM_ID        // program ID
+      )
+    );
+
+    // Create metadata and mint tokens
+    // ... more implementation ...
+
+    return { 
+      success: true,
+      mintAddress: mintPublicKey.toString()
+    };
+  } catch (error) {
+    console.error('Error minting token:', error);
+    return {
+      success: false,
+      error: (error as Error).message
+    };
+  }
+}`;

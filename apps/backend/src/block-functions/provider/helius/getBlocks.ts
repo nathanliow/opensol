@@ -20,12 +20,7 @@ export const getBlocks: BlockFunctionTemplate = {
       description: 'List of confirmed blocks between two slots'
     }
   },
-  execute: async (
-    params: { 
-      blockNumbers: number[]; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         blockNumbers, 

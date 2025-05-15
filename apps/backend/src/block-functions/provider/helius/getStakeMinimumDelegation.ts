@@ -14,11 +14,7 @@ export const getStakeMinimumDelegation: BlockFunctionTemplate = {
       description: 'Stake minimum delegation'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

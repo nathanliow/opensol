@@ -1,3 +1,4 @@
+import { nodeUtils } from "@/utils/nodeUtils";
 import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
 export const getAsset: BlockFunctionTemplate = {
@@ -20,7 +21,7 @@ export const getAsset: BlockFunctionTemplate = {
       description: 'Asset Data'
     }
   },
-  execute: async (params: { assetId: string; apiKey?: string; network?: string }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { assetId, apiKey, network = 'devnet' } = params;
       
@@ -58,7 +59,7 @@ export const getAsset: BlockFunctionTemplate = {
         throw new Error(`Helius API error (${response.status}): ${errorText}`);
       }
       const data = await response.json();
-
+      
       return data;
     } catch (error) {
       console.error('Error in getAsset:', error);

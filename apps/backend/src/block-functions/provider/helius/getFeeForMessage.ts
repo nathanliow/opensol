@@ -20,12 +20,7 @@ export const getFeeForMessage: BlockFunctionTemplate = {
       description: 'Fee for the message'
     }
   },
-  execute: async (
-    params: { 
-      message: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         message,

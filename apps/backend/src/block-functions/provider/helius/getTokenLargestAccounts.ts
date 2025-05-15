@@ -20,12 +20,7 @@ export const getTokenLargestAccounts: BlockFunctionTemplate = {
       description: '20 largest accounts by token balance'
     }
   },
-  execute: async (
-    params: { 
-      tokenMint: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         tokenMint,

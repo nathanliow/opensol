@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useReactFlow, useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
@@ -6,16 +6,13 @@ import { nodeTypes } from '../../../types/NodeTypes';
 import { OutputDefinition } from '@/types/OutputTypes';
 import { nodeUtils } from '@/utils/nodeUtils';
 import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
+import ObjectDisplay from '../../ui/ObjectDisplay';
 
 interface ObjectNodeProps {
   id: string;
-  data: {
-    label?: string;
-    object?: Record<string, any>;
-  };
 }
 
-export default function ObjectNode({ id, data }: ObjectNodeProps) {
+export default function ObjectNode({ id }: ObjectNodeProps) {
   const { setNodes } = useReactFlow();
   const edges = useEdges();
   const nodes = useNodes() as FlowNode[];
@@ -45,27 +42,22 @@ export default function ObjectNode({ id, data }: ObjectNodeProps) {
     }
     
     // Fall back to the data.object if available, or an empty object
-    return data.object || {};
-  }, [edges, nodes, id, data.object]);
+    return {};
+  }, [edges, nodes, id]);
   
-  // Display properties from connected object
-  const displayInputs: InputDefinition[] = useMemo(() => {
-    return Object.keys(object).map(key => 
-      createInputDefinition.display({
-        id: `${key}`,
-        label: key,
-        defaultValue: typeof object[key] === 'string' 
-          ? object[key] 
-          : String(object[key]),
-        format: (value) => String(value)
-      })
-    );
+  // Create a custom component for displaying the object
+  const objectDisplayInput = useMemo(() => {
+    return createInputDefinition.display({
+      id: 'object-display',
+      label: 'Object Data',
+      component: <ObjectDisplay data={object} maxHeight="300px" />,
+    });
   }, [object]);
   
   // Combine inputs
   const allInputs = useMemo(() => {
-    return [...inputs, ...displayInputs];
-  }, [inputs, displayInputs]);
+    return [...inputs, objectDisplayInput];
+  }, [inputs, objectDisplayInput]);
   
   // Define the output
   const output: OutputDefinition = {

@@ -16,11 +16,11 @@ export const getUserSolBalance: BlockFunctionTemplate = {
     ],
     requiredKeys: ['helius'],
     output: {
-      type: 'string',
+      type: 'object',
       description: 'User SOL balance'
     }
   },
-  execute: async (params: { address: string; apiKey?: string; network?: string }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       // Extract parameters
       const { address, apiKey, network = 'devnet' } = params;
@@ -54,7 +54,9 @@ export const getUserSolBalance: BlockFunctionTemplate = {
       const balanceData = await balanceResponse.json();
 
       // Return combined results
-      return balanceData.result.value*1e-9;
+      return {
+        result: balanceData.result.value*1e-9
+      }
     } catch (error) {
       console.error('Error in getUserSolBalance:', error);
       throw error;

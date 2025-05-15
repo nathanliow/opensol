@@ -14,11 +14,7 @@ export const getBlockProduction: BlockFunctionTemplate = {
       description: 'Recent block production information from the current or previous epoch'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

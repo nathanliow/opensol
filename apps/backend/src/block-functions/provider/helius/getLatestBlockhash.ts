@@ -20,12 +20,7 @@ export const getLatestBlockhash: BlockFunctionTemplate = {
       description: 'Latest blockhash'
     }
   },
-  execute: async (
-    params: { 
-      commitment?: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         commitment = 'confirmed',

@@ -50,18 +50,7 @@ export const getAssetsByCreator: BlockFunctionTemplate = {
       description: 'List of assets created by an address'
     }
   },
-  execute: async (
-    params: { 
-      creatorAddress: string; 
-      page: number; 
-      limit: number; 
-      sortBy: string; 
-      sortDirection: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         creatorAddress, 

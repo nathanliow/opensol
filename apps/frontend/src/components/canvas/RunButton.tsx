@@ -1,16 +1,19 @@
 import { memo, useCallback } from 'react';
-import { useNodes, useEdges } from '@xyflow/react';
+import { useNodes, useEdges, useReactFlow } from '@xyflow/react';
 import { FlowCompiler } from '../../../../backend/src/packages/compiler/src/FlowCompiler';
 import blockTemplateService from '../services/blockTemplateService';
 import { FlowNode, FlowEdge } from '../../../../backend/src/packages/compiler/src/types';
 import { BlockFunctionTemplate } from '../services/blockTemplateService';
 import { useConfig } from '../../contexts/ConfigContext';
-import { createFileFromUrl } from '../../utils/createFileFromUrl';
+import { OutputValueType } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
 
 // Function imports
-import { useTokenMint } from '../../lib/tokenMint';
+import { createFileFromUrl } from '../../utils/createFileFromUrl';
+import { useTokenMint } from '../../hooks/useTokenMint';
 import { uploadImageToPinata } from '../../ipfs/uploadImageToPinata';
 import { uploadMetadataToPinata } from '../../ipfs/uploadMetadataToPinata';
+import { useTokenTransfer } from '@/hooks/useTokenTransfer';
 
 interface RunButtonProps {
   onOutput: (output: string) => void;
@@ -23,8 +26,10 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
   const nodes = useNodes() as FlowNode[];
   const edges = useEdges();
   const { apiKeys, network } = useConfig();
+  const reactFlowInstance = useReactFlow();
   
   const { mintToken: reactMintToken } = useTokenMint();
+  const { transferToken: reactTransferToken } = useTokenTransfer();
 
   const handleRun = useCallback(() => {
     try {
@@ -138,10 +143,13 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       
       // Pass apiKeys and network to the FlowCompiler
       const compiler = new FlowCompiler(relevantNodes, relevantEdges, templates, apiKeys, network, compilerOptions);
-      const { execute, functionCode, displayCode } = compiler.compile();
+      const { functionName, execute, functionCode, displayCode } = compiler.compile();
       
       // Update code tab with display version
       onCodeGenerated(displayCode);
+      
+      // Store execution results for updating node outputs (nodeId => result)
+      const executionResults = new Map<string, OutputValueType>();
       
       const mintToken = async (
         name: string, 
@@ -150,94 +158,87 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
         imageUrl: string,
         decimals: number, 
         supply: number, 
-        metadataUri: string
+        metadataUri: string,
+        nodeId: string  
       ) => {
         try {          
-          // 1. Handle image upload to Pinata
-          let finalImageUrl = imageUrl;
-          if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('blob:'))) {
-            try {
-              // Convert URL to File object if needed
-              const imageFile = await createFileFromUrl(imageUrl);
-              if (imageFile) {
-                // Upload to Pinata and get IPFS URL
-                finalImageUrl = await uploadImageToPinata(imageFile);
-              }
-            } catch (error) {
-              console.error('Error uploading image to Pinata:', error);
-            }
-          }
-          
-          // 2. Create metadata
-          const metadata = {
-            name,
-            symbol,
-            description,
-            image: finalImageUrl,
-            showName: true,
-            createdOn: "openSOL"
-          };
-          
-          // 3. Upload metadata to Pinata
-          let finalMetadataUri = metadataUri;
-          if (!metadataUri) {
-            try {
-              finalMetadataUri = await uploadMetadataToPinata(metadata);
-            } catch (error) {
-              console.error('Error uploading metadata to Pinata:', error);
-            }
-          }
-          
-          return await reactMintToken(
+          const result = await reactMintToken(
             name, 
             symbol, 
             description, 
-            finalImageUrl, 
+            imageUrl, 
             decimals, 
             supply, 
-            finalMetadataUri
+            metadataUri,
           );
+
+          executionResults.set(nodeId, result);
+          
+          return result;
         } catch (error) {
           console.error('Error in runMintToken:', error);
           return null;
         }
       };
-        
+
+      const transferToken = async (
+        tokenAddress: string,
+        amount: number,
+        recipient: string,
+        nodeId: string
+      ) => {
+        try {
+          const result = await reactTransferToken(
+            tokenAddress,
+            amount,
+            recipient,
+          );
+
+          executionResults.set(nodeId, result);
+
+          return result;
+        } catch (error) {
+          console.error('Error in transferToken:', error);
+          return null;
+        }
+      };
+      
       // Prepare the function code by removing any import statements
       const cleanedFunctionCode = functionCode.replace(/import\s+.*?from\s+.*?;/g, '');
       
       // Execute the flow with function injection
-      // Note: We're NOT passing any React hooks, only regular functions
       const executeWithContext = new Function(
         'mintToken',
+        'transferToken',
         'createFileFromUrl',
         'uploadImageToPinata',
         'uploadMetadataToPinata',
         'network',
+        'updateNodeOutput',
         `
         return async function() {
           try {
-            // Helper function to handle potential string URLs
-            async function createFileFromUrl(url) {
-              try {
-                const response = await fetch(url);
-                const blob = await response.blob();
-                return new File([blob], 'image.png', { type: 'image/png' });
-              } catch (error) {
-                console.error('Error converting URL to File:', error);
-                return null;
-              }
-            }
-            
             ${cleanedFunctionCode}
             
-            return await execute();
+            return await ${functionName}();
           } catch (error) {
             console.error("Execution error:", error);
             return { output: "Execution Error: " + error.message };
           }
         }
-      `)(mintToken, createFileFromUrl, uploadImageToPinata, uploadMetadataToPinata, network);
+      `)(
+        mintToken, 
+        transferToken, 
+        createFileFromUrl, 
+        uploadImageToPinata, 
+        uploadMetadataToPinata, 
+        network,
+        (nodeId: string, result: OutputValueType) => {
+          if (nodeId && result) {
+            executionResults.set(nodeId, result);
+          }
+        }
+      );
 
       executeWithContext()
         .then((result: any) => {
@@ -249,6 +250,24 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
           } catch {
             formattedOutput = result.output || JSON.stringify(result, null, 2);
           }
+          
+          // Update node outputs with execution results
+          executionResults.forEach((result, nodeId) => {
+            if (result) {
+              // Find the node and update its output
+              const node = relevantNodes.find(n => n.id === nodeId);
+              if (node) {
+                // Update the node with the mint result
+                nodeUtils.updateNodeOutput(
+                  node.id,
+                  node.data.output?.type || 'object',
+                  result,
+                  reactFlowInstance.setNodes
+                );
+              }
+            }
+          });
+          
           onOutput(formattedOutput);
         })
         .catch((error: any) => {
@@ -257,7 +276,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
     } catch (error: any) {
       onOutput(`Compilation Error: ${error.message}`);
     }
-  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network, reactMintToken]);
+  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network, reactMintToken, reactFlowInstance]);
 
   return (
     <button

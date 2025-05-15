@@ -19,7 +19,6 @@ import {
   SelectionMode,
   Panel,
   Connection,
-  Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { edgeTypes } from "../../types/EdgeTypes";
@@ -71,7 +70,7 @@ function Flow() {
   const reactFlowInstance = useReactFlow();
   const { supabaseUser } = useUserAccountContext();
   const searchParams = useSearchParams();
-  const tutorialUnitId = searchParams.get('tutorial');
+  const tutorialUnitId = searchParams?.get('tutorial');
   const tutorialMode = !!tutorialUnitId;
   
   // Create node types with setNodes
@@ -159,6 +158,7 @@ function Flow() {
 
   // Auto-save changes to Supabase
   useEffect(() => {
+    console.log('nodes', nodes);
     if (tutorialMode) return; // Don't autosave during tutorial
     
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;

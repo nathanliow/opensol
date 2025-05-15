@@ -55,19 +55,7 @@ export const getAssetsByGroup: BlockFunctionTemplate = {
       description: 'Asset Proof'
     }
   },
-  execute: async (
-    params: { 
-      groupKey: string; 
-      groupValue: string; 
-      page: number; 
-      limit: number; 
-      sortBy: string; 
-      sortDirection: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         groupKey, 

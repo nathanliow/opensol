@@ -14,11 +14,7 @@ export const getLargestAccounts: BlockFunctionTemplate = {
       description: 'Largest accounts on the network'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

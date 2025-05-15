@@ -50,18 +50,7 @@ export const getTokenAccounts: BlockFunctionTemplate = {
       description: 'List of assets with a specific authority'
     }
   },
-  execute: async (
-    params: { 
-      mint: string; 
-      owner: string; 
-      page: number; 
-      limit: number; 
-      cursor: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         mint, 

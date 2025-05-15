@@ -14,11 +14,7 @@ export const getClusterNodes: BlockFunctionTemplate = {
       description: 'Information about all the nodes participating in the cluster'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

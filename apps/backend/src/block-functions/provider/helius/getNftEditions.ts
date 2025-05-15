@@ -30,14 +30,7 @@ export const getNftEditions: BlockFunctionTemplate = {
       description: 'List of NFT editions for a specific mint'
     }
   },
-  execute: async (
-    params: { 
-      mint: string; 
-      page: number; 
-      limit: number; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         mint, 

@@ -14,11 +14,7 @@ export const getSlotLeader: BlockFunctionTemplate = {
       description: 'Current slot leader'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

@@ -14,11 +14,7 @@ export const getSupply: BlockFunctionTemplate = {
       description: 'Total supply of the network'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

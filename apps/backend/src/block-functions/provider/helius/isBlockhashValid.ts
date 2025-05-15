@@ -20,12 +20,7 @@ export const isBlockhashValid: BlockFunctionTemplate = {
       description: 'Whether the blockhash is valid or not'
     }
   },
-  execute: async (
-    params: { 
-      blockhash: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         blockhash,

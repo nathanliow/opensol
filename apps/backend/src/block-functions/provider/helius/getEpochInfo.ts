@@ -14,11 +14,7 @@ export const getEpochInfo: BlockFunctionTemplate = {
       description: 'Information about the current epoch'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

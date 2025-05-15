@@ -30,30 +30,33 @@ export default function GetNode({ id }: GetNodeProps) {
     setParameters(newParameters);
     
     nodeUtils.updateNodeInput(id, 'function', 'input-function', 'string', value, setNodes);
-    // nodeUtils.updateNodeInput(id, 'network', 'input-network', 'string', network || 'devnet', setNodes);
+    nodeUtils.updateNodeInput(id, 'network', 'input-network', 'string', network || 'devnet', setNodes);
     const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === value);
     if (functionTemplate) {
+      console.log('functionTemplate parameters', functionTemplate.metadata.parameters);
       functionTemplate.metadata.parameters.forEach((param) => {
-        if (param.name !== 'apiKey' && param.name !== 'network') {
-          nodeUtils.updateNodeInput(id, param.name, `input-${param.name}`, 'string', '', setNodes);
-        }
+        nodeUtils.updateNodeInput(id, param.name, `input-${param.name}`, 'string', '', setNodes);
       });
     }
   }, [network, id, setNodes, blockFunctionTemplates]);
 
   const handleParameterChange = useCallback((inputId: string, value: string, fromConnection: boolean = false) => {
     // Extract parameter name from input ID (remove 'input-' prefix)
-    const paramName = inputId.replace('input-', '');
-    
-    const newParameters: Record<string, string> = { 
-      ...parameters, 
-      network: network || 'devnet', 
-      [paramName]: value
-    };
-    setParameters(newParameters);
-    
-    // Update node data using nodeUtils
-    nodeUtils.updateNodeInput(id, paramName, inputId, 'string', value, setNodes);
+    const paramMatch = inputId.match(/^input-(.+)$/);
+    if (paramMatch) {
+      const actualParamName = paramMatch[1];
+      
+      const newParameters: Record<string, string> = { 
+        ...parameters, 
+        network: network || 'devnet',
+        [actualParamName]: value
+      };
+
+      setParameters(newParameters);
+      
+      // Update node data using nodeUtils
+      nodeUtils.updateNodeInput(id, actualParamName, inputId, 'string', value, setNodes);
+    }
   }, [parameters, network, id, setNodes]);
 
   // Convert function options into dropdown options
@@ -83,15 +86,13 @@ export default function GetNode({ id }: GetNodeProps) {
       if (template) {
         const paramInputs: InputDefinition[] = template.metadata.parameters
           .filter(param => param.name !== 'apiKey' && param.name !== 'network')
-          .map(param => {
-            const connectionGetter = nodeUtils.createConnectionGetter(edges, nodes, id, param.name);
-            
+          .map(param => {            
             return createInputDefinition.text({
-              id: param.name,
+              id: `input-${param.name}`,
               label: param.name,
               defaultValue: parameters[param.name] || '',
               description: param.description,
-              getConnectedValue: connectionGetter,
+              getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, param.name),
               handleId: `input-${param.name}`,
             });
           });
@@ -130,11 +131,11 @@ export default function GetNode({ id }: GetNodeProps) {
       metadata={nodeTypes['GET'].metadata}
       inputs={inputs}
       data={nodeUtils.getNodeData(nodes, id)}
-      onInputChange={(inputId, value) => {
+      onInputChange={(inputId, value, fromConnection) => {
         if (inputId === 'input-function') {
           handleFunctionChange(value);
         } else {
-          handleParameterChange(inputId, value);
+          handleParameterChange(inputId, value, fromConnection);
         }
       }}
       output={output}

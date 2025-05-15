@@ -14,11 +14,7 @@ export const getIdentity: BlockFunctionTemplate = {
       description: 'Identity pubkey for the current node'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

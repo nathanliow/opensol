@@ -20,12 +20,7 @@ export const getBalance: BlockFunctionTemplate = {
       description: 'Balance for a specific account'
     }
   },
-  execute: async (
-    params: { 
-      address: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         address, 

@@ -50,18 +50,7 @@ export const getAssetsByAuthority: BlockFunctionTemplate = {
       description: 'List of assets with a specific authority'
     }
   },
-  execute: async (
-    params: { 
-      authorityAddress: string; 
-      page: number; 
-      limit: number; 
-      sortBy: string; 
-      sortDirection: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         authorityAddress, 

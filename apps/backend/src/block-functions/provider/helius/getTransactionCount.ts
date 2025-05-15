@@ -14,11 +14,7 @@ export const getTransactionCount: BlockFunctionTemplate = {
       description: 'Current Transaction count from the ledger'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

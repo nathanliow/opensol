@@ -14,11 +14,7 @@ export const minimumLedgerSlot: BlockFunctionTemplate = {
       description: 'Lowest slot that the node has information about in its ledger'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

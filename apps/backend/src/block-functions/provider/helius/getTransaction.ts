@@ -20,12 +20,7 @@ export const getTransaction: BlockFunctionTemplate = {
       description: 'Transaction'
     }
   },
-  execute: async (
-    params: { 
-      signature: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         signature,

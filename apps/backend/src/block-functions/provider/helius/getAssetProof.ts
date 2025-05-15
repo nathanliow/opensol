@@ -20,7 +20,7 @@ export const getAssetProof: BlockFunctionTemplate = {
       description: 'Asset Proof'
     }
   },
-  execute: async (params: { assetId: string; apiKey?: string; network?: string }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { assetId, apiKey, network = 'devnet' } = params;
       

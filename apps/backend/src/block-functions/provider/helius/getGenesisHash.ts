@@ -14,11 +14,7 @@ export const getGenesisHash: BlockFunctionTemplate = {
       description: 'Genesis hash of the blockchain'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

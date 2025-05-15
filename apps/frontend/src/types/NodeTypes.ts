@@ -1,15 +1,19 @@
 import { NodeTypes } from "@xyflow/react";
-import GetNode from "../components/nodes/blockchain/GetNode";
-import ObjectNode from "../components/nodes/code/ObjectNode";
-import MintNode from "../components/nodes/blockchain/MintNode";
-import ConstNode from "../components/nodes/code/ConstNode";
-import FunctionNode from "../components/nodes/code/FunctionNode";
-import PrintNode from "../components/nodes/code/PrintNode";
-import HeliusNode from "../components/nodes/provider/HeliusNode";
-import MathNode from "../components/nodes/code/MathNode";
-import ConditionalNode from "../components/nodes/code/ConditionalNode";
 import { Output } from "./OutputTypes";
 import { Inputs } from "./InputTypes";
+
+import ConstNode from "../components/nodes/code/ConstNode";
+import ObjectNode from "../components/nodes/code/ObjectNode";
+import ConditionalNode from "../components/nodes/code/ConditionalNode";
+import MathNode from "../components/nodes/code/MathNode";
+import FunctionNode from "../components/nodes/code/FunctionNode";
+import PrintNode from "../components/nodes/code/PrintNode";
+
+import GetNode from "../components/nodes/blockchain/GetNode";
+import MintNode from "../components/nodes/blockchain/MintNode";
+import TransferNode from "../components/nodes/blockchain/TransferNode";
+
+import HeliusNode from "../components/nodes/provider/HeliusNode";
 
 /*
  * FRONTEND TYPES FOR NODES AND EDGES
@@ -50,6 +54,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   // Blockchain
   GET: GetNode,
   MINT: MintNode,
+  TRANSFER: TransferNode,
 
   // DeFi
 
@@ -116,8 +121,8 @@ export const nodeTypes: Record<string, NodeType> = {
     },
     defaultOutput: {
       handleId: 'output',
-      type: 'string',
-      value: ''
+      type: 'object',
+      value: {}
     }
   },
   CONDITIONAL: {
@@ -274,16 +279,50 @@ export const nodeTypes: Record<string, NodeType> = {
         type: 'string',
         value: ''
       },
-      decimals: {
-        handleId: 'input-decimals',
+      supply: {
+        handleId: 'input-supply',
         type: 'number',
-        value: 9
+        value: 1000000000
       },
       image: {
         handleId: 'input-image',
         type: 'string',
         value: ''
       },
+    },
+    defaultOutput: {
+      handleId: 'output',
+      type: 'object',
+      value: {}
+    }
+  },
+  TRANSFER: {
+    metadata: {
+      id: 'TRANSFER',
+      label: 'TRANSFER',
+      category: 'Blockchain',
+      backgroundColor: 'bg-green-200',
+      borderColor: 'border-green-400',
+      primaryColor: 'green',
+      secondaryColor: 'green',
+      textColor: 'text-black'
+    },
+    defaultInputs: {
+      tokenAddress: {
+        handleId: 'input-tokenAddress',
+        type: 'string',
+        value: ''
+      },
+      amount: {
+        handleId: 'input-amount',
+        type: 'number',
+        value: 0
+      },
+      recipient: {
+        handleId: 'input-recipient',
+        type: 'string',
+        value: ''
+      }
     },
     defaultOutput: {
       handleId: 'output',
