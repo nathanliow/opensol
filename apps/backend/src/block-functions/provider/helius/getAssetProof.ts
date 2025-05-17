@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getAssetProof: BlockTemplate = {
+export const getAssetProof: BlockFunctionTemplate = {
   metadata: {
     name: 'getAssetProof',
     description:
@@ -20,7 +20,7 @@ export const getAssetProof: BlockTemplate = {
       description: 'Asset Proof'
     }
   },
-  execute: async (params: { assetId: string; apiKey?: string; network?: string }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { assetId, apiKey, network = 'devnet' } = params;
       

@@ -1,5 +1,5 @@
 import { Icons } from '@/components/icons/icons';
-import { useCopyText } from '@/hooks/useCopyText';
+import { useCopyText } from '@/hooks/utils/useCopyText';
 import { memo } from 'react';
 
 interface CopyButtonProps {

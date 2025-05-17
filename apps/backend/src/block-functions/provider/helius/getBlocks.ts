@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getBlocks: BlockTemplate = {
+export const getBlocks: BlockFunctionTemplate = {
   metadata: {
     name: 'getBlocks',
     description:
@@ -20,12 +20,7 @@ export const getBlocks: BlockTemplate = {
       description: 'List of confirmed blocks between two slots'
     }
   },
-  execute: async (
-    params: { 
-      blockNumbers: number[]; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         blockNumbers, 

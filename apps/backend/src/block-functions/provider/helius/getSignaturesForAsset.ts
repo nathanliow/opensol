@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getSignaturesForAsset: BlockTemplate = {
+export const getSignaturesForAsset: BlockFunctionTemplate = {
   metadata: {
     name: 'getSignaturesForAsset',
     description:
@@ -40,16 +40,7 @@ export const getSignaturesForAsset: BlockTemplate = {
       description: 'List of transaction signatures related to a compressed asset'
     }
   },
-  execute: async (
-    params: { 
-      assetId: string; 
-      page: number; 
-      limit: number; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       // Extract parameters
       const { 

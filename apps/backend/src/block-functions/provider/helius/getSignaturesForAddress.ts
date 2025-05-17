@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getSignaturesForAddress: BlockTemplate = {
+export const getSignaturesForAddress: BlockFunctionTemplate = {
   metadata: {
     name: 'getSignaturesForAddress',
     description:
@@ -30,14 +30,7 @@ export const getSignaturesForAddress: BlockTemplate = {
       description: 'Signatures for address'
     }
   },
-  execute: async (
-    params: { 
-      address: string;
-      before?: string;
-      limit?: number;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         address,

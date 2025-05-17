@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getVersion: BlockTemplate = {
+export const getVersion: BlockFunctionTemplate = {
   metadata: {
     name: 'getVersion',
     description:
@@ -14,11 +14,7 @@ export const getVersion: BlockTemplate = {
       description: 'Current Solana version running on the node'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

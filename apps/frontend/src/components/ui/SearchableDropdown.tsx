@@ -6,12 +6,14 @@ interface Option {
   value: string;
 }
 
-interface SearchableDropdownProps {
+export interface SearchableDropdownProps {
   options: Option[];
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  searchable?: boolean;
+  clearable?: boolean;
 }
 
 export default function SearchableDropdown({
@@ -20,6 +22,8 @@ export default function SearchableDropdown({
   onChange,
   disabled = false,
   placeholder = 'Select an option',
+  searchable = true,
+  clearable = false,
 }: SearchableDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -79,6 +83,11 @@ export default function SearchableDropdown({
     }
   };
 
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange('');
+  };
+
   return (
     <div ref={dropdownRef} className={`relative w-full`}>
       {/* Current selection display */}
@@ -91,26 +100,39 @@ export default function SearchableDropdown({
         <div className="truncate">
           {selectedOption ? selectedOption.label : placeholder}
         </div>
-        <Icons.ChevronDownIcon className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
+        <div className="flex items-center">
+          {clearable && selectedOption && (
+            <button 
+              type="button"
+              onClick={handleClear}
+              className="mr-1 text-gray-400 hover:text-gray-600"
+            >
+              <Icons.FiX className="w-2.5 h-2.5" />
+            </button>
+          )}
+          <Icons.ChevronDownIcon className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
+        </div>
       </div>
 
       {/* Dropdown content */}
       {isOpen && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded shadow-lg">
           {/* Search input */}
-          <div className="p-1 border-b border-gray-200">
-            <div className="relative">
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full p-1 pr-7 text-xs rounded border border-gray-300 focus:border-blue-500 focus:outline-none"
-                placeholder="Search..."
-                onClick={(e) => e.stopPropagation()}
-              />
+          {searchable && (
+            <div className="p-1 border-b border-gray-200">
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full p-1 pr-7 text-xs rounded border border-gray-300 focus:border-blue-500 focus:outline-none"
+                  placeholder="Search..."
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
             </div>
-          </div>
+          )}
           
           {/* Options list */}
           <div 

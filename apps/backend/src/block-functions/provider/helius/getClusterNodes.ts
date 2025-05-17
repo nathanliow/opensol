@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getClusterNodes: BlockTemplate = {
+export const getClusterNodes: BlockFunctionTemplate = {
   metadata: {
     name: 'getClusterNodes',
     description:
@@ -14,11 +14,7 @@ export const getClusterNodes: BlockTemplate = {
       description: 'Information about all the nodes participating in the cluster'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

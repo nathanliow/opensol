@@ -1,133 +1,146 @@
-import { memo, useCallback, useState, useMemo } from 'react';
-import { useEdges, useNodes } from '@xyflow/react';
+import { useCallback, useState, useMemo } from 'react';
+import { useEdges, useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
 import { useConfig } from '../../../contexts/ConfigContext';
-
-interface HeliusNodeData {
-  label: string;
-  selectedFunction?: string;
-  parameters?: Record<string, string>;
-}
+import { OutputDefinition } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface HeliusNodeProps {
   id: string;
-  data: HeliusNodeData;
 }
 
-export default function HeliusNode({ id, data }: HeliusNodeProps) {
-  const [selectedFunction, setSelectedFunction] = useState<string>(data.selectedFunction || '');
-  const [parameters, setParameters] = useState<Record<string, string>>(data.parameters || {});
-  const blockTemplates = blockTemplateService.getTemplatesByType('HELIUS');
+export default function HeliusNode({ id }: HeliusNodeProps) {
+  const { setNodes } = useReactFlow();
+  const [selectedFunction, setSelectedFunction] = useState<string>('');
+  const [parameters, setParameters] = useState<Record<string, string>>({});
+  const blockFunctionTemplates = blockTemplateService.getTemplatesByType('HELIUS');
   const edges = useEdges();
-  const nodes = useNodes();
-  const { network, getApiKey } = useConfig();
-
-  const getConnectedValue = useCallback((paramName: string) => {
-    const edge = edges.find(e => 
-      e.target === id && 
-      e.targetHandle === `param-${paramName}`
-    );
-    
-    if (!edge) return null;
-    const sourceNode = nodes.find(n => n.id === edge.source);
-    if (!sourceNode) return null;
-    
-    return sourceNode.data.value;
-  }, [edges, id, nodes]);
+  const nodes = useNodes() as FlowNode[];
+  const { network } = useConfig();
 
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);
-    const newParameters = { 
-      network: network || 'devnet'  // Default to devnet if network is empty
+    const newParameters: Record<string, string> = { 
+      network: network || 'devnet'  
     }; 
-    data.selectedFunction = value;
-    data.parameters = newParameters;
-  }, [network, data]);
-
-  const handleParameterChange = useCallback((paramName: string, value: string) => {
-    const newParameters = { 
-      ...parameters, 
-      network: network || 'devnet'  // Default to devnet if network is empty
-    };
-    newParameters[paramName] = value;
     setParameters(newParameters);
-    data.parameters = newParameters;
-  }, [parameters, network, data]);
+
+    // Update node data
+    nodeUtils.updateNodeInput(id, 'function', 'input-function', 'string', value, setNodes);
+    nodeUtils.updateNodeInput(id, 'network', 'input-network', 'string', network || 'devnet', setNodes);
+    const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === value);
+    if (functionTemplate) {
+      functionTemplate.metadata.parameters.forEach((param) => {
+        nodeUtils.updateNodeInput(id, param.name, `input-${param.name}`, 'string', '', setNodes);
+      });
+    }
+  }, [network, id, setNodes, blockFunctionTemplates]);
+
+  const handleParameterChange = useCallback((inputId: string, value: string, fromConnection: boolean = false) => {
+    // Extract the actual parameter name
+    const paramMatch = inputId.match(/^input-(.+)$/);
+    if (paramMatch) {
+      const actualParamName = paramMatch[1];
+      
+      const newParameters: Record<string, string> = { 
+        ...parameters, 
+        network: network || 'devnet',
+        [actualParamName]: value
+      };
+      
+      setParameters(newParameters);
+      
+      // Update node data using nodeUtils
+      nodeUtils.updateNodeInput(id, actualParamName, inputId, 'string', value, setNodes);
+    }
+  }, [parameters, network, id, setNodes]);
 
   // Convert function options into dropdown options
   const functionOptions = useMemo(() => {
     return [
       { value: '', label: 'Select Function' },
-      ...blockTemplates.map(template => ({
-        value: template.metadata.name,
-        label: template.metadata.name
+      ...blockFunctionTemplates.map(functionTemplate => ({
+        value: functionTemplate.metadata.name,
+        label: functionTemplate.metadata.name
       }))
     ];
-  }, [blockTemplates]);
+  }, [blockFunctionTemplates]);
 
   // Create dynamic inputs based on selected function
   const inputs: InputDefinition[] = useMemo(() => {
-    const baseInputs: InputDefinition[] = [{
-      id: 'function',
-      label: 'Function',
-      type: 'dropdown',
-      options: functionOptions,
-      defaultValue: selectedFunction
-    }];
+    // Base function dropdown
+    const baseInputs: InputDefinition[] = [
+      createInputDefinition.dropdown({
+        id: 'input-function',
+        label: 'Function',
+        options: functionOptions,
+        defaultValue: selectedFunction,
+        searchable: true
+      })
+    ];
     
     if (selectedFunction) {
-      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
-      if (template) {
-        const paramInputs = template.metadata.parameters
+      const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === selectedFunction);
+      if (functionTemplate) {
+        const paramInputs = functionTemplate.metadata.parameters
           .filter(param => param.name !== 'apiKey' && param.name !== 'network')
-          .map(param => ({
-            id: param.name,
-            label: param.name,
-            type: 'text' as const,
-            defaultValue: parameters[param.name] || '',
-            description: param.description,
-            getConnectedValue: () => getConnectedValue(param.name),
-            handleId: `param-${param.name}`,
-          }));
+          .map(param => {
+            return createInputDefinition.text({
+              id: `input-${param.name}`,
+              label: param.name,
+              defaultValue: parameters[param.name] || '',
+              description: param.description,
+              getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, param.name),
+              handleId: `input-${param.name}`,
+            });
+          });
+          
         return [...baseInputs, ...paramInputs];
       }
     }
     
     return baseInputs;
-  }, [blockTemplates, selectedFunction, parameters, getConnectedValue, functionOptions]);
+  }, [blockFunctionTemplates, selectedFunction, parameters, functionOptions, edges, nodes, id]);
 
   // Get output type from selected template
-  const output = useMemo(() => {
+  const output: OutputDefinition = useMemo(() => {
     if (selectedFunction) {
-      
-
-      const template = blockTemplates.find(t => t.metadata.name === selectedFunction);
-      if (template?.metadata.output) {
+      const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === selectedFunction);
+      if (functionTemplate?.metadata.output) {
         return {
-          type: template.metadata.output.type,
-          description: template.metadata.output.description
+          id: 'output',
+          label: 'Result',
+          type: functionTemplate.metadata.output.type as any,
+          description: functionTemplate.metadata.output.description
         };
       }
     }
-    return undefined;
-  }, [selectedFunction, blockTemplates]);
+    return {
+      id: 'output',
+      label: 'Result',
+      type: 'object',
+      description: 'Helius API result'
+    };
+  }, [selectedFunction, blockFunctionTemplates]);
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['HELIUS']}
+      id={id}
+      metadata={nodeTypes['HELIUS'].metadata}
       inputs={inputs}
-      data={data}
-      onInputChange={(inputId, value) => {
-        if (inputId === 'function') {
+      data={nodeUtils.getNodeData(nodes, id)}
+      onInputChange={(inputId, value, fromConnection) => {
+        if (inputId === 'input-function') {
           handleFunctionChange(value);
         } else {
-          handleParameterChange(inputId, value);
+          handleParameterChange(inputId, value, fromConnection);
         }
       }}
       output={output}
     />
   );
-};
+}

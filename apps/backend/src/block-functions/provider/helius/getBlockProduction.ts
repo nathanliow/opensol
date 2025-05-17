@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getBlockProduction: BlockTemplate = {
+export const getBlockProduction: BlockFunctionTemplate = {
   metadata: {
     name: 'getBlockProduction',
     description:
@@ -14,11 +14,7 @@ export const getBlockProduction: BlockTemplate = {
       description: 'Recent block production information from the current or previous epoch'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

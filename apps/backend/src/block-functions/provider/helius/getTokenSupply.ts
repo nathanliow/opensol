@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getTokenSupply: BlockTemplate = {
+export const getTokenSupply: BlockFunctionTemplate = {
   metadata: {
     name: 'getTokenSupply',
     description:
@@ -20,12 +20,7 @@ export const getTokenSupply: BlockTemplate = {
       description: 'Supply of the token'
     }
   },
-  execute: async (
-    params: { 
-      tokenMint: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         tokenMint,

@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getIdentity: BlockTemplate = {
+export const getIdentity: BlockFunctionTemplate = {
   metadata: {
     name: 'getIdentity',
     description:
@@ -14,11 +14,7 @@ export const getIdentity: BlockTemplate = {
       description: 'Identity pubkey for the current node'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

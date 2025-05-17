@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getAssetsByCreator: BlockTemplate = {
+export const getAssetsByCreator: BlockFunctionTemplate = {
   metadata: {
     name: 'getAssetsByCreator',
     description:
@@ -50,18 +50,7 @@ export const getAssetsByCreator: BlockTemplate = {
       description: 'List of assets created by an address'
     }
   },
-  execute: async (
-    params: { 
-      creatorAddress: string; 
-      page: number; 
-      limit: number; 
-      sortBy: string; 
-      sortDirection: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         creatorAddress, 

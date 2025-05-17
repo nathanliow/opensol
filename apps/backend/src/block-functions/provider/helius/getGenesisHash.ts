@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getGenesisHash: BlockTemplate = {
+export const getGenesisHash: BlockFunctionTemplate = {
   metadata: {
     name: 'getGenesisHash',
     description:
@@ -14,11 +14,7 @@ export const getGenesisHash: BlockTemplate = {
       description: 'Genesis hash of the blockchain'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

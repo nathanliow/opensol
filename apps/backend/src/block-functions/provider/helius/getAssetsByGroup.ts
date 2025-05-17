@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getAssetsByGroup: BlockTemplate = {
+export const getAssetsByGroup: BlockFunctionTemplate = {
   metadata: {
     name: 'getAssetsByGroup',
     description:
@@ -55,19 +55,7 @@ export const getAssetsByGroup: BlockTemplate = {
       description: 'Asset Proof'
     }
   },
-  execute: async (
-    params: { 
-      groupKey: string; 
-      groupValue: string; 
-      page: number; 
-      limit: number; 
-      sortBy: string; 
-      sortDirection: string; 
-      before: string; 
-      after: string; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         groupKey, 

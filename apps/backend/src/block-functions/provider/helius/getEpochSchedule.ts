@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getEpochSchedule: BlockTemplate = {
+export const getEpochSchedule: BlockFunctionTemplate = {
   metadata: {
     name: 'getEpochSchedule',
     description:
@@ -14,11 +14,7 @@ export const getEpochSchedule: BlockTemplate = {
       description: 'Information about the current epoch schedule'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

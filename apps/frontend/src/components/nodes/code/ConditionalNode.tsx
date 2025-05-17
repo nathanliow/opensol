@@ -1,31 +1,46 @@
-import { useMemo } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useCallback, useMemo } from 'react';
+import { useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
 import { CustomHandle } from '../../../types/HandleTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface ConditionalNodeProps {
   id: string;
-  data: {
-    label?: string;
-    parameters?: Record<string, any>;
-  };
 }
 
-const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
+const ConditionalNode = ({ id }: ConditionalNodeProps) => {
+  const { setNodes } = useReactFlow();
+  const nodes = useNodes() as FlowNode[];
+  
+  const handleConditionChange = useCallback((value: string) => {
+    nodeUtils.updateNodeInput(id, 'condition', 'input-condition', 'string', value, setNodes);
+  }, [id, setNodes]);
+
   const inputs: InputDefinition[] = useMemo(() => [
-    {
-      id: 'condition',
+    createInputDefinition.text({
+      id: 'input-condition',
       label: 'Condition',
       description: 'Boolean expression to evaluate',
-      type: 'text',
       placeholder: 'Enter condition expression',
-      required: true,
-    }
+      defaultValue: '',
+      required: true
+    })
   ], []);
 
-  const outputs: CustomHandle[] = useMemo(() => [
+  // Define the main output
+  const output: OutputDefinition = {
+    id: 'output',
+    label: 'Output',
+    type: 'any',
+    description: 'Result of the conditional execution'
+  };
+
+  // Define custom handles for the then/else branches
+  const customHandles: CustomHandle[] = useMemo(() => [
     {
       id: 'then',
       label: 'Then',
@@ -39,22 +54,22 @@ const ConditionalNode = ({ id, data }: ConditionalNodeProps) => {
       description: 'Execute when condition is false',
       position: 'right',
       type: 'source',
-    },
-    {
-      id: 'output',
-      label: 'Output',
-      description: 'Combined output after conditional execution',
-      position: 'bottom',
-      type: 'source',
     }
   ], []);
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['CONDITIONAL']}
+      id={id}
+      metadata={nodeTypes['CONDITIONAL'].metadata}
       inputs={inputs}
-      data={data}
-      customHandles={outputs}
+      output={output}
+      data={nodeUtils.getNodeData(nodes, id)}
+      onInputChange={(inputId, value) => {
+        if (inputId === 'input-condition') {
+          handleConditionChange(value);
+        }
+      }}
+      customHandles={customHandles}
     />
   );
 };

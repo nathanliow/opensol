@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getMaxRetransmitSlot: BlockTemplate = {
+export const getMaxRetransmitSlot: BlockFunctionTemplate = {
   metadata: {
     name: 'getMaxRetransmitSlot',
     description:
@@ -14,11 +14,7 @@ export const getMaxRetransmitSlot: BlockTemplate = {
       description: 'Maximum retransmit slot'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

@@ -1,28 +1,32 @@
-[![OpenSOL](./images/cover.jpg)]()
+[![OpenSOL](./branding/name.jpg)]()
 <p align="center">
-  <a href="https://github.com/nathanliow/opensol/wiki">Documentation</a> |
-  <a href="https://opensol.dev">Website (WIP)</a> |
+  <a href="https://opensol-2.gitbook.io/opensol/">Documentation</a> |
+  <a href="https://opensol.dev">Website (Not yet live)</a> |
   <a href="https://github.com/nathanliow/opensol">GitHub Repository</a>
 </p>
-Welcome! OpenSOL is a visual programming platform designed to democratize Solana blockchain development through a no-code interface. It combines the accessibility of visual programming with the power of blockchain technology.
-
-
+Welcome! openSOL is a no-code platform for developers to learn, design, or create on Solana. Use blocks to create functional applications and programs that can interact with the blockchain from reading data to minting tokens. We aim to accelerate the growth of Solana's ecosystem by creating more higher quality developers and making it easier for beginners to start developing onchain.
 
 ## Overview of OpenSOL
-### Why OpenSOL? #
-1. Lack of open source code
-2. Make solana development easier with a no code solution
-3. Incentivize open source code contributions by allowing community to contribute custom functions (merge requests to Solana101 Repo)
-4. Financially award top contributors and protocol
+### Why OpenSOL? ###
+1. Improve education for blockchain development
+2. Lack of open source code
+3. Make solana/blockchain development easier with a no code solution
+4. Accelerate Solana ecosystem growth
 
-### Incentivization Model: #
-1. 0.10 SOL to contribute custom block
-2. 0.01 SOL to vote against a custom block 
-3. 0.01 SOL to vote for a custom block
-4. 5% of all contributions go to protocol
-5. 5% of all contributions go to top contributors at the end of a set amount of time
+### Tech Stack ###
+#### Frontend: ####
+ - ReactFlow (nodes and edges)
+ - NextJS 
+ - Privy (authentication)
+ - TypeScript
 
-### Run OpenSOL
+##### Backend: #####
+ - @solana/web3.js (blockchain interaction)
+ - Supabase (authentication + database)
+ - Pinata (IPFS Provider)
+ - TypeScript
+
+### Run OpenSOL ###
 OpenSOL consists of a frontend and a backend. However, (for now) only the frontend runs.
 
 ```bash
@@ -34,6 +38,8 @@ cd ../frontend
 npm run dev
 ```
 
+### Twitter/X: ###
+[@opensoldev](https://x.com/opensoldev)
 
-### Excalidraw: #
-[High Level Overview](https://excalidraw.com/#json=t6JWm9eFhLqf2c03cq2xP,4i0dgz-U3R09hsx6_pBMBQ)
+### Excalidraw: ###
+[High Level Overview](https://excalidraw.com/#json=oaUn4i3wUj1kYxWnqyz9H,XtVydYB7NIJpyQzAUJTZDA)

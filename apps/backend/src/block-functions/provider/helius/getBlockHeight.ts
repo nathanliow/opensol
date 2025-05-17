@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getBlockHeight: BlockTemplate = {
+export const getBlockHeight: BlockFunctionTemplate = {
   metadata: {
     name: 'getBlockHeight',
     description:
@@ -14,11 +14,7 @@ export const getBlockHeight: BlockTemplate = {
       description: 'Height of the last block'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

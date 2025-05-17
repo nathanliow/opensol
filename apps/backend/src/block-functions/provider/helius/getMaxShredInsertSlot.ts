@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getMaxShredInsertSlot: BlockTemplate = {
+export const getMaxShredInsertSlot: BlockFunctionTemplate = {
   metadata: {
     name: 'getMaxShredInsertSlot',
     description:
@@ -14,11 +14,7 @@ export const getMaxShredInsertSlot: BlockTemplate = {
       description: 'Max slot seen from after shred insert'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

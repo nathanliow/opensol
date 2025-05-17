@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getUserSolBalance: BlockTemplate = {
+export const getUserSolBalance: BlockFunctionTemplate = {
   metadata: {
     name: 'getUserSolBalance',
     description:
@@ -13,24 +13,14 @@ export const getUserSolBalance: BlockTemplate = {
         type: 'string',
         description: 'Wallet address to check'
       },
-      {
-        name: 'apiKey',
-        type: 'string',
-        description: 'Helius API key'
-      },
-      {
-        name: 'network',
-        type: 'string',
-        description: 'Network to use'
-      }
     ],
     requiredKeys: ['helius'],
     output: {
-      type: 'string',
+      type: 'object',
       description: 'User SOL balance'
     }
   },
-  execute: async (params: { address: string; apiKey?: string; network?: string }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       // Extract parameters
       const { address, apiKey, network = 'devnet' } = params;
@@ -64,7 +54,9 @@ export const getUserSolBalance: BlockTemplate = {
       const balanceData = await balanceResponse.json();
 
       // Return combined results
-      return balanceData.result.value*1e-9;
+      return {
+        result: balanceData.result.value*1e-9
+      }
     } catch (error) {
       console.error('Error in getUserSolBalance:', error);
       throw error;

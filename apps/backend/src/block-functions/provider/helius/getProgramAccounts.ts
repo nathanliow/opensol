@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getProgramAccounts: BlockTemplate = {
+export const getProgramAccounts: BlockFunctionTemplate = {
   metadata: {
     name: 'getProgramAccounts',
     description:
@@ -20,12 +20,7 @@ export const getProgramAccounts: BlockTemplate = {
       description: 'Program accounts'
     }
   },
-  execute: async (
-    params: { 
-      pubkey?: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         pubkey,

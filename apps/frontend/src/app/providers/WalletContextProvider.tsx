@@ -3,8 +3,7 @@ import { PrivyProvider } from '@privy-io/react-auth';
 import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana';
 
 const solanaConnectors = toSolanaWalletConnectors({
-  // By default, shouldAutoConnect is enabled
-  shouldAutoConnect: false,
+  shouldAutoConnect: true,
 });
 
 export function WalletContextProvider({ children }: WithChildren) {

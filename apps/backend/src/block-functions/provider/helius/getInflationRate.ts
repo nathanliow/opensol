@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getInflationRate: BlockTemplate = {
+export const getInflationRate: BlockFunctionTemplate = {
   metadata: {
     name: 'getInflationRate',
     description:
@@ -14,11 +14,7 @@ export const getInflationRate: BlockTemplate = {
       description: 'Specific inflation values for the current epoch'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

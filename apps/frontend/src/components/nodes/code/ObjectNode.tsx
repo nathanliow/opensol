@@ -1,46 +1,86 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useReactFlow, useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
+import ObjectDisplay from '../../ui/ObjectDisplay';
 
 interface ObjectNodeProps {
   id: string;
-  data: {
-    label?: string;
-    object?: Record<string, any>;
-  };
 }
 
-export default function ObjectNode({ id, data }: ObjectNodeProps) {
-  // Default object if none provided
-  const objectData = data.object || {
-    id: "123",
-    name: "Sample Object",
-    status: "active",
-    createdAt: "2023-05-15",
-    count: 42,
+export default function ObjectNode({ id }: ObjectNodeProps) {
+  const { setNodes } = useReactFlow();
+  const edges = useEdges();
+  const nodes = useNodes() as FlowNode[];
+  
+  // Create a single object input
+  const inputs: InputDefinition[] = useMemo(() => {
+    const connectionGetter = nodeUtils.createConnectionGetter(edges, nodes, id, 'object');
+    
+    return [
+      createInputDefinition.text({
+        id: 'input-object',
+        label: 'Object',
+        description: 'Connect an object to display its properties',
+        getConnectedValue: connectionGetter,
+        handleId: 'input-object',
+      })
+    ];
+  }, [edges, nodes, id]);
+  
+  // Get the connected object value
+  const object = useMemo(() => {
+    const connectionGetter = nodeUtils.createConnectionGetter(edges, nodes, id, 'object');
+    const value = connectionGetter();
+    
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return value as Record<string, any>;
+    }
+    
+    // Fall back to the data.object if available, or an empty object
+    return {};
+  }, [edges, nodes, id]);
+  
+  // Create a custom component for displaying the object
+  const objectDisplayInput = useMemo(() => {
+    return createInputDefinition.display({
+      id: 'object-display',
+      label: 'Object Data',
+      component: <ObjectDisplay data={object} maxHeight="300px" />,
+    });
+  }, [object]);
+  
+  // Combine inputs
+  const allInputs = useMemo(() => {
+    return [...inputs, objectDisplayInput];
+  }, [inputs, objectDisplayInput]);
+  
+  // Define the output
+  const output: OutputDefinition = {
+    id: 'output',
+    label: 'Object',
+    type: 'object',
+    description: 'Object containing the displayed properties'
   };
   
-  // Create inputs for each object property
-  const inputs: InputDefinition[] = Object.keys(objectData).map(key => ({
-    id: key,
-    label: key,
-    type: 'display' as const,
-    defaultValue: typeof objectData[key] === 'object' 
-      ? JSON.stringify(objectData[key]) 
-      : String(objectData[key])
-  }));
-  
   const handleInputChange = useCallback((inputId: string, value: any) => {
-    console.log(`Object property ${inputId} changed to ${value}`);
-    // Update logic would go here
-  }, []);
+    if (inputId === 'input-object' && value && typeof value === 'object') {
+      // Update the node with the connected object
+      nodeUtils.updateNodeInput(id, 'object', inputId, 'object', value, setNodes);
+    }
+  }, [id, setNodes]);
   
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['OBJECT']}
-      inputs={inputs}
-      data={objectData}
+      id={id}
+      metadata={nodeTypes['OBJECT'].metadata}
+      inputs={allInputs}
+      output={output}
+      data={nodeUtils.getNodeData(nodes, id)}
       onInputChange={handleInputChange}
     />
   );

@@ -1,6 +1,8 @@
 import { supabase } from './supabase';
 import { Node, Edge } from '@xyflow/react';
 import { Project } from '@/types/ProjectTypes';
+import { FlowEdge } from '../../../backend/src/packages/compiler/src/types';
+import { FlowNode } from '../../../backend/src/packages/compiler/src/types';
 
 // Create a new project
 export async function createProject(project: Omit<Project, 'id' | 'created_at' | 'updated_at'>): Promise<Project> {
@@ -103,7 +105,7 @@ export async function deleteProject(id: string) {
 }
 
 // Save nodes and edges changes
-export async function saveCanvasChanges(projectId: string, nodes: Node[], edges: Edge[]) {
+export async function saveCanvasChanges(projectId: string, nodes: FlowNode[], edges: FlowEdge[]) {
   return updateProject(projectId, {
     nodes,
     edges

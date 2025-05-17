@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getStakeMinimumDelegation: BlockTemplate = {
+export const getStakeMinimumDelegation: BlockFunctionTemplate = {
   metadata: {
     name: 'getStakeMinimumDelegation',
     description:
@@ -14,11 +14,7 @@ export const getStakeMinimumDelegation: BlockTemplate = {
       description: 'Stake minimum delegation'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

@@ -1,62 +1,57 @@
 import { memo, useCallback, useMemo } from 'react';
-import { useReactFlow } from '@xyflow/react';
+import { useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
-
-interface PrintNodeData {
-  label: string;
-  template: string;
-  parameters?: Record<string, any>;
-}
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
+import { OutputDefinition } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface PrintNodeProps {
   id: string;
-  data: PrintNodeData;
 }
 
-export default function PrintNode({ id, data }: PrintNodeProps) {
+export default function PrintNode({ id }: PrintNodeProps) {
   const { setNodes } = useReactFlow();
-
+  const nodes = useNodes() as FlowNode[];
+  
   const handleTemplateChange = useCallback((value: string) => {
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                template: value
-              }
-            }
-          : node
-      )
-    );
+    nodeUtils.updateNodeInput(id, 'template', 'input-template', 'string', value, setNodes);
+    nodeUtils.updateNodeOutput(id, 'string', value, setNodes);
   }, [id, setNodes]);
 
-  // Define inputs for template node
+  // Define inputs for template node using the new helper function
   const inputs: InputDefinition[] = useMemo(() => [
-    {
-      id: 'template',
+    createInputDefinition.textarea({
+      id: 'input-template',
       label: 'Template',
-      type: 'textarea',
-      defaultValue: data.template || '',
+      defaultValue: '',
       placeholder: 'Enter template (use $output$ for value)',
       description: 'Template text, use $output$ to insert the input value',
       rows: 3
-    }
-  ], [data.template]);
+    })
+  ], []);
+
+  // Define the output
+  const output: OutputDefinition = {
+    id: 'output',
+    label: 'Formatted Text',
+    type: 'string',
+    description: 'The formatted template text'
+  };
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['PRINT']}
+      id={id}
+      metadata={nodeTypes['PRINT'].metadata}
       inputs={inputs}
-      data={data}
+      output={output}
+      data={nodeUtils.getNodeData(nodes, id)}
       onInputChange={(inputId, value) => {
-        if (inputId === 'template') {
+        if (inputId === 'input-template') {
           handleTemplateChange(value);
         }
       }}
     />
   );
-};
+}

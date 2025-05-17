@@ -1,58 +1,47 @@
 import { useCallback, useMemo } from 'react';
-import { useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
-import { InputDefinition } from '../../../types/InputTypes';
-import { nodeTypesMetadata } from '../../../types/NodeTypes';
+import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
+import { nodeTypes } from '../../../types/NodeTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+import { useNodes, useReactFlow } from '@xyflow/react';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface LabelNodeProps {
   id: string;
-  data: { 
-    name: string;
-  };
 }
 
-export default function FunctionNode({ id, data }: LabelNodeProps) {
+export default function FunctionNode({ id }: LabelNodeProps) {
   const { setNodes } = useReactFlow();
+  const nodes = useNodes() as FlowNode[];
 
   const handleNameChange = useCallback((value: string) => {
-    setNodes((nodes) =>
-      nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                name: value
-              }
-            }
-          : node
-      )
-    );
-  }, [id, setNodes]);
+    nodeUtils.updateNodeInput(id, 'name', 'input-name', 'string', value, setNodes);
+  }, [id]);
 
-  // Define input for the name field
+  // Define input for the name field using the new helper
   const inputs: InputDefinition[] = useMemo(() => [
-    {
-      id: 'name',
+    createInputDefinition.text({
+      id: 'input-name',
       label: 'Name',
-      type: 'text',
-      defaultValue: data.name || 'Untitled Function',
+      defaultValue: '',
       placeholder: 'Enter Function name...'
-    }
-  ], [data.name]);
+    })
+  ], []);
 
   return (
     <TemplateNode
-      metadata={nodeTypesMetadata['FUNCTION']}
+      id={id}
+      metadata={nodeTypes['FUNCTION'].metadata}
       inputs={inputs}
-      data={data}
+      data={nodeUtils.getNodeData(nodes, id)}
       onInputChange={(inputId, value) => {
-        if (inputId === 'name') {
+        if (inputId === 'input-name') {
           handleNameChange(value);
         }
       }}
       hideTopHandle={true}
       hideInputHandles={true}
+      hideOutputHandle={true}
     />
   );
 }

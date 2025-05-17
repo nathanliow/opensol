@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getLatestBlockhash: BlockTemplate = {
+export const getLatestBlockhash: BlockFunctionTemplate = {
   metadata: {
     name: 'getLatestBlockhash',
     description:
@@ -20,12 +20,7 @@ export const getLatestBlockhash: BlockTemplate = {
       description: 'Latest blockhash'
     }
   },
-  execute: async (
-    params: { 
-      commitment?: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         commitment = 'confirmed',

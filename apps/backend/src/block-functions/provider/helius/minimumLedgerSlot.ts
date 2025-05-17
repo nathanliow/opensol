@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const minimumLedgerSlot: BlockTemplate = {
+export const minimumLedgerSlot: BlockFunctionTemplate = {
   metadata: {
     name: 'minimumLedgerSlot',
     description:
@@ -14,11 +14,7 @@ export const minimumLedgerSlot: BlockTemplate = {
       description: 'Lowest slot that the node has information about in its ledger'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

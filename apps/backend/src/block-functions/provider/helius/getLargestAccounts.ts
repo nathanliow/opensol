@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getLargestAccounts: BlockTemplate = {
+export const getLargestAccounts: BlockFunctionTemplate = {
   metadata: {
     name: 'getLargestAccounts',
     description:
@@ -14,11 +14,7 @@ export const getLargestAccounts: BlockTemplate = {
       description: 'Largest accounts on the network'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

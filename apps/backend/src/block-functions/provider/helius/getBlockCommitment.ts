@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getBlockCommitment: BlockTemplate = {
+export const getBlockCommitment: BlockFunctionTemplate = {
   metadata: {
     name: 'getBlockCommitment',
     description:
@@ -20,12 +20,7 @@ export const getBlockCommitment: BlockTemplate = {
       description: 'Commitment for a specific block'
     }
   },
-  execute: async (
-    params: { 
-      blockNumber: number; 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         blockNumber, 

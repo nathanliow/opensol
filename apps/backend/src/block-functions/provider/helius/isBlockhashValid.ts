@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const isBlockhashValid: BlockTemplate = {
+export const isBlockhashValid: BlockFunctionTemplate = {
   metadata: {
     name: 'isBlockhashValid',
     description:
@@ -20,12 +20,7 @@ export const isBlockhashValid: BlockTemplate = {
       description: 'Whether the blockhash is valid or not'
     }
   },
-  execute: async (
-    params: { 
-      blockhash: string;
-      apiKey?: string; 
-      network?: string;
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         blockhash,

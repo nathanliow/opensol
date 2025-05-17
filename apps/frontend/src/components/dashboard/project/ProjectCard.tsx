@@ -1,6 +1,6 @@
 import { Icons } from "../../icons/icons";
 import { Project } from "@/types/ProjectTypes";
-import { useTimeAgo } from "@/hooks/useTimeAgo";
+import { useTimeAgo } from "@/hooks/utils/useTimeAgo";
 import { User } from "@supabase/supabase-js";
 
 interface ProjectCardProps {

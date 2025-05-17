@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getTokenAccountBalance: BlockTemplate = {
+export const getTokenAccountBalance: BlockFunctionTemplate = {
   metadata: {
     name: 'getTokenAccountBalance',
     description:
@@ -20,12 +20,7 @@ export const getTokenAccountBalance: BlockTemplate = {
       description: 'Token balance of the token account'
     }
   },
-  execute: async (
-    params: { 
-      address: string;
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         address,

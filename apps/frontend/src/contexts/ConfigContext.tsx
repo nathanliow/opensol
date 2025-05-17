@@ -1,12 +1,11 @@
 'use client';
 
+import { NetworkType } from '@/types/NetworkTypes';
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type Network = 'mainnet' | 'devnet';
-
 interface ConfigContextType {
-  network: Network;
-  setNetwork: (network: Network) => void;
+  network: NetworkType;
+  setNetwork: (network: NetworkType) => void;
   apiKeys: Record<string, string>;
   setApiKey: (provider: string, key: string) => void;
   getApiKey: (provider: string) => string | null;
@@ -28,10 +27,10 @@ interface ConfigProviderProps {
 
 export const ConfigProvider = ({ children }: ConfigProviderProps) => {
   // Initialize state from localStorage if available
-  const [network, setNetworkState] = useState<Network>(() => {
+  const [network, setNetworkState] = useState<NetworkType>(() => {
     if (typeof window !== 'undefined') {
       const savedNetwork = localStorage.getItem('network');
-      return (savedNetwork as Network) || 'devnet';
+      return (savedNetwork as NetworkType) || 'devnet';
     }
     return 'devnet';
   });
@@ -57,7 +56,7 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
     }
   }, [apiKeys]);
 
-  const setNetwork = (newNetwork: Network) => {
+  const setNetwork = (newNetwork: NetworkType) => {
     setNetworkState(newNetwork);
   };
 

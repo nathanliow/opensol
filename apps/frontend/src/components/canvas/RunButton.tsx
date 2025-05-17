@@ -1,10 +1,19 @@
 import { memo, useCallback } from 'react';
-import { useNodes, useEdges } from '@xyflow/react';
+import { useNodes, useEdges, useReactFlow } from '@xyflow/react';
 import { FlowCompiler } from '../../../../backend/src/packages/compiler/src/FlowCompiler';
 import blockTemplateService from '../services/blockTemplateService';
 import { FlowNode, FlowEdge } from '../../../../backend/src/packages/compiler/src/types';
-import { BlockTemplate } from '../services/blockTemplateService';
+import { BlockFunctionTemplate } from '../services/blockTemplateService';
 import { useConfig } from '../../contexts/ConfigContext';
+import { OutputValueType } from '@/types/OutputTypes';
+import { nodeUtils } from '@/utils/nodeUtils';
+
+// Function imports
+import { createFileFromUrl } from '../../utils/createFileFromUrl';
+import { useTokenMint } from '../../hooks/useTokenMint';
+import { uploadImageToPinata } from '../../ipfs/uploadImageToPinata';
+import { uploadMetadataToPinata } from '../../ipfs/uploadMetadataToPinata';
+import { useTokenTransfer } from '@/hooks/useTokenTransfer';
 
 interface RunButtonProps {
   onOutput: (output: string) => void;
@@ -14,9 +23,13 @@ interface RunButtonProps {
 }
 
 export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, selectedFunction }: RunButtonProps) => {
-  const nodes = useNodes();
+  const nodes = useNodes() as FlowNode[];
   const edges = useEdges();
   const { apiKeys, network } = useConfig();
+  const reactFlowInstance = useReactFlow();
+  
+  const { mintToken: reactMintToken } = useTokenMint();
+  const { transferToken: reactTransferToken } = useTokenTransfer();
 
   const handleRun = useCallback(() => {
     try {
@@ -24,67 +37,15 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
         onOutput('Error: Please select a function to run');
         return;
       }
-      // Transform nodes to the format expected by FlowCompiler
-      const transformedNodes: FlowNode[] = nodes.map(node => {
-        if (!node.type) {
-          throw new Error('Node type is undefined');
-        }
-        
-        // For GET and HELIUS nodes, process string inputs and add API key
-        if (node.type === 'GET' || node.type === 'HELIUS') {
-          const parameters: any = node.data?.parameters || {};
-          // Add appropriate API key and network to parameters
-          if (node.type === 'GET') {
-            parameters.apiKey = apiKeys['helius'] || '';
-            parameters.network = network;
-          } else if (node.type === 'HELIUS') {
-            parameters.apiKey = apiKeys['helius'] || '';
-            parameters.network = network; // Use network from ConfigContext
-          }
-          
-          return {
-            id: node.id,
-            type: node.type,
-            data: {
-              ...node.data,
-              parameters
-            }
-          };
-        }
-
-        // For CONST nodes, ensure proper data structure
-        if (node.type === 'CONST') {
-          return {
-            id: node.id,
-            type: node.type,
-            position: node.position,
-            data: {
-              dataType: node.data?.dataType || 'string',
-              value: node.data?.value
-            }
-          };
-        }
-
-        // For other nodes, pass through as is
-        return {
-          id: node.id,
-          type: node.type,
-          position: node.position,
-          data: {
-            ...node.data,
-            parameters: node.data?.parameters || {}
-          }
-        };
-      });
 
       // Transform edges to the format expected by FlowCompiler
       const transformedEdges: FlowEdge[] = edges.map(edge => ({
         id: edge.id || `${edge.source}-${edge.target}`,
-        source: edge.source || '',
-        target: edge.target || '',
-        sourceHandle: edge.sourceHandle || '',
-        targetHandle: edge.targetHandle || ''
-      }));
+        source: edge.source,
+        target: edge.target,
+        sourceHandle: edge.sourceHandle || undefined,
+        targetHandle: edge.targetHandle || undefined
+      } as FlowEdge));
 
       // Get all nodes connected to the selected function
       const connectedNodes = new Set<string>();
@@ -112,7 +73,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       }
 
       // Filter nodes and edges to only include connected ones
-      const relevantNodes = transformedNodes.filter(node => connectedNodes.has(node.id));
+      const relevantNodes = nodes.filter((node: FlowNode) => connectedNodes.has(node.id));
       const relevantEdges = transformedEdges.filter(edge => 
         connectedNodes.has(edge.source) && connectedNodes.has(edge.target)
       );
@@ -159,7 +120,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       onDebugGenerated(JSON.stringify(debugInfo, null, 2));
 
       // Get templates from service
-      const templates: Record<string, BlockTemplate> = Object.entries(blockTemplateService.getTemplates()).reduce((acc, [_, template]) => {
+      const templates: Record<string, BlockFunctionTemplate> = Object.entries(blockTemplateService.getTemplates()).reduce((acc, [_, template]) => {
         acc[template.metadata.name] = {
           metadata: { 
             name: template.metadata.name,
@@ -173,24 +134,111 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
           execute: template.execute
         };
         return acc;
-      }, {} as Record<string, BlockTemplate>);
+      }, {} as Record<string, BlockFunctionTemplate>);
 
-      // Compile and execute the flow
-      console.log('relevantNodes', relevantNodes);
-      console.log('relevantEdges', relevantEdges);
-      const compiler = new FlowCompiler(relevantNodes, relevantEdges, templates);
-      const { execute, functionCode, displayCode } = compiler.compile();
+      // Configure compiler options to not use imports
+      const compilerOptions = {
+        noImports: true
+      };
+      
+      // Pass apiKeys and network to the FlowCompiler
+      const compiler = new FlowCompiler(relevantNodes, relevantEdges, templates, apiKeys, network, compilerOptions);
+      const { functionName, execute, functionCode, displayCode } = compiler.compile();
       
       // Update code tab with display version
       onCodeGenerated(displayCode);
       
-      // Execute the flow with actual API key
-      const executeWithContext = new Function(`
-        return async function() {
-          ${functionCode}
-          return await execute();
+      // Store execution results for updating node outputs (nodeId => result)
+      const executionResults = new Map<string, OutputValueType>();
+      
+      const mintToken = async (
+        name: string, 
+        symbol: string, 
+        description: string, 
+        imageUrl: string,
+        decimals: number, 
+        supply: number, 
+        metadataUri: string,
+        nodeId: string  
+      ) => {
+        try {          
+          const result = await reactMintToken(
+            name, 
+            symbol, 
+            description, 
+            imageUrl, 
+            decimals, 
+            supply, 
+            metadataUri,
+          );
+
+          executionResults.set(nodeId, result);
+          
+          return result;
+        } catch (error) {
+          console.error('Error in runMintToken:', error);
+          return null;
         }
-      `)();
+      };
+
+      const transferToken = async (
+        tokenAddress: string,
+        amount: number,
+        recipient: string,
+        nodeId: string
+      ) => {
+        try {
+          const result = await reactTransferToken(
+            tokenAddress,
+            amount,
+            recipient,
+          );
+
+          executionResults.set(nodeId, result);
+
+          return result;
+        } catch (error) {
+          console.error('Error in transferToken:', error);
+          return null;
+        }
+      };
+      
+      // Prepare the function code by removing any import statements
+      const cleanedFunctionCode = functionCode.replace(/import\s+.*?from\s+.*?;/g, '');
+      
+      // Execute the flow with function injection
+      const executeWithContext = new Function(
+        'mintToken',
+        'transferToken',
+        'createFileFromUrl',
+        'uploadImageToPinata',
+        'uploadMetadataToPinata',
+        'network',
+        'updateNodeOutput',
+        `
+        return async function() {
+          try {
+            ${cleanedFunctionCode}
+            
+            return await ${functionName}();
+          } catch (error) {
+            console.error("Execution error:", error);
+            return { output: "Execution Error: " + error.message };
+          }
+        }
+      `)(
+        mintToken, 
+        transferToken, 
+        createFileFromUrl, 
+        uploadImageToPinata, 
+        uploadMetadataToPinata, 
+        network,
+        (nodeId: string, result: OutputValueType) => {
+          if (nodeId && result) {
+            executionResults.set(nodeId, result);
+          }
+        }
+      );
 
       executeWithContext()
         .then((result: any) => {
@@ -200,8 +248,26 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
             const parsed = JSON.parse(result.output);
             formattedOutput = JSON.stringify(parsed, null, 2);
           } catch {
-            formattedOutput = result.output;
+            formattedOutput = result.output || JSON.stringify(result, null, 2);
           }
+          
+          // Update node outputs with execution results
+          executionResults.forEach((result, nodeId) => {
+            if (result) {
+              // Find the node and update its output
+              const node = relevantNodes.find(n => n.id === nodeId);
+              if (node) {
+                // Update the node with the mint result
+                nodeUtils.updateNodeOutput(
+                  node.id,
+                  node.data.output?.type || 'object',
+                  result,
+                  reactFlowInstance.setNodes
+                );
+              }
+            }
+          });
+          
           onOutput(formattedOutput);
         })
         .catch((error: any) => {
@@ -210,7 +276,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
     } catch (error: any) {
       onOutput(`Compilation Error: ${error.message}`);
     }
-  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network]);
+  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network, reactMintToken, reactFlowInstance]);
 
   return (
     <button

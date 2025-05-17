@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getMinimumBalanceForRentExemption: BlockTemplate = {
+export const getMinimumBalanceForRentExemption: BlockFunctionTemplate = {
   metadata: {
     name: 'getMinimumBalanceForRentExemption',
     description:
@@ -20,12 +20,7 @@ export const getMinimumBalanceForRentExemption: BlockTemplate = {
       description: 'Minimum balance for rent exemption'
     }
   },
-  execute: async (
-    params: { 
-      accountDataLength: number;
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         accountDataLength,

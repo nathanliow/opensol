@@ -1,34 +1,37 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/NodeTypes';
 import { ApiKeyType } from '../../types/KeyTypes';
+import { OutputValueType } from '../../types/OutputTypes';
 
 // Frontend block template format
-export interface BlockTemplateMetadata {
+export interface BlockFunctionTemplateMetadata {
   name: string;
   description: string;
   blockType: string;
   blockCategory?: NodeCategory;
-  parameters: {
-    name: string;
-    description: string;
-    type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
-    defaultValue?: any;
-  }[];
+  parameters: BlockFunctionTemplateParameters[];
   requiredKeys?: ApiKeyType[];
   output?: {
-    type: 'string' | 'number' | 'boolean' | 'object' | 'any' | 'string[]' | 'number[]' | 'boolean[]';
+    type: OutputValueType;
     description: string;
   };
 }
 
-export interface BlockTemplate {
-  metadata: BlockTemplateMetadata;
+export interface BlockFunctionTemplateParameters {
+  name: string;
+  description: string;
+  type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
+  defaultValue?: any;
+}
+
+export interface BlockFunctionTemplate {
+  metadata: BlockFunctionTemplateMetadata;
   execute: (params: Record<string, any>) => Promise<any>;
 }
 
-export class BlockTemplateService {
-  private static instance: BlockTemplateService;
-  private templates: Record<string, BlockTemplate>;
+export class BlockFunctionTemplateService {
+  private static instance: BlockFunctionTemplateService;
+  private templates: Record<string, BlockFunctionTemplate>;
 
   private constructor() {
     // Load and transform backend templates
@@ -36,21 +39,21 @@ export class BlockTemplateService {
     this.templates = Object.entries(backendTemplates).reduce((acc, [name, template]) => {
       acc[name] = transformTemplate(template);
       return acc;
-    }, {} as Record<string, BlockTemplate>);
+    }, {} as Record<string, BlockFunctionTemplate>);
   }
 
-  static getInstance(): BlockTemplateService {
-    if (!BlockTemplateService.instance) {
-      BlockTemplateService.instance = new BlockTemplateService();
+  static getInstance(): BlockFunctionTemplateService {
+    if (!BlockFunctionTemplateService.instance) {
+      BlockFunctionTemplateService.instance = new BlockFunctionTemplateService();
     }
-    return BlockTemplateService.instance;
+    return BlockFunctionTemplateService.instance;
   }
 
-  getTemplate(name: string): BlockTemplate | undefined {
+  getTemplate(name: string): BlockFunctionTemplate | undefined {
     return this.templates[name];
   }
 
-  getTemplates(): BlockTemplate[] {
+  getTemplates(): BlockFunctionTemplate[] {
     return Object.values(this.templates);
   }
 
@@ -59,7 +62,7 @@ export class BlockTemplateService {
   }
 
   // Get templates for a specific block type
-  getTemplatesByType(blockType: string): BlockTemplate[] {
+  getTemplatesByType(blockType: string): BlockFunctionTemplate[] {
     return Object.values(this.templates).filter(
       template => template.metadata.blockType === blockType
     );
@@ -71,7 +74,7 @@ export class BlockTemplateService {
   }
 }
 
-export function transformTemplate(backendTemplate: BlockTemplate): BlockTemplate {
+export function transformTemplate(backendTemplate: BlockFunctionTemplate): BlockFunctionTemplate {
   return {
     metadata: {
       name: backendTemplate.metadata.name,
@@ -86,4 +89,4 @@ export function transformTemplate(backendTemplate: BlockTemplate): BlockTemplate
   };
 }
 
-export default BlockTemplateService.getInstance();
+export default BlockFunctionTemplateService.getInstance();

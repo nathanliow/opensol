@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getHighestSnapshotSlot: BlockTemplate = {
+export const getHighestSnapshotSlot: BlockFunctionTemplate = {
   metadata: {
     name: 'getHighestSnapshotSlot',
     description:
@@ -14,11 +14,7 @@ export const getHighestSnapshotSlot: BlockTemplate = {
       description: 'Highest slot information that the node has snapshots for'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 

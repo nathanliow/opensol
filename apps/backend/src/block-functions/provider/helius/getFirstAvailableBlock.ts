@@ -1,6 +1,6 @@
-import { BlockTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
+import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getFirstAvailableBlock: BlockTemplate = {
+export const getFirstAvailableBlock: BlockFunctionTemplate = {
   metadata: {
     name: 'getFirstAvailableBlock',
     description:
@@ -14,11 +14,7 @@ export const getFirstAvailableBlock: BlockTemplate = {
       description: 'Slot of the lowest confirmed block that has not been purged from the ledger'
     }
   },
-  execute: async (
-    params: { 
-      apiKey?: string; 
-      network?: string 
-    }) => {
+  execute: async (params: Record<string, any>) => {
     try {
       const { 
         apiKey, 
