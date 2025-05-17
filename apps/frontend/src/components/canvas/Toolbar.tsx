@@ -282,7 +282,7 @@ export const Toolbar = ({
       }
 
       // Send USDC tip
-      await transferToken("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", tipAmount, creatorData.wallet_address, 6, true);
+      await transferToken("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", tipAmount, creatorData.wallet_address, true);
       alert('Tip sent successfully!');
       setTipAmount(0);
     } catch (error) {
