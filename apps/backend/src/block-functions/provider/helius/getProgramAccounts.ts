@@ -15,6 +15,9 @@ export const getProgramAccounts: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Program accounts'

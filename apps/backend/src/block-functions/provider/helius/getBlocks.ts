@@ -15,6 +15,9 @@ export const getBlocks: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'List of confirmed blocks between two slots'

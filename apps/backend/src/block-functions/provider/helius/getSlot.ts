@@ -9,6 +9,9 @@ export const getSlot: BlockFunctionTemplate = {
     blockType: 'HELIUS',
     parameters: [],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Current slot'

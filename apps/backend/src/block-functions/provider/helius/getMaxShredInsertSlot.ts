@@ -9,6 +9,9 @@ export const getMaxShredInsertSlot: BlockFunctionTemplate = {
     blockType: 'HELIUS',
     parameters: [],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Max slot seen from after shred insert'

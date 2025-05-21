@@ -16,6 +16,9 @@ export const getAsset: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Asset Data'

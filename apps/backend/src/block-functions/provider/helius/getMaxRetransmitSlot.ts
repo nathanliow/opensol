@@ -9,6 +9,9 @@ export const getMaxRetransmitSlot: BlockFunctionTemplate = {
     blockType: 'HELIUS',
     parameters: [],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Maximum retransmit slot'

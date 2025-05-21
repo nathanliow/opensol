@@ -9,6 +9,9 @@ export const getFirstAvailableBlock: BlockFunctionTemplate = {
     blockType: 'HELIUS',
     parameters: [],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Slot of the lowest confirmed block that has not been purged from the ledger'

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useConfig } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
+import { ApiKey, ApiKeyType, HeliusApiKeyTiers, BirdeyeApiKeyTiers } from "@/types/KeyTypes";
 
 interface ApiKeyModalProps {
   isOpen: boolean;
@@ -9,19 +10,19 @@ interface ApiKeyModalProps {
 
 export const ApiKeyModal = ({ isOpen, onClose }: ApiKeyModalProps) => {
   const { apiKeys, setApiKey } = useConfig();
-  const [heliusApiKey, setHeliusApiKey] = useState(apiKeys['helius'] || '');
-  const [openaiApiKey, setOpenaiApiKey] = useState(apiKeys['openai'] || '');
-  const [birdeyeApiKey, setBirdeyeApiKey] = useState(apiKeys['birdeye'] || '');
+  const [heliusApiKey, setHeliusApiKey] = useState<ApiKey>(apiKeys['helius'] || { key: '', tier: null });
+  const [openaiApiKey, setOpenaiApiKey] = useState<ApiKey>(apiKeys['openai'] || { key: '', tier: null });
+  const [birdeyeApiKey, setBirdeyeApiKey] = useState<ApiKey>(apiKeys['birdeye'] || { key: '', tier: null });
 
   useEffect(() => {
     // Update local state when apiKeys context changes
-    setHeliusApiKey(apiKeys['helius'] || '');
-    setOpenaiApiKey(apiKeys['openai'] || '');
-    setBirdeyeApiKey(apiKeys['birdeye'] || '');
+    setHeliusApiKey(apiKeys['helius'] || { key: '', tier: null });
+    setOpenaiApiKey(apiKeys['openai'] || { key: '', tier: null });
+    setBirdeyeApiKey(apiKeys['birdeye'] || { key: '', tier: null });
   }, [apiKeys]);
 
-  const handleApiKeySave = (provider: string, key: string) => {
-    setApiKey(provider, key);
+  const handleApiKeySave = (provider: ApiKeyType, apiKey: ApiKey) => {
+    setApiKey(provider, apiKey);
   };
 
   if (!isOpen) return null;
@@ -53,15 +54,32 @@ export const ApiKeyModal = ({ isOpen, onClose }: ApiKeyModalProps) => {
                 <Icons.FiInfo size={12} />
               </a>
             </label>
-            <input 
-              id="helius"
-              type="password" 
-              className="w-full text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-              value={heliusApiKey}
-              onChange={(e) => setHeliusApiKey(e.target.value)}
-              onBlur={() => handleApiKeySave('helius', heliusApiKey)}
-              placeholder="Your Helius API key"
-            />
+            <div className="flex gap-2">
+              <input 
+                id="helius"
+                type="password" 
+                className="w-full text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
+                value={heliusApiKey.key}
+                onChange={(e) => setHeliusApiKey({...heliusApiKey, key: e.target.value})}
+                onBlur={() => handleApiKeySave('helius', heliusApiKey)}
+                placeholder="Your Helius API key"
+              />
+              <select
+                className="text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500 min-w-[120px]"
+                value={heliusApiKey.tier || ''}
+                onChange={(e) => {
+                  const tier = e.target.value as HeliusApiKeyTiers | '';
+                  setHeliusApiKey({...heliusApiKey, tier: tier || null});
+                  handleApiKeySave('helius', {...heliusApiKey, tier: tier || null});
+                }}
+              >
+                <option value="">Select Tier</option>
+                <option value="free">Free</option>
+                <option value="developer">Developer</option>
+                <option value="business">Business</option>
+                <option value="professional">Professional</option>
+              </select>
+            </div>
           </div>
           
           <div>
@@ -75,8 +93,8 @@ export const ApiKeyModal = ({ isOpen, onClose }: ApiKeyModalProps) => {
               id="openai"
               type="password" 
               className="w-full text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-              value={openaiApiKey}
-              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              value={openaiApiKey.key}
+              onChange={(e) => setOpenaiApiKey({...openaiApiKey, key: e.target.value})}
               onBlur={() => handleApiKeySave('openai', openaiApiKey)}
               placeholder="Your OpenAI API key"
             />
@@ -89,15 +107,32 @@ export const ApiKeyModal = ({ isOpen, onClose }: ApiKeyModalProps) => {
                 <Icons.FiInfo size={12} />
               </a>
             </label>
-            <input 
-              id="birdeye"
-              type="password" 
-              className="w-full text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
-              value={birdeyeApiKey}
-              onChange={(e) => setBirdeyeApiKey(e.target.value)}
-              onBlur={() => handleApiKeySave('birdeye', birdeyeApiKey)}
-              placeholder="Your Birdeye API key"
-            />
+            <div className="flex gap-2">
+              <input 
+                id="birdeye"
+                type="password" 
+                className="w-full text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500" 
+                value={birdeyeApiKey.key}
+                onChange={(e) => setBirdeyeApiKey({...birdeyeApiKey, key: e.target.value})}
+                onBlur={() => handleApiKeySave('birdeye', birdeyeApiKey)}
+                placeholder="Your Birdeye API key"
+              />
+              <select
+                className="text-xs px-2 py-2 bg-[#2D2D2D] border border-[#333333] rounded-md focus:outline-none focus:border-blue-500 min-w-[120px]"
+                value={birdeyeApiKey.tier || ''}
+                onChange={(e) => {
+                  const tier = e.target.value as BirdeyeApiKeyTiers | '';
+                  setBirdeyeApiKey({...birdeyeApiKey, tier: tier || null});
+                  handleApiKeySave('birdeye', {...birdeyeApiKey, tier: tier || null});
+                }}
+              >
+                <option value="">Select Tier</option>
+                <option value="standard">Standard</option>
+                <option value="starter">Starter</option>
+                <option value="premium">Premium</option>
+                <option value="business">Business</option>
+              </select>
+            </div>
           </div>
         </div>
 

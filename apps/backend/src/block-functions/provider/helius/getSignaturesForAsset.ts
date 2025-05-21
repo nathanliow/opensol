@@ -35,6 +35,9 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'List of transaction signatures related to a compressed asset'
@@ -42,7 +45,6 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
-      // Extract parameters
       const { 
         assetId, 
         page, 

@@ -1,6 +1,6 @@
 import { getFlattenedTemplates } from '../../../../backend/src/block-functions';
 import { NodeCategory } from '../../types/NodeTypes';
-import { ApiKeyType } from '../../types/KeyTypes';
+import { ApiKeyType, HeliusApiKeyTiers, BirdeyeApiKeyTiers } from '../../types/KeyTypes';
 import { OutputValueType } from '../../types/OutputTypes';
 
 // Frontend block template format
@@ -11,6 +11,9 @@ export interface BlockFunctionTemplateMetadata {
   blockCategory?: NodeCategory;
   parameters: BlockFunctionTemplateParameters[];
   requiredKeys?: ApiKeyType[];
+  requiredKeyTiers?: {
+    [key in ApiKeyType]?: HeliusApiKeyTiers | BirdeyeApiKeyTiers | Array<HeliusApiKeyTiers | BirdeyeApiKeyTiers>;
+  };
   output?: {
     type: OutputValueType;
     description: string;
@@ -20,8 +23,9 @@ export interface BlockFunctionTemplateMetadata {
 export interface BlockFunctionTemplateParameters {
   name: string;
   description: string;
-  type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]';
+  type: 'string' | 'number' | 'boolean' | 'string[]' | 'number[]' | 'boolean[]' | 'dropdown';
   defaultValue?: any;
+  options?: string[]; // Available options when type is 'dropdown'
 }
 
 export interface BlockFunctionTemplate {
@@ -83,6 +87,7 @@ export function transformTemplate(backendTemplate: BlockFunctionTemplate): Block
       blockCategory: backendTemplate.metadata.blockCategory,
       parameters: backendTemplate.metadata.parameters || [],
       requiredKeys: backendTemplate.metadata.requiredKeys,
+      requiredKeyTiers: backendTemplate.metadata.requiredKeyTiers,
       output: backendTemplate.metadata.output || undefined
     },
     execute: backendTemplate.execute

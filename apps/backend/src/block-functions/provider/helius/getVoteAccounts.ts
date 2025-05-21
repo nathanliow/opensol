@@ -9,6 +9,9 @@ export const getVoteAccounts: BlockFunctionTemplate = {
     blockType: 'HELIUS',
     parameters: [],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Account info and associated stake for all the voting accounts in the current bank'

@@ -1,7 +1,7 @@
 import { FlowNode, FlowEdge } from './types';
 import { BlockFunctionTemplate, BlockFunctionTemplateParameters } from '../../../../../frontend/src/components/services/blockTemplateService';
 import { nodeUtils } from '@/utils/nodeUtils';
-import { ApiKeyType } from '@/types/KeyTypes';
+import { ApiKey, ApiKeyType } from '@/types/KeyTypes';
 import { NetworkType } from '@/types/NetworkTypes';
 import { InputValueType } from '@/types/InputTypes';
 
@@ -17,7 +17,7 @@ export class FlowCompiler {
   }[] = []; // function to path mapping (ex: getUserSolBalance -> @opensol/templates)
   private printOutputs: string[] = [];
   private getFunctions: Map<string, string> = new Map();
-  private apiKeys: Record<ApiKeyType, string> = {"helius": "", "openai": "", "birdeye": ""};
+  private apiKeys: Record<ApiKeyType, ApiKey> = {"helius": { key: "", tier: null }, "openai": { key: "", tier: null }, "birdeye": { key: "", tier: null }};
   private network: NetworkType = 'devnet';
   private noImports: boolean = false;
   private functionName: string = 'execute'; // Default function name
@@ -27,7 +27,7 @@ export class FlowCompiler {
     nodes: FlowNode[], 
     edges: FlowEdge[], 
     templates: Record<string, BlockFunctionTemplate>,
-    apiKeys: Record<ApiKeyType, string> = {"helius": "", "openai": "", "birdeye": ""},
+    apiKeys: Record<ApiKeyType, ApiKey> = {"helius": { key: "", tier: null }, "openai": { key: "", tier: null }, "birdeye": { key: "", tier: null }},
     network: NetworkType = 'devnet',
     options: { noImports?: boolean } = {}
   ) {
@@ -517,7 +517,7 @@ export class FlowCompiler {
     // Define API keys with consistent indentation
     const apiKeyLines = [];
     for (const key of Object.keys(this.apiKeys)) {
-      if (this.apiKeys[key as ApiKeyType] !== '') {
+      if (this.apiKeys[key as ApiKeyType].key !== '') {
         if (hideApiKey) {
           apiKeyLines.push(`const ${key.toUpperCase()}_API_KEY = process.env.${key.toUpperCase()}_API_KEY;`);
         } else if (this.apiKeys[key as ApiKeyType]) {

@@ -15,6 +15,9 @@ export const getMinimumBalanceForRentExemption: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Minimum balance for rent exemption'

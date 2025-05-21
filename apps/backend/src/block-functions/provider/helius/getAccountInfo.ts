@@ -15,6 +15,9 @@ export const getAccountInfo: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'All information associated with the account of provided Pubkey'

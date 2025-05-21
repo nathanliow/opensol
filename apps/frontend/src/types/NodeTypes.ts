@@ -367,6 +367,30 @@ export const nodeTypes: Record<string, NodeType> = {
       value: {}
     }
   },
+  BIRDEYE: {
+    metadata: {
+      id: 'BIRDEYE',
+      label: 'BIRDEYE',
+      category: 'Provider',
+      backgroundColor: 'bg-purple-200',
+      borderColor: 'border-purple-400',
+      primaryColor: 'purple',
+      secondaryColor: 'purple',
+      textColor: 'text-black',
+    },
+    defaultInputs: {
+      function: {
+        handleId: 'input-function',
+        type: 'string',
+        value: ''
+      }
+    },
+    defaultOutput: {
+      handleId: 'output',
+      type: 'object',
+      value: {}
+    }
+  },
 
   /* -------------------------------------------------------------- */
   /* ---------------------------- Misc ---------------------------- */

@@ -25,6 +25,9 @@ export const getSignaturesForAddress: BlockFunctionTemplate = {
       }
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Signatures for address'
