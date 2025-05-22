@@ -65,7 +65,10 @@ export const ConfigProvider = ({ children }: ConfigProviderProps) => {
   const setApiKey = (provider: ApiKeyType, key: ApiKey) => {
     setApiKeys(prev => ({
       ...prev,
-      [provider]: key
+      [provider]: {
+        key: String(key.key),
+        tier: key.tier
+      }
     }));
   };
 

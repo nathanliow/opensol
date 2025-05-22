@@ -75,7 +75,7 @@ export const getAssetsByOwner: BlockFunctionTemplate = {
         throw new Error('Helius API key is required.');
       } 
 
-      if (apiKey.tier != 'free' || apiKey.tier != 'developer' || apiKey.tier != 'business' || apiKey.tier != 'professional') {
+      if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
         throw new Error('Invalid API key tier.');
       }
 
