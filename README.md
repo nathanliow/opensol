@@ -1,4 +1,4 @@
-[![OpenSOL](./branding/name.jpg)]()
+[![OpenSOL](./branding/name.png)]()
 <p align="center">
   <a href="https://opensol-2.gitbook.io/opensol/">Documentation</a> |
   <a href="https://opensol.dev">Website (Not yet live)</a> |
