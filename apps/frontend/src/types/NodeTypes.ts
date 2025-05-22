@@ -14,6 +14,7 @@ import MintNode from "../components/nodes/blockchain/MintNode";
 import TransferNode from "../components/nodes/blockchain/TransferNode";
 
 import HeliusNode from "../components/nodes/provider/HeliusNode";
+import BirdeyeNode from "../components/nodes/provider/BirdeyeNode";
 
 /*
  * FRONTEND TYPES FOR NODES AND EDGES
@@ -61,6 +62,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
 
   // Provider
   HELIUS: HeliusNode,
+  BIRDEYE: BirdeyeNode,
 
   // Misc
 
@@ -359,6 +361,30 @@ export const nodeTypes: Record<string, NodeType> = {
         handleId: 'input-network',
         type: 'string',
         value: 'devnet'
+      }
+    },
+    defaultOutput: {
+      handleId: 'output',
+      type: 'object',
+      value: {}
+    }
+  },
+  BIRDEYE: {
+    metadata: {
+      id: 'BIRDEYE',
+      label: 'BIRDEYE',
+      category: 'Provider',
+      backgroundColor: 'bg-[#fb8d05]',
+      borderColor: 'border-[#fb8d05]',
+      primaryColor: '[#fb8d05]',
+      secondaryColor: '[#fb8d05]',
+      textColor: 'text-black',
+    },
+    defaultInputs: {
+      function: {
+        handleId: 'input-function',
+        type: 'string',
+        value: ''
       }
     },
     defaultOutput: {

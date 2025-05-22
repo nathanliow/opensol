@@ -15,6 +15,9 @@ export const getAssetProof: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional']
+    },
     output: {
       type: 'object',
       description: 'Asset Proof'
@@ -22,7 +25,11 @@ export const getAssetProof: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
-      const { assetId, apiKey, network = 'devnet' } = params;
+      const { 
+        assetId, 
+        apiKey, 
+        network = 'devnet' 
+      } = params;
       
       if (!assetId) {
         throw new Error('Asset ID is required.');
@@ -32,7 +39,11 @@ export const getAssetProof: BlockFunctionTemplate = {
         throw new Error('Helius API key is required.');
       }
 
-      const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
+      if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
+        throw new Error('Invalid API key tier.');
+      }
+
+      const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey.key}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
