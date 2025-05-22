@@ -66,11 +66,15 @@ export const getTokenTopTraders: BlockFunctionTemplate = {
         offset = 0,
         limit = 10,
         apiKey, 
-        network = 'devnet',
+        network = 'mainnet',
       } = params;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');
+      }
+
+      if (apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+        throw new Error('Invalid API key tier.');
       }
 
       if (!address) {
@@ -94,7 +98,7 @@ export const getTokenTopTraders: BlockFunctionTemplate = {
         headers: {
           accept: 'application/json', 
           'x-chain': 'solana',
-          'X-API-KEY': apiKey
+          'X-API-KEY': apiKey.key
         },
       });
 

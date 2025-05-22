@@ -57,11 +57,15 @@ export const getTokenOHLCV: BlockFunctionTemplate = {
         time_from,
         time_to,
         apiKey, 
-        network = 'devnet',
+        network = 'mainnet',
       } = params;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');
+      }
+
+      if (apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+        throw new Error('Invalid API key tier.');
       }
 
       if (!address) {
@@ -93,7 +97,7 @@ export const getTokenOHLCV: BlockFunctionTemplate = {
         headers: { 
           accept: 'application/json', 
           'x-chain': 'solana',
-          'X-API-KEY': apiKey
+          'X-API-KEY': apiKey.key
         },
       });
 

@@ -1,4 +1,3 @@
-import { nodeUtils } from "@/utils/nodeUtils";
 import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
 export const getAsset: BlockFunctionTemplate = {
@@ -26,7 +25,11 @@ export const getAsset: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
-      const { assetId, apiKey, network = 'devnet' } = params;
+      const { 
+        assetId, 
+        apiKey, 
+        network = 'devnet' 
+      } = params;
       
       if (!assetId) {
         throw new Error('Asset ID is required.');
@@ -36,7 +39,11 @@ export const getAsset: BlockFunctionTemplate = {
         throw new Error('Helius API key is required.');
       }
 
-      const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
+      if (apiKey.tier != 'free' || apiKey.tier != 'developer' || apiKey.tier != 'business' || apiKey.tier != 'professional') {
+        throw new Error('Invalid API key tier.');
+      }
+
+      const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey.key}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

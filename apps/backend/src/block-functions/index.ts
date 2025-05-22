@@ -51,7 +51,36 @@ import { getVersion } from './provider/helius/getVersion';
 import { getVoteAccounts } from './provider/helius/getVoteAccounts';
 import { isBlockhashValid } from './provider/helius/isBlockhashValid';
 import { minimumLedgerSlot } from './provider/helius/minimumLedgerSlot';
-// import { mintToken } from './blockchain/mint/mintToken';
+
+import { getBaseQuoteOHLCV } from './provider/birdeye/getBaseQuoteOHLCV';
+import { getHistoricalPrice } from './provider/birdeye/getHistoricalPrice';
+import { getNewTokens } from './provider/birdeye/getNewTokens';
+import { getPairOHLCV } from './provider/birdeye/getPairOHLCV';
+import { getPairOverview } from './provider/birdeye/getPairOverview';
+import { getPairTrades } from './provider/birdeye/getPairTrades';
+import { getPrice } from './provider/birdeye/getPrice';
+import { getPriceAtUnixTime } from './provider/birdeye/getPriceAtUnixTime';
+import { getPriceVolume } from './provider/birdeye/getPriceVolume';
+import { getTokenAllMarkets } from './provider/birdeye/getTokenAllMarkets';
+import { getTokenAllTrades } from './provider/birdeye/getTokenAllTrades';
+import { getTokenCreationInfo } from './provider/birdeye/getTokenCreationInfo';
+import { getTokenHolders } from './provider/birdeye/getTokenHolders';
+import { getTokenList } from './provider/birdeye/getTokenList';
+import { getTokenMarketData } from './provider/birdeye/getTokenMarketData';
+import { getTokenMetadata} from './provider/birdeye/getTokenMetadata';
+import { getTokenMintBurn } from './provider/birdeye/getTokenMintBurn';
+import { getTokenOHLCV } from './provider/birdeye/getTokenOHLCV';
+import { getTokenOverview } from './provider/birdeye/getTokenOverview';
+import { getTokenSecurity } from './provider/birdeye/getTokenSecurity';
+import { getTokenTopTraders } from './provider/birdeye/getTokenTopTraders';
+import { getTokenTradeData } from './provider/birdeye/getTokenTradeData';
+import { getTokenTrades } from './provider/birdeye/getTokenTrades';
+import { getTraderGainersAndLosers } from './provider/birdeye/getTraderGainersAndLosers';
+import { getTradesLatestBlockNumber } from './provider/birdeye/getTradesLatestBlockNumber';
+import { getTrendingTokens } from './provider/birdeye/getTrendingTokens';
+import { getWalletPortfolio } from './provider/birdeye/getWalletPortfolio';
+import { getWalletTokenBalance } from './provider/birdeye/getWalletTokenBalance';
+import { getWalletTransactionHistory } from './provider/birdeye/getWalletTransactionHistory';
 
 // Group templates by their block type
 export const templates: Record<string, Record<string, BlockFunctionTemplate>> = {
@@ -108,6 +137,37 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getVoteAccounts,
     isBlockhashValid,
     minimumLedgerSlot
+  },
+  BIRDEYE: {
+    getBaseQuoteOHLCV,
+    getHistoricalPrice,
+    getNewTokens,
+    getPairOHLCV,
+    getPairOverview,
+    getPairTrades,
+    getPrice,
+    getPriceAtUnixTime,
+    getPriceVolume,
+    getTokenAllMarkets,
+    getTokenAllTrades,
+    getTokenCreationInfo,
+    getTokenHolders,
+    getTokenList,
+    getTokenMarketData,
+    getTokenMetadata,
+    getTokenMintBurn,
+    getTokenOHLCV,
+    getTokenOverview,
+    getTokenSecurity,
+    getTokenTopTraders,
+    getTokenTradeData,
+    getTokenTrades,
+    getTraderGainersAndLosers,
+    getTradesLatestBlockNumber,
+    getTrendingTokens,
+    getWalletPortfolio,
+    getWalletTokenBalance,
+    getWalletTransactionHistory,
   },
   MATH: {
     solToUsd,

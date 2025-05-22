@@ -1,10 +1,10 @@
 import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getTokenCreationInfo: BlockFunctionTemplate = {
+export const getTokenHolders: BlockFunctionTemplate = {
   metadata: {
-    name: 'getTokenCreationInfo',
+    name: 'getTokenHolders',
     description:
-      'Retrieve the creation transaction information of a specified token.',
+      'Retrieve the holders of a specified token.',
     blockCategory: 'Provider',
     blockType: 'BIRDEYE',
     parameters: [
@@ -43,11 +43,15 @@ export const getTokenCreationInfo: BlockFunctionTemplate = {
         limit = 100,
         offset = 0,
         apiKey, 
-        network = 'devnet',
+        network = 'mainnet',
       } = params;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');
+      }
+
+      if (apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+        throw new Error('Invalid API key tier.');
       }
 
       if (!address) {
@@ -71,7 +75,7 @@ export const getTokenCreationInfo: BlockFunctionTemplate = {
         headers: {
           accept: 'application/json', 
           'x-chain': 'solana',
-          'X-API-KEY': apiKey
+          'X-API-KEY': apiKey.key
         },
       });
 

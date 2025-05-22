@@ -34,11 +34,15 @@ export const getPriceAtUnixTime: BlockFunctionTemplate = {
         address,
         unixTimestamp,
         apiKey, 
-        network = 'devnet',
+        network = 'mainnet',
       } = params;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');
+      }
+
+      if (apiKey.tier != 'standard' || apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+        throw new Error('Invalid API key tier.');
       }
 
       const response = await fetch(`https://public-api.birdeye.so/defi/historical_price_unix?address=${address}&unixtime=${unixTimestamp}`, {
@@ -46,7 +50,7 @@ export const getPriceAtUnixTime: BlockFunctionTemplate = {
         headers: {
           accept: 'application/json', 
           'x-chain': 'solana',
-          'X-API-KEY': apiKey
+          'X-API-KEY': apiKey.key
         },
       });
 

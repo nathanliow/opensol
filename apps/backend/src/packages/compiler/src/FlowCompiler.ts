@@ -233,6 +233,8 @@ export class FlowCompiler {
         return `get_${counter}`;
       case 'HELIUS':
         return `helius_${counter}`;
+      case 'BIRDEYE':
+        return `birdeye_${counter}`;
       default:
         return `result_${counter}`;
     }
@@ -267,6 +269,7 @@ export class FlowCompiler {
     switch (node.type) {
       case 'GET':
       case 'HELIUS':
+      case 'BIRDEYE':
       case 'MATH': {
         const templateName = node.data.inputs?.['function']?.value || '';
         if (!templateName || typeof templateName !== 'string') return '';

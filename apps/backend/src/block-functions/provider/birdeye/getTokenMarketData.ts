@@ -28,11 +28,15 @@ export const getTokenMarketData: BlockFunctionTemplate = {
       const { 
         address,
         apiKey, 
-        network = 'devnet',
+        network = 'mainnet',
       } = params;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');
+      }
+
+      if (apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+        throw new Error('Invalid API key tier.');
       }
 
       const response = await fetch(`https://public-api.birdeye.so/defi/v3/token/market-data?address=${address}`, {
@@ -40,7 +44,7 @@ export const getTokenMarketData: BlockFunctionTemplate = {
         headers: {
           accept: 'application/json', 
           'x-chain': 'solana',
-          'X-API-KEY': apiKey
+          'X-API-KEY': apiKey.key
         },
       });
 

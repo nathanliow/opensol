@@ -28,7 +28,11 @@ export const getLeaderSchedule: BlockFunctionTemplate = {
         throw new Error('Helius API key is required.');
       }
 
-      const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
+      if (apiKey.tier != 'free' || apiKey.tier != 'developer' || apiKey.tier != 'business' || apiKey.tier != 'professional') {
+        throw new Error('Invalid API key tier.');
+      }
+
+      const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey.key}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
