@@ -71,6 +71,7 @@ export default function ObjectNode({ id }: ObjectNodeProps) {
     if (inputId === 'input-object' && value && typeof value === 'object') {
       // Update the node with the connected object
       nodeUtils.updateNodeInput(id, 'object', inputId, 'object', value, setNodes);
+      nodeUtils.updateNodeOutput(id, 'object', value, setNodes);
     }
   }, [id, setNodes]);
   

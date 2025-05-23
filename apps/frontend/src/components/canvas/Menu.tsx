@@ -2,11 +2,12 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Panel } from "@xyflow/react";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useConfig, Network } from "../../contexts/ConfigContext";
+import { useConfig } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { signOut } from "@/lib/auth";
 import { ApiKeyModal } from "../modal/ApiKeyModal";
+import { NetworkType } from "@/types/NetworkTypes";
 
 interface MenuProps {
   onMenuToggle?: (isOpen: boolean) => void;
@@ -42,7 +43,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
     }
   }, [isOpen, onMenuToggle]);
 
-  const handleNetworkChange = (newNetwork: Network) => {
+  const handleNetworkChange = (newNetwork: NetworkType) => {
     setNetwork(newNetwork);
   };
 
@@ -100,24 +101,31 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
                 <div className="py-1">
                   <button
                     onClick={navigateToDashboard}
-                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
                     disabled={!supabaseUser}
                   >
                     <Icons.FiFolder size={16} />
                     Go to Dashboard
+                  </button>
+                  <button
+                    onClick={() => window.open('https://opensol-2.gitbook.io/opensol', '_blank')}
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                  >
+                    <Icons.FiBook size={16} />
+                    Documentation
                   </button>
                 </div>
                 <div className="border-t border-[#333333] py-3">
                   <div className="text-xs text-gray-400 px-3 pb-1">Network</div>
                   <div className="flex flex-col gap-1">
                     <button
-                      className={`w-full text-left px-3 py-1.5 text-xs rounded-md ${network === 'mainnet' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-[#2D2D2D]'}`}
+                      className={`cursor-pointer w-full text-left px-3 py-1.5 text-xs rounded-md ${network === 'mainnet' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-[#2D2D2D]'}`}
                       onClick={() => handleNetworkChange('mainnet')}
                     >
                       Mainnet
                     </button>
                     <button
-                      className={`w-full text-left px-3 py-1.5 text-xs rounded-md ${network === 'devnet' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-[#2D2D2D]'}`}
+                      className={`cursor-pointer w-full text-left px-3 py-1.5 text-xs rounded-md ${network === 'devnet' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-[#2D2D2D]'}`}
                       onClick={() => handleNetworkChange('devnet')}
                     >
                       Devnet
@@ -129,7 +137,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
                 <div className="border-t border-[#333333] py-1">
                   <button
                     onClick={openApiKeyModal}
-                    className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
                   >
                     <Icons.FiKey size={16} />
                     Manage API Keys
@@ -140,7 +148,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
                   {!supabaseUser && (
                     <button
                       onClick={login}
-                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md"
+                      className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md"
                     >
                       Connect Wallet
                     </button>
@@ -148,7 +156,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
                   {supabaseUser && (
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                      className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
                     >
                       <Icons.FiLogOut size={16} />
                       Disconnect Wallet

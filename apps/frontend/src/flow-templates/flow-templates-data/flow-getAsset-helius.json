@@ -4,125 +4,190 @@
   "category": "Helius",
   "nodes": [
     {
-      "id": "function-1742861522787",
-        "type": "FUNCTION",
-        "position": {
-          "x": 765.6011612376292,
-          "y": 206.2096191274576
-        },
-        "data": {
-          "name": "Helius - getAsset",
-          "label": "FUNCTION"
-        },
-        "measured": {
-          "width": 258,
-          "height": 81
-        },
-        "selected": false
-    },
-    {
-      "id": "helius-1742861555250",
-      "type": "HELIUS",
-      "position": {
-        "x": 762.0889582686544,
-        "y": 337.1207232792368
-      },
+      "id": "function-1747277489220",
+      "type": "FUNCTION",
       "data": {
-        "label": "HELIUS",
-        "selectedFunction": "getAsset",
-        "parameters": {
-          "network": "mainnet",
-          "assetId": "",
-          "apiKey": "59b22110-9b58-4580-9187-cf1cadeaa27d "
+        "inputs": {
+          "name": {
+            "handleId": "input-name",
+            "type": "string",
+            "value": "Getting Asset"
+          }
+        },
+        "output": {
+          "type": "string",
+          "value": "",
+          "handleId": "output"
         }
       },
-      "measured": {
-        "width": 258,
-        "height": 115
-      },
-      "selected": false,
-      "dragging": false
+      "connections": {
+        "inputs": [],
+        "outputs": [
+          {
+            "to": "helius-1747894965040",
+            "type": "HELIUS",
+            "handleId": "flow-bottom"
+          }
+        ]
+      }
     },
     {
-      "id": "const-1742861612991",
-      "type": "CONST",
-      "position": {
-        "x": 344.93189390689895,
-        "y": 345.0924543680174
-      },
-      "data": {
-        "label": "CONST",
-        "selectedFunction": "",
-        "parameters": {},
-        "value": "Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump"
-      },
-      "measured": {
-        "width": 258,
-        "height": 115
-      },
-      "selected": false,
-      "dragging": false
-    },
-    {
-      "id": "print-1742861627171",
+      "id": "print-1747292570610",
       "type": "PRINT",
-      "position": {
-        "x": 1171.285340236015,
-        "y": 320.1043361319817
-      },
       "data": {
-        "label": "PRINT",
-        "selectedFunction": "",
-        "parameters": {},
-        "template": "$output$"
+        "inputs": {
+          "template": {
+            "handleId": "input-template",
+            "type": "string",
+            "value": "$output$"
+          }
+        },
+        "output": {
+          "handleId": "output",
+          "type": "string",
+          "value": "$output$"
+        }
       },
-      "measured": {
-        "width": 258,
-        "height": 114
+      "connections": {
+        "inputs": [
+          {
+            "from": "helius-1747894965040",
+            "type": "HELIUS",
+            "handleId": "flow-top"
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "id": "helius-1747894965040",
+      "type": "HELIUS",
+      "data": {
+        "inputs": {
+          "assetId": {
+            "handleId": "input-assetId",
+            "type": "string",
+            "value": "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk"
+          },
+          "network": {
+            "handleId": "input-network",
+            "type": "string",
+            "value": "mainnet"
+          },
+          "function": {
+            "handleId": "input-function",
+            "type": "string",
+            "value": "getAsset"
+          },
+          "signature": {
+            "type": "string",
+            "value": "",
+            "handleId": "input-signature"
+          },
+          "blockNumbers": {
+            "type": "string",
+            "value": "",
+            "handleId": "input-blockNumbers"
+          }
+        },
+        "output": {
+          "handleId": "output",
+          "type": "object",
+          "value": {}
+        }
       },
-      "selected": false,
-      "dragging": false
+      "connections": {
+        "inputs": [
+          {
+            "from": "function-1747277489220",
+            "type": "FUNCTION",
+            "handleId": "flow-top"
+          },
+          {
+            "from": "const-1747974926752",
+            "type": "CONST",
+            "handleId": "input-assetId"
+          }
+        ],
+        "outputs": [
+          {
+            "to": "print-1747292570610",
+            "type": "PRINT",
+            "handleId": "flow-bottom"
+          }
+        ]
+      }
+    },
+    {
+      "id": "const-1747974926752",
+      "type": "CONST",
+      "data": {
+        "inputs": {
+          "dataType": {
+            "handleId": "input-dataType",
+            "type": "string",
+            "value": "string"
+          },
+          "value": {
+            "handleId": "input-value",
+            "type": "string",
+            "value": "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk"
+          }
+        },
+        "output": {
+          "handleId": "output",
+          "type": "string",
+          "value": "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk"
+        }
+      },
+      "connections": {
+        "inputs": [],
+        "outputs": [
+          {
+            "to": "helius-1747894965040",
+            "type": "HELIUS",
+            "handleId": "output"
+          }
+        ]
+      }
     }
   ],
   "edges": [
     {
-      "source": "function-1742861522787",
-      "sourceHandle": "output",
-      "target": "helius-1742861555250",
-      "targetHandle": "flow-top",
-      "type": "smoothstep",
-      "animated": true,
-      "style": {
-        "strokeWidth": 2,
-        "stroke": "white"
+      "from": {
+        "id": "function-1747277489220",
+        "type": "FUNCTION"
       },
-      "id": "xy-edge__function-1742861522787output-helius-1742861555250flow"
+      "to": {
+        "id": "helius-1747894965040",
+        "type": "HELIUS"
+      },
+      "sourceHandle": "flow-bottom",
+      "targetHandle": "flow-top"
     },
     {
-      "source": "const-1742861612991",
-      "sourceHandle": "output",
-      "target": "helius-1742861555250",
-      "targetHandle": "input-assetId",
-      "type": "smoothstep",
-      "animated": true,
-      "style": {
-        "strokeWidth": 2,
-        "stroke": "white"
+      "from": {
+        "id": "helius-1747894965040",
+        "type": "HELIUS"
       },
-      "id": "xy-edge__const-1742861612991output-helius-1742861555250input-assetId"
+      "to": {
+        "id": "print-1747292570610",
+        "type": "PRINT"
+      },
+      "sourceHandle": "flow-bottom",
+      "targetHandle": "flow-top"
     },
     {
-      "source": "helius-1742861555250",
-      "sourceHandle": "output",
-      "target": "print-1742861627171",
-      "targetHandle": "template",
-      "type": "smoothstep",
-      "animated": true,
-      "style": {
-        "strokeWidth": 2,
-        "stroke": "white"
+      "from": {
+        "id": "const-1747974926752",
+        "type": "CONST"
       },
-      "id": "xy-edge__helius-1742861555250output-print-1742861627171template"
+      "to": {
+        "id": "helius-1747894965040",
+        "type": "HELIUS"
+      },
+      "sourceHandle": "output",
+      "targetHandle": "input-assetId"
     }
   ],
   "viewport": {

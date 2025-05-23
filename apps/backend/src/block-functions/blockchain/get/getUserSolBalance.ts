@@ -15,6 +15,9 @@ export const getUserSolBalance: BlockFunctionTemplate = {
       },
     ],
     requiredKeys: ['helius'],
+    requiredKeyTiers: {
+      helius: ['free', 'developer', 'business', 'professional'],
+    },
     output: {
       type: 'object',
       description: 'User SOL balance'
@@ -23,7 +26,11 @@ export const getUserSolBalance: BlockFunctionTemplate = {
   execute: async (params: Record<string, any>) => {
     try {
       // Extract parameters
-      const { address, apiKey, network = 'devnet' } = params;
+      const { 
+        address, 
+        apiKey, 
+        network = 'mainnet' 
+      } = params;
       
       if (!address) {
         throw new Error('Wallet address is required.');
@@ -34,7 +41,7 @@ export const getUserSolBalance: BlockFunctionTemplate = {
       }
 
       // Fetch the SOL balance for the account
-      const balanceResponse = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey}`, {
+      const balanceResponse = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey.key}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -4,124 +4,180 @@
   "category": "Solana",
   "nodes": [
     {
-      "id": "function-1742784695325",
-      "data": {
-        "name": "Untitled Function",
-        "label": "FUNCTION"
-      },
+      "id": "function-1747277489220",
       "type": "FUNCTION",
-      "dragging": false,
-      "measured": {
-        "width": 258,
-        "height": 80
-      },
-      "position": {
-        "x": 870.5,
-        "y": 163
-      },
-      "selected": false
-    },
-    {
-      "id": "get-1742785990720",
       "data": {
-        "label": "GET",
-        "parameters": {
-          "network": "mainnet"
+        "inputs": {
+          "name": {
+            "handleId": "input-name",
+            "type": "string",
+            "value": "Get User Sol Bal"
+          }
         },
-        "selectedFunction": "getUserSolBalance"
+        "output": {
+          "type": "string",
+          "value": "",
+          "handleId": "output"
+        }
       },
-      "type": "GET",
-      "dragging": false,
-      "measured": {
-        "width": 257,
-        "height": 113
-      },
-      "position": {
-        "x": 887.4725629201586,
-        "y": 342.55575978392477
-      },
-      "selected": false
+      "connections": {
+        "inputs": [],
+        "outputs": [
+          {
+            "to": "get-1747975000036",
+            "type": "GET",
+            "handleId": "flow-bottom"
+          }
+        ]
+      }
     },
     {
-      "id": "const-1742786439908",
-      "type": "CONST",
-      "position": {
-        "x": 586.9862814600792,
-        "y": 342.02787989196236
-      },
-      "data": {
-        "label": "CONST",
-        "selectedFunction": "",
-        "parameters": {},
-        "value": "97R4UGhdj7WqXA5AhfQqxM2CGDscJ5meFC8ZJvSoNUBs"
-      },
-      "measured": {
-        "width": 257,
-        "height": 113
-      },
-      "selected": false,
-      "dragging": false
-    },
-    {
-      "id": "print-1742786454099",
+      "id": "print-1747292570610",
       "type": "PRINT",
-      "position": {
-        "x": 1234.4862814600792,
-        "y": 319.02787989196236
-      },
       "data": {
-        "label": "PRINT",
-        "selectedFunction": "",
-        "parameters": {},
-        "template": "$output$"
+        "inputs": {
+          "template": {
+            "handleId": "input-template",
+            "type": "string",
+            "value": "$output$"
+          }
+        },
+        "output": {
+          "handleId": "output",
+          "type": "string",
+          "value": "$output$"
+        }
       },
-      "measured": {
-        "width": 255,
-        "height": 115
+      "connections": {
+        "inputs": [
+          {
+            "from": "get-1747975000036",
+            "type": "GET",
+            "handleId": "flow-top"
+          }
+        ],
+        "outputs": []
+      }
+    },
+    {
+      "id": "const-1747974926752",
+      "type": "CONST",
+      "data": {
+        "inputs": {
+          "value": {
+            "handleId": "input-value",
+            "type": "string",
+            "value": "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK"
+          },
+          "dataType": {
+            "type": "string",
+            "value": "string",
+            "handleId": "input-dataType"
+          }
+        },
+        "output": {
+          "handleId": "output",
+          "type": "string",
+          "value": "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK"
+        }
       },
-      "selected": false,
-      "dragging": false
+      "connections": {
+        "inputs": [],
+        "outputs": [
+          {
+            "to": "get-1747975000036",
+            "type": "GET",
+            "handleId": "output"
+          }
+        ]
+      }
+    },
+    {
+      "id": "get-1747975000036",
+      "type": "GET",
+      "data": {
+        "inputs": {
+          "address": {
+            "handleId": "input-address",
+            "type": "string",
+            "value": "suqh5sHtr8HyJ7q8scBimULPkPpA557prMG47xCHQfK"
+          },
+          "network": {
+            "type": "string",
+            "value": "mainnet",
+            "handleId": "input-network"
+          },
+          "function": {
+            "type": "string",
+            "value": "getUserSolBalance",
+            "handleId": "input-function"
+          }
+        },
+        "output": {
+          "type": "object",
+          "value": {},
+          "handleId": "output"
+        }
+      },
+      "connections": {
+        "inputs": [
+          {
+            "from": "function-1747277489220",
+            "type": "FUNCTION",
+            "handleId": "flow-top"
+          },
+          {
+            "from": "const-1747974926752",
+            "type": "CONST",
+            "handleId": "input-address"
+          }
+        ],
+        "outputs": [
+          {
+            "to": "print-1747292570610",
+            "type": "PRINT",
+            "handleId": "flow-bottom"
+          }
+        ]
+      }
     }
   ],
   "edges": [
     {
-      "id": "xy-edge__function-1742784695325output-get-1742785990720flow",
-      "type": "smoothstep",
-      "style": {
-        "stroke": "white",
-        "strokeWidth": 2
+      "from": {
+        "id": "function-1747277489220",
+        "type": "FUNCTION"
       },
-      "source": "function-1742784695325",
-      "target": "get-1742785990720",
-      "animated": true,
-      "sourceHandle": "output",
+      "to": {
+        "id": "helius-1747894965040",
+        "type": "HELIUS"
+      },
+      "sourceHandle": "flow-bottom",
       "targetHandle": "flow-top"
     },
     {
-      "source": "const-1742786439908",
-      "sourceHandle": "output",
-      "target": "get-1742785990720",
-      "targetHandle": "input-address",
-      "type": "smoothstep",
-      "animated": true,
-      "style": {
-        "strokeWidth": 2,
-        "stroke": "white"
+      "from": {
+        "id": "helius-1747894965040",
+        "type": "HELIUS"
       },
-      "id": "xy-edge__const-1742786439908output-get-1742785990720input-address"
+      "to": {
+        "id": "print-1747292570610",
+        "type": "PRINT"
+      },
+      "sourceHandle": "flow-bottom",
+      "targetHandle": "flow-top"
     },
     {
-      "source": "get-1742785990720",
-      "sourceHandle": "output",
-      "target": "print-1742786454099",
-      "targetHandle": "input-template",
-      "type": "smoothstep",
-      "animated": true,
-      "style": {
-        "strokeWidth": 2,
-        "stroke": "white"
+      "from": {
+        "id": "const-1747974926752",
+        "type": "CONST"
       },
-      "id": "xy-edge__get-1742785990720output-print-1742786454099input-template"
+      "to": {
+        "id": "helius-1747894965040",
+        "type": "HELIUS"
+      },
+      "sourceHandle": "output",
+      "targetHandle": "input-assetId"
     }
   ],
   "viewport": {
