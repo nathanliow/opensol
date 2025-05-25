@@ -554,10 +554,8 @@ export class FlowCompiler {
         const xType = nodeInputs?.['x']?.type as InputValueTypeString || 'string';
         const yType = nodeInputs?.['y']?.type as InputValueTypeString || 'string';
         
-        // Helper function to convert value based on type
         const convertValue = (value: any, type: InputValueTypeString, isConnected: boolean): string => {
           if (isConnected) {
-            // If connected, apply type conversion at runtime
             switch (type) {
               case 'number':
                 return `Number(${value})`;
@@ -569,7 +567,6 @@ export class FlowCompiler {
                 return `String(${value})`;
             }
           } else {
-            // If not connected, convert the literal value
             const stringValue = String(value || '');
             switch (type) {
               case 'number':
@@ -782,7 +779,7 @@ export class FlowCompiler {
       `  }`,
       `  return printOutput;`,
       `}`
-    ].filter(line => line !== ''); // Remove empty lines when no API key exists
+    ].filter(line => line !== '');
     
     const codeBlock = codeLines.join('\n');
 
@@ -804,12 +801,12 @@ export class FlowCompiler {
   compile(): { functionName: string; execute: () => Promise<any>; functionCode: string; displayCode: string } {
     this.nodeOutputVarNames.clear();
     this.typeCounters = {}; 
-    this.functionName = 'execute'; // Reset to default
+    this.functionName = 'execute';
     this.printOutputs = [];
     this.getFunctions.clear();
     this.imports = [];
-    this.processedNodes.clear(); // Reset processed nodes tracking
-    this.currentIndentLevel = 0; // Reset indentation level
+    this.processedNodes.clear(); 
+    this.currentIndentLevel = 0; 
 
     const rootNodes = this.nodes.filter(node => !this.edges.some(edge => edge.target === node.id));
     if (rootNodes.length === 0) {
@@ -823,7 +820,6 @@ export class FlowCompiler {
       if (visited.has(nodeId) || this.processedNodes.has(nodeId)) return;
       visited.add(nodeId);
 
-      // Visit data dependencies first, but only if they won't be processed within conditional blocks
       const dataDependencies = this.edges.filter(e => 
         e.target === nodeId && 
         e.targetHandle?.startsWith('input-') &&
@@ -849,8 +845,6 @@ export class FlowCompiler {
         nodeCodeLines.push(code);
       }
 
-      // Visit child nodes, but skip nodes connected via flow-then/flow-else 
-      // (they are processed within conditional blocks)
       this.edges
         .filter(e => e.source === nodeId && !['flow-then', 'flow-else'].includes(e.sourceHandle || ''))
         .forEach(e => visitNode(e.target));
@@ -858,32 +852,24 @@ export class FlowCompiler {
 
     rootNodes.forEach(n => visitNode(n.id));
 
-    // Process multi-line code snippets with proper indentation
     const indentedNodeCode = nodeCodeLines
       .map(code => {
-        // For empty code, return nothing
         if (!code.trim()) return '';
         
-        // Split each code block into lines and properly indent
         const lines = code.split('\n');
         
-        // Always use exactly 2 spaces for the first line (top-level declarations)
         return lines
           .map((line, i) => {
-            // Skip empty lines
             if (!line.trim()) return line;
-            // First line always gets exactly 2 spaces for consistent top-level indentation
-            // Subsequent lines get 4 spaces
             return i === 0 ? `  ${line.trim()}` : `    ${line}`;
           })
           .join('\n');
       })
-      .filter(Boolean) // Remove empty strings
+      .filter(Boolean)
       .join('\n\n');
 
     const printLinesJoined = this.printOutputs.map(line => `  ${line}`).join('\n');
 
-    // Imports for "MINT"
     if (this.nodes.some(n => n.type === 'MINT')) {
       this.imports.push({ 
         importName: 'mintToken', 
@@ -916,28 +902,23 @@ export class FlowCompiler {
       });
     }
 
-    // Generate inline function code for execution (API key shown, no imports)
     const savedNoImports = this.noImports;
     this.noImports = true;
-    this.isGeneratingDisplayCode = false; // Generating function code for execution
+    this.isGeneratingDisplayCode = false; 
     const functionCodeRaw = this.generateFinalCode(true, false);
     const functionCode = functionCodeRaw
       .replace('NODE_CODE_HERE', indentedNodeCode)
       .replace('PRINT_OUTPUT_HERE', printLinesJoined);
 
-    // Generate display code (imports shown, API key hidden)
     this.noImports = false;
-    this.isGeneratingDisplayCode = true; // Generating display code
-    
-    // Need to regenerate node code with updateNodeOutput calls removed
+    this.isGeneratingDisplayCode = true; 
     this.nodeOutputVarNames.clear();
     this.typeCounters = {};
-    this.processedNodes.clear(); // Reset processed nodes tracking for display
-    this.currentIndentLevel = 0; // Reset indentation level
-    const savedPrintOutputs = [...this.printOutputs]; // Save print outputs
+    this.processedNodes.clear(); 
+    this.currentIndentLevel = 0; 
+    const savedPrintOutputs = [...this.printOutputs]; 
     this.printOutputs = [];
     
-    // Regenerate node code for display
     const displayNodeCodeLines: string[] = [];
     visited.clear();
     
@@ -945,7 +926,6 @@ export class FlowCompiler {
       if (visited.has(nodeId) || this.processedNodes.has(nodeId)) return;
       visited.add(nodeId);
 
-      // Visit data dependencies first, but only if they won't be processed within conditional blocks
       const dataDependencies = this.edges.filter(e => 
         e.target === nodeId && 
         e.targetHandle?.startsWith('input-') &&
@@ -953,7 +933,6 @@ export class FlowCompiler {
       );
       
       dataDependencies.forEach(edge => {
-        // Only process the dependency if the current node is not within a conditional branch
         const isInConditionalBranch = this.edges.some(e => 
           e.target === nodeId && (e.sourceHandle === 'flow-then' || e.sourceHandle === 'flow-else')
         );
@@ -981,35 +960,29 @@ export class FlowCompiler {
 
     rootNodes.forEach(n => visitNodeForDisplay(n.id));
     
-    // Process multi-line code snippets with proper indentation for display code
     const displayNodeCodeJoined = displayNodeCodeLines
       .map(code => {
         // For empty code, return nothing
         if (!code.trim()) return '';
         
-        // Split each code block into lines and properly indent
         const lines = code.split('\n');
         return lines
           .map((line, i) => {
-            // Skip empty lines
             if (!line.trim()) return line;
-            // First line gets 2 spaces, subsequent lines get 4 spaces (2 extra)
             return i === 0 ? `  ${line}` : `    ${line}`;
           })
           .join('\n');
       })
-      .filter(Boolean) // Remove empty strings
+      .filter(Boolean)
       .join('\n\n');
     
     const displayCodeRaw = this.generateFinalCode(false, true);
     const displayCode = displayCodeRaw
       .replace('NODE_CODE_HERE', displayNodeCodeJoined)
-      .replace('PRINT_OUTPUT_HERE', savedPrintOutputs.join('\n')); // Use original print outputs
+      .replace('PRINT_OUTPUT_HERE', savedPrintOutputs.join('\n')); 
     
-    // Restore original noImports value
     this.noImports = savedNoImports;
 
-    // Wrap the function code to build a real executable function.
     const wrappedFunctionCode = `
 ${functionCode}
 return { execute: ${this.functionName}, FlowCompilerOutput: ${this.functionName} };
