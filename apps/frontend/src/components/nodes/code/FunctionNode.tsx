@@ -15,8 +15,12 @@ export default function FunctionNode({ id }: LabelNodeProps) {
   const nodes = useNodes() as FlowNode[];
 
   const handleNameChange = useCallback((value: string) => {
+    const hasNumbers = /\d/.test(value);
+    if (hasNumbers) {
+      return;
+    }
     nodeUtils.updateNodeInput(id, 'name', 'input-name', 'string', value, setNodes);
-  }, [id]);
+  }, [id, setNodes]);
 
   // Define input for the name field using the new helper
   const inputs: InputDefinition[] = useMemo(() => [

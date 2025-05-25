@@ -37,7 +37,6 @@ import {
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { Icons } from "../icons/icons";
 import { Project } from "@/types/ProjectTypes";
-import { OutputValueTypeString } from "@/types/OutputTypes";
 import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/src/types";
 import TutorialPanel from "@/tutorials/components/TutorialPanel";
 import { useSearchParams } from "next/navigation";
@@ -72,22 +71,18 @@ function Flow() {
   const reactFlowInstance = useReactFlow();
   const { supabaseUser } = useUserAccountContext();
   const searchParams = useSearchParams();
+  const { canUndo, canRedo, undo, redo, saveState, clearHistory, isApplyingHistory } = useUndoRedo(setNodes, setEdges);
   const tutorialUnitId = searchParams?.get('tutorial');
   const tutorialMode = !!tutorialUnitId;
   
-  // Create node types with setNodes
   const nodeTypesData = useMemo(() => createNodeTypes(setNodes), [setNodes]);
 
-  // Initialize undo/redo functionality
-  const { canUndo, canRedo, undo, redo, saveState, clearHistory, isApplyingHistory } = useUndoRedo(setNodes, setEdges);
-
-  // Allow editing either if user owns the project OR we are in tutorial mode
   const canEdit = tutorialMode || isProjectOwner;
 
   // Handle project change notification from Menu component
   const handleProjectChange = useCallback(() => {
-    projectLoadedRef.current = false; // Reset the project loaded state
-    setIsLoading(true);               // Set loading state to trigger a reload
+    projectLoadedRef.current = false; 
+    setIsLoading(true);              
   }, []);
 
   // Load project from localStorage
@@ -101,7 +96,6 @@ function Flow() {
     }
     
     const loadProjectFromStorage = async () => {
-      // If we've already loaded this project, don't reload it
       if (!supabaseUser || (projectLoadedRef.current && !localStorage.getItem('forceProjectReload'))) {
         setIsLoading(false);
         return;
@@ -128,7 +122,6 @@ function Flow() {
             setNodes(projectData.nodes ? [...projectData.nodes] : []);
             setEdges(projectData.edges ? [...projectData.edges] : []);
             
-            // Save initial state to history after loading
             setTimeout(() => {
               saveState(projectData.nodes || [], projectData.edges || []);
             }, 100);
@@ -149,7 +142,6 @@ function Flow() {
         }
       } catch (error) {
         console.error('Error loading project:', error);
-        // Clear localStorage on error
         localStorage.removeItem('currentProjectId');
         setNodes([]);
         setEdges([]);
@@ -157,7 +149,7 @@ function Flow() {
         setIsProjectOwner(true);
       } finally {
         setIsLoading(false);
-        projectLoadedRef.current = true; // Mark as loaded even on error to prevent retry loops
+        projectLoadedRef.current = true;
       }
     };
     
@@ -170,14 +162,14 @@ function Flow() {
 
   // Save state to history when nodes or edges change
   useEffect(() => {
-    if (tutorialMode) return; // Don't save history during tutorial
-    if (!projectLoadedRef.current || isLoading) return; // Don't save during initial load
-    if (isNodeDragging) return; // Don't save while dragging nodes
-    if (isApplyingHistory()) return; // Don't save during undo/redo operations
+    if (tutorialMode) return; 
+    if (!projectLoadedRef.current || isLoading) return; 
+    if (isNodeDragging) return; 
+    if (isApplyingHistory()) return; 
     
     // Debounce state saving to avoid too many history entries during rapid changes
     const timeoutId = setTimeout(() => {
-      if (!isApplyingHistory()) { // Double-check before saving
+      if (!isApplyingHistory()) {
         saveState(nodes, edges);
       }
     }, 100); // Reduced debounce time
@@ -188,7 +180,7 @@ function Flow() {
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!canEdit) return; // Don't allow shortcuts in read-only mode
+      if (!canEdit) return;
       
       if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
         event.preventDefault();
@@ -206,10 +198,10 @@ function Flow() {
   // Auto-save changes to Supabase
   useEffect(() => {
     console.log('nodes', nodes);
-    if (tutorialMode) return; // Don't autosave during tutorial
+    if (tutorialMode) return; 
     
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;
-    if (isNodeDragging) return; // Don't save while dragging nodes
+    if (isNodeDragging) return;
     
     const storedProjectId = localStorage.getItem('currentProjectId');
     if (storedProjectId !== projectId) return; 

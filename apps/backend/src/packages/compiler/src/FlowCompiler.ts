@@ -525,20 +525,85 @@ export class FlowCompiler {
       }
 
       case 'PRINT': {
-        const inputVar = Object.values(this.getNodeInputVarNames(node.id))[0];
-        if (!inputVar) {
-          throw new Error(`Print node ${node.id} has no input`);
+        const dataInputs = this.getNodeInputVarNames(node.id);
+        
+        const flowEdge = this.edges.find(e => 
+          e.target === node.id && 
+          (e.targetHandle === 'flow-top' || e.targetHandle === 'flow-bottom')
+        );
+        
+        let template: string = '';
+        let isTemplateConnected = false;
+        
+        if (dataInputs['template']) {
+          isTemplateConnected = true;
+          template = dataInputs['template'];
+        } else {
+          template = String(node.data.inputs?.['template']?.value || '');
         }
         
-        const printCode = this.generatePrintCode(node, inputVar);
+        let printCode = '';
+        if (flowEdge) {
+          const flowSourceVar = this.nodeOutputVarNames.get(flowEdge.source);
+          if (flowSourceVar) {
+            const sourceType = this.getNodeOutputType(flowEdge.source);
+            let outputExpr = '';
+            
+            switch (sourceType) {
+              case 'object':
+                outputExpr = `JSON.stringify(${flowSourceVar}, null, 2)`;
+                break;
+              case 'string':
+              case 'number':
+              case 'boolean':
+                outputExpr = `String(${flowSourceVar})`;
+                break;
+              case 'string[]':
+              case 'number[]':
+              case 'boolean[]':
+                outputExpr = `JSON.stringify(${flowSourceVar})`;
+                break;
+              default:
+                outputExpr = `(typeof ${flowSourceVar} === 'object' ? JSON.stringify(${flowSourceVar}, null, 2) : String(${flowSourceVar}))`;
+            }
+            
+            // Handle template replacement
+            if (isTemplateConnected) {
+              printCode = `printOutput += \`\${${template}.replace(/\\$output\\$/g, ${outputExpr})}\\n\`;`;
+            } else {
+              // Template is a literal string
+              if (template.includes('$output$')) {
+                const formattedTemplate = template.replace(/\$output\$/g, `\${${outputExpr}}`).replace(/`/g, '\\`');
+                printCode = `printOutput += \`${formattedTemplate}\\n\`;`;
+              } else {
+                printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+              }
+            }
+            
+            // If we're inside a conditional block, don't add to global printOutputs
+            if (this.currentIndentLevel === 0) {
+              this.printOutputs.push(printCode);
+            }
+            
+            return `const ${varName} = ${flowSourceVar};`;
+          }
+        }
         
-        // If we're inside a conditional block (indentLevel > 0), don't add to global printOutputs
-        // The conditional will handle the print statement directly
+        // Fallback: no flow connection, just use template
+        if (isTemplateConnected) {
+          // Template is connected
+          printCode = `printOutput += \`\${${template}}\\n\`;`;
+        } else {
+          // Template is in node data
+          printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+        }
+        
         if (this.currentIndentLevel === 0) {
           this.printOutputs.push(printCode);
         }
         
-        return `const ${varName} = ${inputVar};`;
+        const templateVar = isTemplateConnected ? template : `"${template}"`;
+        return `const ${varName} = ${templateVar};`;
       }
 
       case 'CONDITIONAL': {

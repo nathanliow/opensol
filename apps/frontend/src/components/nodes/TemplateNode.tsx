@@ -375,6 +375,10 @@ const useNodeInputs = (
   },
   onInputChange?: (inputId: string, value: any, fromConnection?: boolean) => void
 ) => {
+  // Track if we've initialized from data
+  const initializedRef = useRef(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   // Initialize values from data or defaults
   const initialValues = useMemo(() => {
     const values: Record<string, any> = {};
@@ -386,22 +390,17 @@ const useNodeInputs = (
   
   const [inputValues, setInputValues] = useState<Record<string, any>>(initialValues);
   
-  // Update when data changes
+  // Update when data changes or on initial load
   useEffect(() => {
-    let hasChanged = false;
-    const newValues = {...inputValues};
-    
-    inputs.forEach(input => {
-      if (data.inputs[input.id] !== undefined && data.inputs[input.id] !== inputValues[input.id]) {
-        newValues[input.id] = data.inputs[input.id];
-        hasChanged = true;
-      }
-    });
-    
-    if (hasChanged) {
+    if (!initializedRef.current) {
+      const newValues: Record<string, any> = {};
+      inputs.forEach(input => {
+        newValues[input.id] = nodeUtils.getValue(data.inputs, input.id, input.defaultValue);
+      });
       setInputValues(newValues);
+      initializedRef.current = true;
     }
-  }, [data, inputs, inputValues]);
+  }, [data, inputs]);
 
   // Update connected values
   useEffect(() => {
@@ -424,7 +423,7 @@ const useNodeInputs = (
     }
   }, [inputs, inputValues]);
   
-  // Handle input change
+  // Debounced input change handler
   const handleInputChange = (inputId: string, value: any) => {
     // Find the input definition
     const input = inputs.find(i => i.id === inputId);
@@ -434,11 +433,28 @@ const useNodeInputs = (
       return;
     }
     
+    // Update the local state immediately for responsive UI
     setInputValues(prev => ({ ...prev, [inputId]: value }));
+    
+    // Debounce the actual save operation
     if (onInputChange) {
-      onInputChange(inputId, value);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      
+      debounceTimeoutRef.current = setTimeout(() => {
+        onInputChange(inputId, value);
+      }, 500); // 500ms delay after user stops typing
     }
   };
+  
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
   
   return { inputValues, handleInputChange };
 };

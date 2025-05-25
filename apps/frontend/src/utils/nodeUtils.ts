@@ -113,7 +113,27 @@ export const nodeUtils = {
    */
   getValue: (data: Inputs | undefined, id: string, defaultValue: any = null): any => {
     if (!data) return defaultValue;
-    return data[id] !== undefined ? data[id] : defaultValue;
+    
+    // First, try to find by the input ID directly
+    if (data[id] !== undefined) {
+      // If it's an object with a value property, return the value
+      if (typeof data[id] === 'object' && data[id] !== null && 'value' in data[id]) {
+        return (data[id] as any).value;
+      }
+      // Otherwise return the value directly
+      return data[id];
+    }
+    
+    // If not found by ID, try to find by handleId
+    for (const [key, value] of Object.entries(data)) {
+      if (typeof value === 'object' && value !== null && 'handleId' in value) {
+        if ((value as any).handleId === id) {
+          return (value as any).value;
+        }
+      }
+    }
+    
+    return defaultValue;
   },
 
   /**
