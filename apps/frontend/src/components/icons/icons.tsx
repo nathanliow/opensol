@@ -40,6 +40,8 @@ import {
   FiKey,
   FiDollarSign,
   FiLoader,
+  FiRotateCcw,
+  FiRotateCw,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon } from '@heroicons/react/24/outline';
@@ -153,4 +155,6 @@ export const Icons = {
   PiMoneyWavyLight,
   FiKey,
   BsBarChartFill,
+  FiRotateCcw,
+  FiRotateCw,
 };

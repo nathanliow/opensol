@@ -27,6 +27,10 @@ interface ToolbarProps {
   onProjectChange?: () => void;
   projectData?: Project | null;
   onProjectMenuToggle?: (isOpen: boolean) => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export const Toolbar = ({
@@ -39,6 +43,10 @@ export const Toolbar = ({
   onProjectChange,
   projectData,
   onProjectMenuToggle,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: ToolbarProps) => {
   const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [isPublic, setIsPublic] = useState(projectData?.is_public || false);
@@ -298,6 +306,35 @@ export const Toolbar = ({
   return (
     <Panel position="top-center">
       <div className="flex bg-[#1E1E1E] rounded-lg items-center py-1 px-4 space-x-4">
+        {/* Undo Button */}
+        <button
+          onClick={onUndo}
+          disabled={!canUndo || isReadOnly}
+          className={`flex items-center justify-center w-10 h-10 transition-colors rounded-lg shadow-lg ${
+            !canUndo || isReadOnly 
+              ? 'bg-[#1E1E1E] text-gray-500 cursor-not-allowed' 
+              : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300 cursor-pointer'
+          }`}
+          title="Undo (Ctrl+Z)"
+        >
+          <Icons.FiRotateCcw size={18} />
+        </button>
+
+        {/* Redo Button */}
+        <button
+          onClick={onRedo}
+          disabled={!canRedo || isReadOnly}
+          className={`flex items-center justify-center w-10 h-10 transition-colors rounded-lg shadow-lg ${
+            !canRedo || isReadOnly 
+              ? 'bg-[#1E1E1E] text-gray-500 cursor-not-allowed' 
+              : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300 cursor-pointer'
+          }`}
+          title="Redo (Ctrl+Y)"
+        >
+          <Icons.FiRotateCw size={18} />
+        </button>
+
+        {/* Selection Mode Button */}
         <button
           onClick={toggleSelectionMode}
           className={`flex items-center justify-center w-10 h-10 transition-colors ${selectionMode ? 'bg-[#3D3D3D] text-white cursor-pointer' : 'bg-[#1E1E1E] hover:bg-[#2D2D2D] text-gray-300 cursor-pointer '} rounded-lg shadow-lg`}

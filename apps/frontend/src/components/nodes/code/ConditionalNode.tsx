@@ -28,7 +28,6 @@ const CONDITION_OPERATORS = [
   { value: 'endsWith', label: 'endsWith (Ends with)' },
 ];
 
-// Data type options for variables - using shorter labels to fit better
 const DATA_TYPE_OPTIONS = [
   { value: 'string', label: 'String' },
   { value: 'number', label: 'Number' },

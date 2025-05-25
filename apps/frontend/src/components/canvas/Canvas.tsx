@@ -42,6 +42,7 @@ import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/sr
 import TutorialPanel from "@/tutorials/components/TutorialPanel";
 import { useSearchParams } from "next/navigation";
 import { nodeUtils } from "@/utils/nodeUtils";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -76,6 +77,9 @@ function Flow() {
   
   // Create node types with setNodes
   const nodeTypesData = useMemo(() => createNodeTypes(setNodes), [setNodes]);
+
+  // Initialize undo/redo functionality
+  const { canUndo, canRedo, undo, redo, saveState, clearHistory, isApplyingHistory } = useUndoRedo(setNodes, setEdges);
 
   // Allow editing either if user owns the project OR we are in tutorial mode
   const canEdit = tutorialMode || isProjectOwner;
@@ -123,18 +127,25 @@ function Flow() {
             // Ensure we're setting completely new arrays to trigger React re-renders
             setNodes(projectData.nodes ? [...projectData.nodes] : []);
             setEdges(projectData.edges ? [...projectData.edges] : []);
+            
+            // Save initial state to history after loading
+            setTimeout(() => {
+              saveState(projectData.nodes || [], projectData.edges || []);
+            }, 100);
           } else {
             console.warn('User does not have access to this project');
             localStorage.removeItem('currentProjectId');
             setNodes([]);
             setEdges([]);
+            clearHistory();
           }
         } else {
           // No project ID in localStorage, use empty canvas
           setNodes([]);
           setEdges([]);
           setProjectId(null);
-          setIsProjectOwner(true); 
+          setIsProjectOwner(true);
+          clearHistory();
         }
       } catch (error) {
         console.error('Error loading project:', error);
@@ -156,6 +167,41 @@ function Flow() {
       projectLoadedRef.current = false;
     };
   }, [supabaseUser, setNodes, setEdges, isLoading, tutorialMode]);
+
+  // Save state to history when nodes or edges change
+  useEffect(() => {
+    if (tutorialMode) return; // Don't save history during tutorial
+    if (!projectLoadedRef.current || isLoading) return; // Don't save during initial load
+    if (isNodeDragging) return; // Don't save while dragging nodes
+    if (isApplyingHistory()) return; // Don't save during undo/redo operations
+    
+    // Debounce state saving to avoid too many history entries during rapid changes
+    const timeoutId = setTimeout(() => {
+      if (!isApplyingHistory()) { // Double-check before saving
+        saveState(nodes, edges);
+      }
+    }, 100); // Reduced debounce time
+    
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, tutorialMode, isLoading, isNodeDragging, saveState, isApplyingHistory]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!canEdit) return; // Don't allow shortcuts in read-only mode
+      
+      if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+        event.preventDefault();
+        undo();
+      } else if ((event.ctrlKey || event.metaKey) && (event.key === 'y' || (event.key === 'z' && event.shiftKey))) {
+        event.preventDefault();
+        redo();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [canEdit, undo, redo]);
 
   // Auto-save changes to Supabase
   useEffect(() => {
@@ -218,7 +264,13 @@ function Flow() {
     setNodes(importedNodes);
     setEdges(importedEdges);
     reactFlowInstance.setViewport(viewport);
-  }, [setNodes, setEdges, reactFlowInstance]);
+    
+    // Clear history and save new state
+    clearHistory();
+    setTimeout(() => {
+      saveState(importedNodes, importedEdges);
+    }, 100);
+  }, [setNodes, setEdges, reactFlowInstance, clearHistory, saveState]);
 
   const toggleSelectionMode = useCallback(() => {
     setSelectionMode(prev => !prev);
@@ -516,6 +568,10 @@ function Flow() {
             onProjectChange={handleProjectChange}
             projectData={projectData}
             onProjectMenuToggle={handleProjectMenuToggle}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={undo}
+            onRedo={redo}
           />
           <NodeSidebar
             nodeTypes={nodeTypes}
@@ -538,6 +594,12 @@ function Flow() {
             onRestoreFlow={(restoredNodes, restoredEdges) => {            
               setNodes(restoredNodes);
               setEdges(restoredEdges);
+              
+              // Clear history and save restored state
+              clearHistory();
+              setTimeout(() => {
+                saveState(restoredNodes, restoredEdges);
+              }, 100);
             }}
             forceCollapse={menuOpen || projectMenuOpen}
           />
