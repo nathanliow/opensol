@@ -414,7 +414,6 @@ export async function ${importName}(params: any) {
                   {/* Code tabs - positioned at the top with clear styling */}
                   <div className="flex w-full border-b-2 border-[#333333] overflow-x-auto mb-4">
                     {codeTabs.map(tab => {
-                      console.log(`Rendering tab: ${tab.name}`); // Debug log
                       return (
                         <button
                           key={tab.id}
@@ -506,7 +505,7 @@ export async function ${importName}(params: any) {
                       }]);
 
                       try {
-                        const result = await callLLM(prompt, nodes, edges, apiKeys['openai'] || '');
+                        const result = await callLLM(prompt, nodes, edges, apiKeys.openai?.key || '');
 
                         setMessages(prev => [
                           ...prev.slice(0, -1),

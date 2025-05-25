@@ -1,9 +1,15 @@
 import { FlowNode, FlowEdge } from './types';
-import { BlockFunctionTemplate, BlockFunctionTemplateParameters } from '../../../../../frontend/src/components/services/blockTemplateService';
+import { 
+  BlockFunctionTemplate, 
+  BlockFunctionTemplateParameters
+} from '../../../../../frontend/src/components/services/blockTemplateService';
 import { nodeUtils } from '@/utils/nodeUtils';
 import { ApiKey, ApiKeyType } from '@/types/KeyTypes';
 import { NetworkType } from '@/types/NetworkTypes';
-import { InputValueType } from '@/types/InputTypes';
+import { 
+  InputValueType, 
+  InputValueTypeString 
+} from '@/types/InputTypes';
 
 export class FlowCompiler {
   private nodes: FlowNode[];
@@ -22,6 +28,8 @@ export class FlowCompiler {
   private noImports: boolean = false;
   private functionName: string = 'execute'; // Default function name
   private isGeneratingDisplayCode: boolean = false; // Flag to track which code we're generating
+  private processedNodes: Set<string> = new Set(); // Track processed nodes to avoid duplicates
+  private currentIndentLevel: number = 0; // Track current indentation level
 
   constructor(
     nodes: FlowNode[], 
@@ -63,8 +71,21 @@ export class FlowCompiler {
       return `${key}: ${JSON.stringify(this.network)}`;
     }
 
-    // Handle node connection variables
-    if (typeof value === 'string' && (value.startsWith('result_') || value.startsWith('const_'))) {
+    // Handle node connection variables - check for all generated variable patterns
+    if (typeof value === 'string' && (
+      value.startsWith('result_') || 
+      value.startsWith('const_') || 
+      value.startsWith('str_') ||
+      value.startsWith('obj_') ||
+      value.startsWith('print_') ||
+      value.startsWith('condition_') ||
+      value.startsWith('mint_') ||
+      value.startsWith('transfer_') ||
+      value.startsWith('math_') ||
+      value.startsWith('get_') ||
+      value.startsWith('helius_') ||
+      value.startsWith('birdeye_')
+    )) {
       return `${key}: ${value}`;
     }
     
@@ -240,6 +261,115 @@ export class FlowCompiler {
     }
   }
 
+  /**
+   * Generate code for conditional branches with proper flow path processing
+   */
+  private generateConditionalBranchCode(branchNodeId: string, indentLevel: number): { code: string; printStatements: string[] } {
+    const codeLines: string[] = [];
+    const printStatements: string[] = [];
+    const visited = new Set<string>();
+    
+    const processNode = (nodeId: string): void => {
+      if (visited.has(nodeId) || this.processedNodes.has(nodeId)) return;
+      
+      visited.add(nodeId);
+      this.processedNodes.add(nodeId);
+      
+      const node = this.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+      
+      // Process data dependencies first (input connections) within this scope
+      const dataDependencies = this.edges.filter(e => 
+        e.target === nodeId && 
+        e.targetHandle?.startsWith('input-') &&
+        !this.processedNodes.has(e.source)
+      );
+      
+      dataDependencies.forEach(edge => {
+        processNode(edge.source);
+      });
+      
+      // Set current indent level for this node
+      const savedIndentLevel = this.currentIndentLevel;
+      this.currentIndentLevel = indentLevel;
+      
+      // Handle print nodes specially to capture their print statements
+      if (node.type === 'PRINT') {
+        const inputs = this.getNodeInputVarNames(node.id);
+        const inputVar = Object.values(inputs)[0];
+        if (inputVar) {
+          const varName = this.getNextVarName(node.type);
+          this.nodeOutputVarNames.set(node.id, varName);
+          
+          // Generate the variable assignment
+          const nodeCode = `const ${varName} = ${inputVar};`;
+          const indentedCode = '  '.repeat(indentLevel) + nodeCode;
+          codeLines.push(indentedCode);
+          
+          // Generate the print statement
+          const printCode = this.generatePrintCode(node, inputVar);
+          const indentedPrintCode = '  '.repeat(indentLevel) + printCode;
+          printStatements.push(indentedPrintCode);
+        } else {
+          // Handle print node with no input connections (direct template value)
+          const varName = this.getNextVarName(node.type);
+          this.nodeOutputVarNames.set(node.id, varName);
+          
+          const template = node.data.inputs?.['template']?.value || '';
+          const nodeCode = `const ${varName} = ${JSON.stringify(template)};`;
+          const indentedCode = '  '.repeat(indentLevel) + nodeCode;
+          codeLines.push(indentedCode);
+          
+          // Generate the print statement for template-only print nodes
+          let printStatement = '';
+          if (typeof template === 'string') {
+            if (!template.includes('$output$')) {
+              printStatement = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+            } else {
+              printStatement = `printOutput += \`${template.replace(/\$output\$/g, `\${String(${varName})}`).replace(/`/g, '\\`')}\\n\`;`;
+            }
+          } else {
+            printStatement = `printOutput += \`${String(template).replace(/`/g, '\\`')}\\n\`;`;
+          }
+          const indentedPrintCode = '  '.repeat(indentLevel) + printStatement;
+          printStatements.push(indentedPrintCode);
+        }
+      } else {
+        // Generate code normally for non-print nodes
+        const code = this.generateNodeCode(node);
+        if (code) {
+          // Apply indentation to each line of generated code
+          const indentedCode = code.split('\n').map(line => {
+            if (!line.trim()) return line;
+            return '  '.repeat(indentLevel) + line;
+          }).join('\n');
+          codeLines.push(indentedCode);
+        }
+      }
+      
+      // Restore previous indent level
+      this.currentIndentLevel = savedIndentLevel;
+      
+      // Follow flow connections (but not flow-then/flow-else which are handled by conditionals)
+      const flowEdges = this.edges.filter(e => 
+        e.source === nodeId && 
+        (e.sourceHandle === 'flow-bottom' || e.sourceHandle === 'flow-top') &&
+        (e.targetHandle === 'flow-top' || e.targetHandle === 'flow-bottom')
+      );
+      
+      flowEdges.forEach(edge => {
+        processNode(edge.target);
+      });
+    };
+    
+    processNode(branchNodeId);
+    
+    return {
+      code: codeLines.join('\n'),
+      printStatements
+    };
+  }
+
   private generateNodeCode(node: FlowNode): string {
     if (node.type === 'FUNCTION') {
       // Extract function name from the node data
@@ -279,6 +409,7 @@ export class FlowCompiler {
 
         const templateParams = this.getTemplateParams(templateName);
         const nodeInputs = nodeUtils.getFlowNode(this.nodes, node.id)?.data.inputs;
+        const connectedInputs = this.getNodeInputVarNames(node.id); 
         const parameters: Record<string, any> = {};
         const requiredKeys = this.getTemplateKeys(templateName);
         
@@ -294,8 +425,12 @@ export class FlowCompiler {
         templateParams.forEach(param => {
           const paramName = param.name;
           // Skip apiKey and network since we're handling those automatically
-          if (paramName !== 'apiKey' && paramName !== 'network' && nodeInputs && nodeInputs[paramName]) {
-            parameters[paramName] = nodeInputs[paramName].value;
+          if (paramName !== 'apiKey' && paramName !== 'network') {
+            if (connectedInputs[paramName]) {
+              parameters[paramName] = connectedInputs[paramName];
+            } else if (nodeInputs && nodeInputs[paramName]) {
+              parameters[paramName] = nodeInputs[paramName].value;
+            }
           }
         });
 
@@ -394,74 +529,174 @@ export class FlowCompiler {
         if (!inputVar) {
           throw new Error(`Print node ${node.id} has no input`);
         }
+        
         const printCode = this.generatePrintCode(node, inputVar);
-        this.printOutputs.push(printCode);
+        
+        // If we're inside a conditional block (indentLevel > 0), don't add to global printOutputs
+        // The conditional will handle the print statement directly
+        if (this.currentIndentLevel === 0) {
+          this.printOutputs.push(printCode);
+        }
+        
         return `const ${varName} = ${inputVar};`;
       }
 
       case 'CONDITIONAL': {
         const inputs = this.getNodeInputVarNames(node.id);
-        const conditionInput = inputs['condition'];
+        const nodeInputs = node.data.inputs;
         
-        if (!conditionInput) {
-          throw new Error(`Conditional node ${node.id} has no condition input`);
+        // Get the three inputs: x, operator, y and their types
+        const xInput = inputs['x'];
+        const yInput = inputs['y'];
+        const xValue = xInput || String(nodeInputs?.['x']?.value || '');
+        const operator = nodeInputs?.['operator']?.value || '>';
+        const yValue = yInput || String(nodeInputs?.['y']?.value || '');
+        const xType = nodeInputs?.['x']?.type as InputValueTypeString || 'string';
+        const yType = nodeInputs?.['y']?.type as InputValueTypeString || 'string';
+        
+        // Helper function to convert value based on type
+        const convertValue = (value: any, type: InputValueTypeString, isConnected: boolean): string => {
+          if (isConnected) {
+            // If connected, apply type conversion at runtime
+            switch (type) {
+              case 'number':
+                return `Number(${value})`;
+              case 'boolean':
+                return `Boolean(${value})`;
+              case 'object':
+                return `(typeof ${value} === 'object' ? ${value} : JSON.parse(String(${value})))`;
+              default:
+                return `String(${value})`;
+            }
+          } else {
+            // If not connected, convert the literal value
+            const stringValue = String(value || '');
+            switch (type) {
+              case 'number':
+                const numValue = Number(stringValue);
+                return isNaN(numValue) ? '0' : String(numValue);
+              case 'boolean':
+                return String(stringValue === 'true' || stringValue === 'true');
+              case 'object':
+                try {
+                  return JSON.stringify(stringValue ? JSON.parse(stringValue) : {});
+                } catch {
+                  return JSON.stringify({});
+                }
+              default:
+                return JSON.stringify(stringValue);
+            }
+          }
+        };
+        
+        // Convert values based on their types
+        const xConverted = convertValue((xInput || String(xValue)) as any, xType, !!xInput);
+        const yConverted = convertValue((yInput || String(yValue)) as any, yType, !!yInput);
+        
+        // Build the condition expression based on the operator
+        let conditionExpression: string;
+        
+        switch (operator) {
+          case 'includes':
+            conditionExpression = `${xConverted} && ${xConverted}.includes && ${xConverted}.includes(${yConverted})`;
+            break;
+          case 'startsWith':
+            conditionExpression = `${xConverted} && ${xConverted}.startsWith && ${xConverted}.startsWith(${yConverted})`;
+            break;
+          case 'endsWith':
+            conditionExpression = `${xConverted} && ${xConverted}.endsWith && ${xConverted}.endsWith(${yConverted})`;
+            break;
+          case '&&':
+            conditionExpression = `(${xConverted}) && (${yConverted})`;
+            break;
+          case '||':
+            conditionExpression = `(${xConverted}) || (${yConverted})`;
+            break;
+          default:
+            // Standard comparison operators: >, <, >=, <=, ===, !==
+            conditionExpression = `${xConverted} ${operator} ${yConverted}`;
         }
 
         // Find connected nodes for then/else branches
-        const thenEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'then');
-        const elseEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'else');
+        const thenEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'flow-then');
+        const elseEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'flow-else');
         
-        // Check if the then/else nodes have been processed
-        let thenCode = 'null';
-        let elseCode = 'null';
+        // Generate code with proper if/else blocks and flow path processing
+        const conditionStr = conditionExpression.includes('&&') || conditionExpression.includes('||') 
+          ? `(${conditionExpression})` 
+          : conditionExpression;
         
-        if (thenEdges.length > 0) {
-          const thenTarget = thenEdges[0].target;
-          // Ensure the target node is processed
-          const targetNode = this.nodes.find(n => n.id === thenTarget);
-          if (targetNode && !this.nodeOutputVarNames.has(thenTarget)) {
-            // Process the target node first
-            const code = this.generateNodeCode(targetNode);
-            if (code) {
-              this.nodeOutputVarNames.set(thenTarget, code.split(' = ')[0].replace('const ', ''));
+        let codeLines = [`let ${varName};`];
+        
+        if (thenEdges.length > 0 || elseEdges.length > 0) {
+          codeLines.push(`if (${conditionStr}) {`);
+          
+          // Process then branch
+          if (thenEdges.length > 0) {
+            const thenNodeId = thenEdges[0].target;
+            const { code: thenCode, printStatements: thenPrintStatements } = this.generateConditionalBranchCode(thenNodeId, this.currentIndentLevel + 1);
+            
+            if (thenCode) {
+              codeLines.push(thenCode);
             }
-          }
-          thenCode = this.nodeOutputVarNames.get(thenTarget) ?? 'null';
-        }
-        
-        if (elseEdges.length > 0) {
-          const elseTarget = elseEdges[0].target;
-          // Ensure the target node is processed
-          const targetNode = this.nodes.find(n => n.id === elseTarget);
-          if (targetNode && !this.nodeOutputVarNames.has(elseTarget)) {
-            // Process the target node first
-            const code = this.generateNodeCode(targetNode);
-            if (code) {
-              this.nodeOutputVarNames.set(elseTarget, code.split(' = ')[0].replace('const ', ''));
+            
+            // Add print statements
+            thenPrintStatements.forEach(printStmt => {
+              codeLines.push(printStmt);
+            });
+            
+            // Find the result variable from the then branch
+            const thenVarMatch = thenCode.match(/(?:const|let)\s+(\w+)/);
+            if (thenVarMatch) {
+              codeLines.push(`  ${varName} = ${thenVarMatch[1]};`);
+            } else {
+              codeLines.push(`  ${varName} = true;`);
             }
+          } else {
+            codeLines.push(`  ${varName} = true;`);
           }
-          elseCode = this.nodeOutputVarNames.get(elseTarget) ?? 'null';
-        }
-        
-        // Generate code with ternary operator or if/else block based on complexity
-        const conditionStr = typeof conditionInput === 'string' && (conditionInput.includes('&&') || conditionInput.includes('||')) 
-          ? `(${conditionInput})` 
-          : conditionInput;
-        
-        if (thenCode === 'null' && elseCode === 'null') {
-          // If both branches are null, just evaluate the condition
-          return `const ${varName} = Boolean(${conditionStr});`;
+          
+          codeLines.push(`} else {`);
+          
+          // Process else branch
+          if (elseEdges.length > 0) {
+            const elseNodeId = elseEdges[0].target;
+            const { code: elseCode, printStatements: elsePrintStatements } = this.generateConditionalBranchCode(elseNodeId, this.currentIndentLevel + 1);
+            
+            if (elseCode) {
+              codeLines.push(elseCode);
+            }
+            
+            // Add print statements
+            elsePrintStatements.forEach(printStmt => {
+              codeLines.push(printStmt);
+            });
+            
+            // Find the result variable from the else branch
+            const elseVarMatch = elseCode.match(/(?:const|let)\s+(\w+)/);
+            if (elseVarMatch) {
+              codeLines.push(`  ${varName} = ${elseVarMatch[1]};`);
+            } else {
+              codeLines.push(`  ${varName} = false;`);
+            }
+          } else {
+            codeLines.push(`  ${varName} = false;`);
+          }
+          
+          codeLines.push(`}`);
         } else {
-          // Create a proper if/else block for better readability
-          return [
-            `let ${varName};`,
-            `if (${conditionStr}) {`,
-            `  ${varName} = ${thenCode};`,
-            `} else {`,
-            `  ${varName} = ${elseCode};`,
-            `}`
-          ].join('\n');
+          // If no connected nodes, just evaluate the condition
+          codeLines.push(`${varName} = Boolean(${conditionStr});`);
         }
+        
+        let code = codeLines.join('\n');
+        
+        // Only add updateNodeOutput call when generating function code (not display code)
+        if (!this.isGeneratingDisplayCode) {
+          code += `\nupdateNodeOutput(${JSON.stringify(node.id)}, { condition: Boolean(${conditionStr}), result: ${varName} });`;
+        }
+        
+        return code;
       }
 
       case 'CONST': {
@@ -537,9 +772,9 @@ export class FlowCompiler {
     const codeLines = [
       `async function ${this.functionName}() {`,
       defineApiKey,
+      `  let printOutput = '';`,
       `  NODE_CODE_HERE`,
       ``,
-      `  let printOutput = '';`,
       `  PRINT_OUTPUT_HERE`,
       ``,
       `  if (printOutput === '') {`,
@@ -573,6 +808,8 @@ export class FlowCompiler {
     this.printOutputs = [];
     this.getFunctions.clear();
     this.imports = [];
+    this.processedNodes.clear(); // Reset processed nodes tracking
+    this.currentIndentLevel = 0; // Reset indentation level
 
     const rootNodes = this.nodes.filter(node => !this.edges.some(edge => edge.target === node.id));
     if (rootNodes.length === 0) {
@@ -583,11 +820,25 @@ export class FlowCompiler {
     const visited = new Set<string>();
 
     const visitNode = (nodeId: string) => {
-      if (visited.has(nodeId)) return;
+      if (visited.has(nodeId) || this.processedNodes.has(nodeId)) return;
       visited.add(nodeId);
 
-      // Visit dependencies first
-      this.edges.filter(e => e.target === nodeId).forEach(e => visitNode(e.source));
+      // Visit data dependencies first, but only if they won't be processed within conditional blocks
+      const dataDependencies = this.edges.filter(e => 
+        e.target === nodeId && 
+        e.targetHandle?.startsWith('input-') &&
+        !['flow-then', 'flow-else'].includes(e.sourceHandle || '')
+      );
+      
+      dataDependencies.forEach(edge => {       
+        const isInConditionalBranch = this.edges.some(e => 
+          e.target === nodeId && (e.sourceHandle === 'flow-then' || e.sourceHandle === 'flow-else')
+        );
+        
+        if (!isInConditionalBranch) {
+          visitNode(edge.source);
+        }
+      });
 
       const node = this.nodes.find(n => n.id === nodeId);
       if (!node) {
@@ -598,8 +849,11 @@ export class FlowCompiler {
         nodeCodeLines.push(code);
       }
 
-      // Visit child nodes
-      this.edges.filter(e => e.source === nodeId).forEach(e => visitNode(e.target));
+      // Visit child nodes, but skip nodes connected via flow-then/flow-else 
+      // (they are processed within conditional blocks)
+      this.edges
+        .filter(e => e.source === nodeId && !['flow-then', 'flow-else'].includes(e.sourceHandle || ''))
+        .forEach(e => visitNode(e.target));
     };
 
     rootNodes.forEach(n => visitNode(n.id));
@@ -678,6 +932,8 @@ export class FlowCompiler {
     // Need to regenerate node code with updateNodeOutput calls removed
     this.nodeOutputVarNames.clear();
     this.typeCounters = {};
+    this.processedNodes.clear(); // Reset processed nodes tracking for display
+    this.currentIndentLevel = 0; // Reset indentation level
     const savedPrintOutputs = [...this.printOutputs]; // Save print outputs
     this.printOutputs = [];
     
@@ -686,11 +942,26 @@ export class FlowCompiler {
     visited.clear();
     
     const visitNodeForDisplay = (nodeId: string) => {
-      if (visited.has(nodeId)) return;
+      if (visited.has(nodeId) || this.processedNodes.has(nodeId)) return;
       visited.add(nodeId);
 
-      // Visit dependencies first
-      this.edges.filter(e => e.target === nodeId).forEach(e => visitNodeForDisplay(e.source));
+      // Visit data dependencies first, but only if they won't be processed within conditional blocks
+      const dataDependencies = this.edges.filter(e => 
+        e.target === nodeId && 
+        e.targetHandle?.startsWith('input-') &&
+        !['flow-then', 'flow-else'].includes(e.sourceHandle || '')
+      );
+      
+      dataDependencies.forEach(edge => {
+        // Only process the dependency if the current node is not within a conditional branch
+        const isInConditionalBranch = this.edges.some(e => 
+          e.target === nodeId && (e.sourceHandle === 'flow-then' || e.sourceHandle === 'flow-else')
+        );
+        
+        if (!isInConditionalBranch) {
+          visitNodeForDisplay(edge.source);
+        }
+      });
 
       const node = this.nodes.find(n => n.id === nodeId);
       if (!node) {
@@ -701,8 +972,11 @@ export class FlowCompiler {
         displayNodeCodeLines.push(code);
       }
 
-      // Visit child nodes
-      this.edges.filter(e => e.source === nodeId).forEach(e => visitNodeForDisplay(e.target));
+      // Visit child nodes, but skip nodes connected via flow-then/flow-else 
+      // (they are processed within conditional blocks)
+      this.edges
+        .filter(e => e.source === nodeId && !['flow-then', 'flow-else'].includes(e.sourceHandle || ''))
+        .forEach(e => visitNodeForDisplay(e.target));
     };
 
     rootNodes.forEach(n => visitNodeForDisplay(n.id));

@@ -5,4 +5,8 @@ export interface CustomHandle {
   position: HandlePosition;
   id: string;
   className?: string;
+  label?: string;
+  description?: string;
+  offsetY?: number; // Custom Y offset for positioning
+  style?: React.CSSProperties; // Custom styles
 }

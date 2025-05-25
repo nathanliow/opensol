@@ -303,14 +303,24 @@ const CustomHandleComponent: FC<{
 }> = ({ handle }) => {
   const position = nodeUtils.toReactFlowPosition(handle.position);
   
+  // Combine base style with custom style and offsetY
+  const handleStyle = {
+    ...nodeUtils.getHandleStyle(handle.position),
+    ...handle.style,
+    ...(handle.offsetY && { [handle.position]: handle.offsetY })
+  };
+  
   return (
     <Handle
       key={handle.id}
       type={handle.type}
       position={position}
-      style={nodeUtils.getHandleStyle(handle.position)}
+      style={handleStyle}
       id={handle.id}
       className={handle.className}
+      isValidConnection={
+        handle.id === 'flow-then' || handle.id === 'flow-else' ? nodeUtils.validateFlowConnection : nodeUtils.validateOutputConnection
+      }
     />
   );
 };
@@ -531,7 +541,7 @@ const TemplateNode: FC<TemplateNodeProps> = ({
             <div className={`ml-1 font-medium ${metadata.textColor} w-[90px]`}>
               {input.label}:
             </div>
-            <div className="w-full mr-1 max-w-[150px]">
+            <div className="w-full mr-1 max-w-[200px]">
               <NodeInput
                 input={input}
                 value={inputValues[input.id]}

@@ -1,12 +1,13 @@
+import { ApiKey } from '@/types/KeyTypes';
 import OpenAI from 'openai';
 
-export async function enhanceCode(code: string, apiKey: string): Promise<string> {
+export async function enhanceCode(code: string, apiKey: ApiKey): Promise<string> {
   if (!apiKey) {
     throw new Error("OpenAI API key is required");
   }
 
   const openai = new OpenAI({
-    apiKey: apiKey,
+    apiKey: apiKey.key,
     dangerouslyAllowBrowser: true
   });
 

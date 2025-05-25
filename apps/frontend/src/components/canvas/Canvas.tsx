@@ -41,6 +41,7 @@ import { OutputValueTypeString } from "@/types/OutputTypes";
 import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/src/types";
 import TutorialPanel from "@/tutorials/components/TutorialPanel";
 import { useSearchParams } from "next/navigation";
+import { nodeUtils } from "@/utils/nodeUtils";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -244,81 +245,7 @@ function Flow() {
 
   // Function to check if a connection is valid based on handle types
   const isValidConnection = useCallback((connection: Connection): boolean => {
-    if (!connection.source || !connection.target) return false;
-
-    // Can't connect node to itself
-    if (connection.source === connection.target) return false;
-
-    // Connections between flow handles (top to bottom, vice versa) are always valid
-    if (connection.sourceHandle === "flow-bottom" && connection.targetHandle === "flow-top") {
-      return true;
-    }
-    if (connection.sourceHandle === "flow-top" && connection.targetHandle === "flow-bottom") {
-      return true;
-    }
-
-    // Connections between flow handles and input or output handles are not valid
-    if (connection.sourceHandle === "flow-top" && (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
-      return false;
-    }
-    if (connection.targetHandle === "flow-top" && (connection.sourceHandle?.startsWith("input-") || connection.sourceHandle?.startsWith("output"))) {
-      return false;
-    }
-    if (connection.sourceHandle === "flow-bottom" && (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
-      return false;
-    }
-    if (connection.targetHandle === "flow-bottom" && (connection.sourceHandle?.startsWith("input-") || connection.sourceHandle?.startsWith("output"))) {
-      return false;
-    }
-
-    // Find the nodes involved in the connection
-    const sourceNode = nodes.find((node: any) => node.id === connection.source);
-    const targetNode = nodes.find((node: any) => node.id === connection.target);
-    
-    if (!sourceNode || !targetNode) return false;
-    
-    // Determine the type of the source handle (output)
-    const outputType = sourceNode.data?.output?.type as OutputValueTypeString || 'any';
-    
-    // Find the target input handle and its expected type
-    const targetInput = Object.values(targetNode.data?.inputs || {}).find((input: any) => 
-      input.handleId === connection.targetHandle || input.id === connection.targetHandle
-    );
-    
-    // If no matching input found, or if it's a flow connection (which are always valid)
-    if (!targetInput) {
-      // For flow connections (top/bottom handles), always valid
-      if (connection.targetHandle === 'flow-top' || connection.targetHandle === 'flow-bottom') {
-        return true;
-      }
-      return false;
-    }
-    
-    // Type compatibility rules
-    // 'any' type is compatible with any input
-    if (outputType === 'any') return true;
- 
-    const targetType = targetInput.type || 'any';
-    
-    switch (outputType) {
-      case 'string':
-        return ['string', 'any', 'object'].includes(targetType as string);
-      
-      case 'number':
-        return ['number', 'any', 'object'].includes(targetType as string);
-      
-      case 'boolean':
-        return ['boolean', 'any', 'object'].includes(targetType as string);
-      
-      case 'object':
-        return ['object', 'any'].includes(targetType as string);
-      
-      case 'array':
-        return ['array', 'object', 'any'].includes(targetType as string);
-      
-      default:
-        return false;
-    }
+    return nodeUtils.validateConnection(connection, nodes);
   }, [nodes]);
 
   // Add connection start handler
