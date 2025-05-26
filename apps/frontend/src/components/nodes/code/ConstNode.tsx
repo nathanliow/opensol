@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { useReactFlow, useEdges, useNodes } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, InputValueTypeString, createInputDefinition } from '../../../types/InputTypes';
@@ -18,6 +18,9 @@ export default function ConstNode({ id }: ConstNodeProps) {
   const [dataType, setDataType] = useState<string>('string');
   const [value, setValue] = useState<string | number | boolean>('');
   
+  // Debounce ref for value input
+  const valueDebounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const handleTypeChange = useCallback((newValue: string) => {
     setDataType(newValue);
     setValue('');
@@ -30,15 +33,47 @@ export default function ConstNode({ id }: ConstNodeProps) {
     // Parse the value based on data type
     let parsedValue = newValue;
     if (dataType === 'number' && typeof newValue === 'string') {
-      parsedValue = parseFloat(newValue);
+      if (newValue.trim() === '') {
+        parsedValue = 0; 
+      } else {
+        const floatValue = parseFloat(newValue);
+        parsedValue = isNaN(floatValue) ? 0 : floatValue; 
+      }
     } else if (dataType === 'boolean' && typeof newValue === 'string') {
       parsedValue = newValue === 'true';
     }
     
+    // Update local state immediately for responsive UI
     setValue(parsedValue);
-    nodeUtils.updateNodeInput(id, 'value', 'input-value', dataType as InputValueTypeString, parsedValue, setNodes);
-    nodeUtils.updateNodeOutput(id, dataType as OutputValueTypeString, parsedValue, setNodes);
+    
+    // Determine if this input should be debounced (text and number inputs)
+    const shouldDebounce = dataType === 'string' || dataType === 'number';
+    
+    if (shouldDebounce) {
+      // Debounce text and number inputs to prevent excessive updates during typing
+      if (valueDebounceTimeoutRef.current) {
+        clearTimeout(valueDebounceTimeoutRef.current);
+      }
+      
+      valueDebounceTimeoutRef.current = setTimeout(() => {
+        nodeUtils.updateNodeInput(id, 'value', 'input-value', dataType as InputValueTypeString, parsedValue, setNodes);
+        nodeUtils.updateNodeOutput(id, dataType as OutputValueTypeString, parsedValue, setNodes);
+      }, 500); // 500ms delay for text and number inputs
+    } else {
+      // Instant updates for boolean dropdown
+      nodeUtils.updateNodeInput(id, 'value', 'input-value', dataType as InputValueTypeString, parsedValue, setNodes);
+      nodeUtils.updateNodeOutput(id, dataType as OutputValueTypeString, parsedValue, setNodes);
+    }
   }, [dataType, id, setNodes]);
+  
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (valueDebounceTimeoutRef.current) {
+        clearTimeout(valueDebounceTimeoutRef.current);
+      }
+    };
+  }, []);
   
   // Define output with OutputDefinition
   const output: OutputDefinition = useMemo(() => ({

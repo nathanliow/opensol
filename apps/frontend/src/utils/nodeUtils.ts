@@ -455,6 +455,11 @@ export const nodeUtils = {
       return true;
     }
 
+    // Handle flow-loop connections to flow-top
+    if (connection.sourceHandle === "flow-loop" && connection.targetHandle === "flow-top") {
+      return true;
+    }
+
     // Connections between flow handles and input or output handles are not valid
     if (connection.sourceHandle === "flow-top" && (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
       return false;
@@ -471,6 +476,12 @@ export const nodeUtils = {
 
     // Additional check for flow-then/flow-else handles
     if ((connection.sourceHandle === "flow-then" || connection.sourceHandle === "flow-else") && 
+        (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
+      return false;
+    }
+
+    // Additional check for flow-loop handles
+    if (connection.sourceHandle === "flow-loop" && 
         (connection.targetHandle?.startsWith("input-") || connection.targetHandle?.startsWith("output"))) {
       return false;
     }

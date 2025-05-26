@@ -8,6 +8,7 @@ import ConditionalNode from "../components/nodes/code/ConditionalNode";
 import MathNode from "../components/nodes/code/MathNode";
 import FunctionNode from "../components/nodes/code/FunctionNode";
 import PrintNode from "../components/nodes/code/PrintNode";
+import RepeatNode from "../components/nodes/code/RepeatNode";
 
 import GetNode from "../components/nodes/blockchain/GetNode";
 import MintNode from "../components/nodes/blockchain/MintNode";
@@ -49,6 +50,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   PRINT: PrintNode,
   MATH: MathNode,
   CONDITIONAL: ConditionalNode,
+  REPEAT: RepeatNode,
 
   // Database
 
@@ -148,6 +150,45 @@ export const nodeTypes: Record<string, NodeType> = {
       handleId: 'output',
       type: 'string',
       value: ''
+    }
+  },
+  REPEAT: {
+    metadata: {
+      id: 'REPEAT',
+      label: 'REPEAT',
+      category: 'Code',
+      backgroundColor: 'bg-blue-300',
+      borderColor: 'border-blue-500',
+      primaryColor: 'blue-300',
+      secondaryColor: 'blue-500',
+      textColor: 'text-black'
+    },
+    defaultInputs: {
+      loopType: {
+        handleId: 'input-loopType',
+        type: 'string',
+        value: 'for'
+      },
+      count: {
+        handleId: 'input-count',
+        type: 'number',
+        value: 10
+      },
+      array: {
+        handleId: 'input-array',
+        type: 'string',
+        value: ''
+      },
+      iteratorName: {
+        handleId: 'input-iteratorName',
+        type: 'string',
+        value: 'i'
+      }
+    },
+    defaultOutput: {
+      handleId: 'output',
+      type: 'any',
+      value: null
     }
   },
   MATH: {

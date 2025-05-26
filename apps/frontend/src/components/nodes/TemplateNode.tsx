@@ -319,7 +319,7 @@ const CustomHandleComponent: FC<{
       id={handle.id}
       className={handle.className}
       isValidConnection={
-        handle.id === 'flow-then' || handle.id === 'flow-else' ? nodeUtils.validateFlowConnection : nodeUtils.validateOutputConnection
+        handle.id === 'flow-then' || handle.id === 'flow-else' || handle.id === 'flow-loop' ? nodeUtils.validateFlowConnection : nodeUtils.validateOutputConnection
       }
     />
   );
@@ -408,7 +408,6 @@ const useNodeInputs = (
     let hasChanged = false;
     
     inputs.forEach(input => {
-      // If input has a connection, update the input value with connected value
       if (nodeUtils.isInputConnected(input)) {
         const connectedValue = nodeUtils.getConnectedValue(input);
         if (connectedValue !== null && connectedValue !== undefined && connectedValue !== inputValues[input.id]) {
@@ -423,28 +422,29 @@ const useNodeInputs = (
     }
   }, [inputs, inputValues]);
   
-  // Debounced input change handler
   const handleInputChange = (inputId: string, value: any) => {
-    // Find the input definition
     const input = inputs.find(i => i.id === inputId);
     
-    // Don't update manually if this input is connected (unless explicitly from a connection)
     if (input && nodeUtils.isInputConnected(input)) {
       return;
     }
     
-    // Update the local state immediately for responsive UI
     setInputValues(prev => ({ ...prev, [inputId]: value }));
     
-    // Debounce the actual save operation
+    const shouldDebounce = input && (input.type === 'text' || input.type === 'textarea' || input.type === 'number');
+    
     if (onInputChange) {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-      
-      debounceTimeoutRef.current = setTimeout(() => {
+      if (shouldDebounce) {
+        if (debounceTimeoutRef.current) {
+          clearTimeout(debounceTimeoutRef.current);
+        }
+        
+        debounceTimeoutRef.current = setTimeout(() => {
+          onInputChange(inputId, value);
+        }, 500); // 500ms delay for text inputs
+      } else {
         onInputChange(inputId, value);
-      }, 500); // 500ms delay after user stops typing
+      }
     }
   };
   

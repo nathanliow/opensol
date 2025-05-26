@@ -244,6 +244,8 @@ export class FlowCompiler {
         return `print_${counter}`;
       case 'CONDITIONAL':
         return `condition_${counter}`;
+      case 'REPEAT':
+        return `repeat_${counter}`;
       case 'MINT':
         return `mint_${counter}`;
       case 'TRANSFER':
@@ -282,7 +284,7 @@ export class FlowCompiler {
       const dataDependencies = this.edges.filter(e => 
         e.target === nodeId && 
         e.targetHandle?.startsWith('input-') &&
-        !this.processedNodes.has(e.source)
+        !['flow-then', 'flow-else', 'flow-loop'].includes(e.sourceHandle || '')
       );
       
       dataDependencies.forEach(edge => {
@@ -295,45 +297,132 @@ export class FlowCompiler {
       
       // Handle print nodes specially to capture their print statements
       if (node.type === 'PRINT') {
-        const inputs = this.getNodeInputVarNames(node.id);
-        const inputVar = Object.values(inputs)[0];
-        if (inputVar) {
-          const varName = this.getNextVarName(node.type);
+        const dataInputs = this.getNodeInputVarNames(node.id);
+        
+        // Check if this node already has a variable name assigned
+        let varName = this.nodeOutputVarNames.get(node.id);
+        if (!varName) {
+          varName = this.getNextVarName(node.type);
           this.nodeOutputVarNames.set(node.id, varName);
-          
-          // Generate the variable assignment
-          const nodeCode = `const ${varName} = ${inputVar};`;
-          const indentedCode = '  '.repeat(indentLevel) + nodeCode;
-          codeLines.push(indentedCode);
-          
-          // Generate the print statement
-          const printCode = this.generatePrintCode(node, inputVar);
-          const indentedPrintCode = '  '.repeat(indentLevel) + printCode;
-          printStatements.push(indentedPrintCode);
-        } else {
-          // Handle print node with no input connections (direct template value)
-          const varName = this.getNextVarName(node.type);
-          this.nodeOutputVarNames.set(node.id, varName);
-          
-          const template = node.data.inputs?.['template']?.value || '';
-          const nodeCode = `const ${varName} = ${JSON.stringify(template)};`;
-          const indentedCode = '  '.repeat(indentLevel) + nodeCode;
-          codeLines.push(indentedCode);
-          
-          // Generate the print statement for template-only print nodes
-          let printStatement = '';
-          if (typeof template === 'string') {
-            if (!template.includes('$output$')) {
-              printStatement = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
-            } else {
-              printStatement = `printOutput += \`${template.replace(/\$output\$/g, `\${String(${varName})}`).replace(/`/g, '\\`')}\\n\`;`;
-            }
-          } else {
-            printStatement = `printOutput += \`${String(template).replace(/`/g, '\\`')}\\n\`;`;
-          }
-          const indentedPrintCode = '  '.repeat(indentLevel) + printStatement;
-          printStatements.push(indentedPrintCode);
         }
+        
+        // Check for flow connection
+        const flowEdge = this.edges.find(e => 
+          e.target === node.id && 
+          (e.targetHandle === 'flow-top' || e.targetHandle === 'flow-bottom')
+        );
+        
+        let template: string = '';
+        let isTemplateConnected = false;
+        
+        if (dataInputs['template']) {
+          isTemplateConnected = true;
+          template = dataInputs['template'];
+        } else {
+          template = String(node.data.inputs?.['template']?.value || '');
+        }
+        
+        let printCode = '';
+        if (flowEdge) {
+          const flowSourceVar = this.nodeOutputVarNames.get(flowEdge.source);
+          if (flowSourceVar) {
+            const sourceType = this.getNodeOutputType(flowEdge.source);
+            let outputExpr = '';
+            
+            switch (sourceType) {
+              case 'object':
+                outputExpr = `JSON.stringify(${flowSourceVar}, null, 2)`;
+                break;
+              case 'string':
+              case 'number':
+              case 'boolean':
+                outputExpr = `String(${flowSourceVar})`;
+                break;
+              case 'string[]':
+              case 'number[]':
+              case 'boolean[]':
+                outputExpr = `JSON.stringify(${flowSourceVar})`;
+                break;
+              default:
+                outputExpr = `(typeof ${flowSourceVar} === 'object' ? JSON.stringify(${flowSourceVar}, null, 2) : String(${flowSourceVar}))`;
+            }
+            
+            // Handle template replacement
+            if (isTemplateConnected) {
+              printCode = `printOutput += \`\${${template}.replace(/\\$output\\$/g, ${outputExpr})}\\n\`;`;
+            } else {
+              // Template is a literal string
+              if (template.includes('$output$')) {
+                const formattedTemplate = template.replace(/\$output\$/g, `\${${outputExpr}}`).replace(/`/g, '\\`');
+                printCode = `printOutput += \`${formattedTemplate}\\n\`;`;
+              } else {
+                printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+              }
+            }
+            
+            // Generate the variable assignment
+            const nodeCode = `const ${varName} = ${flowSourceVar};`;
+            const indentedCode = '  '.repeat(indentLevel) + nodeCode;
+            codeLines.push(indentedCode);
+            
+            // Add the print statement
+            const indentedPrintCode = '  '.repeat(indentLevel) + printCode;
+            printStatements.push(indentedPrintCode);
+          } else {
+            // Fallback if no flow source variable found
+            const nodeCode = `const ${varName} = ${JSON.stringify(template)};`;
+            const indentedCode = '  '.repeat(indentLevel) + nodeCode;
+            codeLines.push(indentedCode);
+            
+            printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+            const indentedPrintCode = '  '.repeat(indentLevel) + printCode;
+            printStatements.push(indentedPrintCode);
+          }
+        } else {
+          // No flow connection, check for data input connections
+          const inputVar = Object.values(dataInputs)[0];
+          if (inputVar) {
+            // Generate the variable assignment
+            const nodeCode = `const ${varName} = ${inputVar};`;
+            const indentedCode = '  '.repeat(indentLevel) + nodeCode;
+            codeLines.push(indentedCode);
+            
+            // Generate the print statement
+            printCode = this.generatePrintCode(node, inputVar);
+            const indentedPrintCode = '  '.repeat(indentLevel) + printCode;
+            printStatements.push(indentedPrintCode);
+          } else {
+            // Handle print node with no input connections (direct template value)
+            const nodeCode = `const ${varName} = ${JSON.stringify(template)};`;
+            const indentedCode = '  '.repeat(indentLevel) + nodeCode;
+            codeLines.push(indentedCode);
+            
+            // Generate the print statement for template-only print nodes
+            if (isTemplateConnected) {
+              printCode = `printOutput += \`\${${template}}\\n\`;`;
+            } else {
+              if (typeof template === 'string') {
+                if (!template.includes('$output$')) {
+                  printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+                } else {
+                  printCode = `printOutput += \`${template.replace(/\$output\$/g, `\${String(${varName})}`).replace(/`/g, '\\`')}\\n\`;`;
+                }
+              } else {
+                printCode = `printOutput += \`${String(template).replace(/`/g, '\\`')}\\n\`;`;
+              }
+            }
+            const indentedPrintCode = '  '.repeat(indentLevel) + printCode;
+            printStatements.push(indentedPrintCode);
+          }
+        }
+        
+        if (this.currentIndentLevel === 0) {
+          this.printOutputs.push(printCode);
+        }
+        
+        // Don't generate a separate variable assignment since PRINT nodes 
+        // are handled specially and don't need additional const declarations
+        // The print statement itself is what matters for loop/conditional bodies
       } else {
         // Generate code normally for non-print nodes
         const code = this.generateNodeCode(node);
@@ -350,7 +439,7 @@ export class FlowCompiler {
       // Restore previous indent level
       this.currentIndentLevel = savedIndentLevel;
       
-      // Follow flow connections (but not flow-then/flow-else which are handled by conditionals)
+      // Follow flow connections (but not flow-then/flow-else/flow-loop which are handled by conditionals and repeats)
       const flowEdges = this.edges.filter(e => 
         e.source === nodeId && 
         (e.sourceHandle === 'flow-bottom' || e.sourceHandle === 'flow-top') &&
@@ -527,6 +616,14 @@ export class FlowCompiler {
       case 'PRINT': {
         const dataInputs = this.getNodeInputVarNames(node.id);
         
+        // Check if this node already has a variable name assigned (from loop/conditional processing)
+        let printVarName = this.nodeOutputVarNames.get(node.id);
+        if (!printVarName) {
+          printVarName = this.getNextVarName(node.type);
+          this.nodeOutputVarNames.set(node.id, printVarName);
+        }
+        
+        // Check for flow connection
         const flowEdge = this.edges.find(e => 
           e.target === node.id && 
           (e.targetHandle === 'flow-top' || e.targetHandle === 'flow-bottom')
@@ -579,23 +676,32 @@ export class FlowCompiler {
                 printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
               }
             }
-            
-            // If we're inside a conditional block, don't add to global printOutputs
-            if (this.currentIndentLevel === 0) {
-              this.printOutputs.push(printCode);
-            }
-            
-            return `const ${varName} = ${flowSourceVar};`;
+          } else {
+            // Fallback if no flow source variable found
+            printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
           }
-        }
-        
-        // Fallback: no flow connection, just use template
-        if (isTemplateConnected) {
-          // Template is connected
-          printCode = `printOutput += \`\${${template}}\\n\`;`;
         } else {
-          // Template is in node data
-          printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+          // No flow connection, check for data input connections
+          const inputVar = Object.values(dataInputs)[0];
+          if (inputVar) {
+            // Generate the print statement
+            printCode = this.generatePrintCode(node, inputVar);
+          } else {
+            // Handle print node with no input connections (direct template value)
+            if (isTemplateConnected) {
+              printCode = `printOutput += \`\${${template}}\\n\`;`;
+            } else {
+              if (typeof template === 'string') {
+                if (!template.includes('$output$')) {
+                  printCode = `printOutput += \`${template.replace(/`/g, '\\`')}\\n\`;`;
+                } else {
+                  printCode = `printOutput += \`${template.replace(/\$output\$/g, `\${String(${printVarName})}`).replace(/`/g, '\\`')}\\n\`;`;
+                }
+              } else {
+                printCode = `printOutput += \`${String(template).replace(/`/g, '\\`')}\\n\`;`;
+              }
+            }
+          }
         }
         
         if (this.currentIndentLevel === 0) {
@@ -603,7 +709,7 @@ export class FlowCompiler {
         }
         
         const templateVar = isTemplateConnected ? template : `"${template}"`;
-        return `const ${varName} = ${templateVar};`;
+        return `const ${printVarName} = ${templateVar};`;
       }
 
       case 'CONDITIONAL': {
@@ -761,6 +867,116 @@ export class FlowCompiler {
         return code;
       }
 
+      case 'REPEAT': {
+        const inputs = this.getNodeInputVarNames(node.id);
+        const nodeInputs = node.data.inputs;
+        
+        const loopType = nodeInputs?.['loopType']?.value || 'for';
+        const iteratorName = nodeInputs?.['iteratorName']?.value || 'i';
+        
+        let loopHeader = '';
+        let arrayVar = '';
+        
+        if (loopType === 'for') {
+          const countInput = inputs['count'];
+          const countValue = countInput || String(nodeInputs?.['count']?.value || '10');
+          const countConverted = countInput ? `Number(${countInput})` : Number(countValue);
+          
+          loopHeader = `for (let ${iteratorName} = 0; ${iteratorName} < ${countConverted}; ${iteratorName}++)`;
+        } else {
+          const arrayInput = inputs['array'];
+          let arrayValue = arrayInput || String(nodeInputs?.['array']?.value || '[]');
+          
+          if (arrayInput) {
+            arrayVar = `${varName}_array`;
+            loopHeader = `const ${arrayVar} = Array.isArray(${arrayInput}) ? ${arrayInput} : JSON.parse(String(${arrayInput}) || '[]');\n`;
+            loopHeader += `for (const ${iteratorName} of ${arrayVar})`;
+          } else {
+            try {
+              const parsedArray = JSON.parse(arrayValue);
+              if (Array.isArray(parsedArray)) {
+                arrayVar = `${varName}_array`;
+                loopHeader = `const ${arrayVar} = ${JSON.stringify(parsedArray)};\n`;
+                loopHeader += `for (const ${iteratorName} of ${arrayVar})`;
+              } else {
+                throw new Error('Not an array');
+              }
+            } catch {
+              // Fallback: treat as string and try to parse at runtime
+              arrayVar = `${varName}_array`;
+              loopHeader = `const ${arrayVar} = JSON.parse(${JSON.stringify(arrayValue)} || '[]');\n`;
+              loopHeader += `for (const ${iteratorName} of ${arrayVar})`;
+            }
+          }
+        }
+        
+        // Find connected nodes for loop body
+        const loopEdges = this.edges.filter(e => e.source === node.id && e.sourceHandle === 'flow-loop');
+        
+        let codeLines = [`let ${varName} = [];`];
+        
+        if (loopEdges.length > 0) {
+          if (arrayVar) {
+            codeLines.push(loopHeader.split('\n')[0]); 
+            codeLines.push(loopHeader.split('\n')[1] + ' {'); 
+          } else {
+            codeLines.push(loopHeader + ' {');
+          }
+          
+          const loopBodyNodeId = loopEdges[0].target;
+          const { code: loopBodyCode, printStatements: loopPrintStatements } = this.generateConditionalBranchCode(loopBodyNodeId, this.currentIndentLevel + 1);
+          
+          if (loopBodyCode) {
+            codeLines.push(loopBodyCode);
+          }
+          
+          // Add print statements
+          loopPrintStatements.forEach(printStmt => {
+            codeLines.push(printStmt);
+          });
+          
+          const loopBodyNode = this.nodes.find(n => n.id === loopBodyNodeId);
+          if (loopBodyNode && loopBodyNode.type !== 'PRINT') {
+            const loopVarMatch = loopBodyCode.match(/(?:const|let)\s+(\w+)/);
+            if (loopVarMatch) {
+              codeLines.push(`  ${varName}.push(${loopVarMatch[1]});`);
+            } else {
+              codeLines.push(`  ${varName}.push(${iteratorName});`);
+            }
+          } else {
+            codeLines.push(`  ${varName}.push(${iteratorName});`);
+          }
+          
+          codeLines.push(`}`);
+        } else {
+          if (loopType === 'for') {
+            const countInput = inputs['count'];
+            const countValue = countInput || String(nodeInputs?.['count']?.value || '10');
+            const countConverted = countInput ? `Number(${countInput})` : Number(countValue);
+            codeLines.push(`for (let ${iteratorName} = 0; ${iteratorName} < ${countConverted}; ${iteratorName}++) {`);
+            codeLines.push(`  ${varName}.push(${iteratorName});`);
+            codeLines.push(`}`);
+          } else {
+            if (arrayVar) {
+              codeLines.push(loopHeader.split('\n')[0]); // Array declaration
+              codeLines.push(loopHeader.split('\n')[1] + ' {'); // Loop start
+            } else {
+              codeLines.push(loopHeader + ' {');
+            }
+            codeLines.push(`  ${varName}.push(${iteratorName});`);
+            codeLines.push(`}`);
+          }
+        }
+        
+        let code = codeLines.join('\n');
+        
+        if (!this.isGeneratingDisplayCode) {
+          code += `\nupdateNodeOutput(${JSON.stringify(node.id)}, ${varName});`;
+        }
+        
+        return code;
+      }
+
       case 'CONST': {
         const dataType = node.data.inputs?.['dataType']?.value || 'string';
         let formattedValue;
@@ -888,7 +1104,7 @@ export class FlowCompiler {
       const dataDependencies = this.edges.filter(e => 
         e.target === nodeId && 
         e.targetHandle?.startsWith('input-') &&
-        !['flow-then', 'flow-else'].includes(e.sourceHandle || '')
+        !['flow-then', 'flow-else', 'flow-loop'].includes(e.sourceHandle || '')
       );
       
       dataDependencies.forEach(edge => {       
@@ -896,7 +1112,11 @@ export class FlowCompiler {
           e.target === nodeId && (e.sourceHandle === 'flow-then' || e.sourceHandle === 'flow-else')
         );
         
-        if (!isInConditionalBranch) {
+        const isInLoopBranch = this.edges.some(e => 
+          e.target === nodeId && e.sourceHandle === 'flow-loop'
+        );
+        
+        if (!isInConditionalBranch && !isInLoopBranch) {
           visitNode(edge.source);
         }
       });
@@ -911,7 +1131,7 @@ export class FlowCompiler {
       }
 
       this.edges
-        .filter(e => e.source === nodeId && !['flow-then', 'flow-else'].includes(e.sourceHandle || ''))
+        .filter(e => e.source === nodeId && !['flow-then', 'flow-else', 'flow-loop'].includes(e.sourceHandle || ''))
         .forEach(e => visitNode(e.target));
     };
 
@@ -994,7 +1214,7 @@ export class FlowCompiler {
       const dataDependencies = this.edges.filter(e => 
         e.target === nodeId && 
         e.targetHandle?.startsWith('input-') &&
-        !['flow-then', 'flow-else'].includes(e.sourceHandle || '')
+        !['flow-then', 'flow-else', 'flow-loop'].includes(e.sourceHandle || '')
       );
       
       dataDependencies.forEach(edge => {
@@ -1002,7 +1222,11 @@ export class FlowCompiler {
           e.target === nodeId && (e.sourceHandle === 'flow-then' || e.sourceHandle === 'flow-else')
         );
         
-        if (!isInConditionalBranch) {
+        const isInLoopBranch = this.edges.some(e => 
+          e.target === nodeId && e.sourceHandle === 'flow-loop'
+        );
+        
+        if (!isInConditionalBranch && !isInLoopBranch) {
           visitNodeForDisplay(edge.source);
         }
       });
@@ -1019,7 +1243,7 @@ export class FlowCompiler {
       // Visit child nodes, but skip nodes connected via flow-then/flow-else 
       // (they are processed within conditional blocks)
       this.edges
-        .filter(e => e.source === nodeId && !['flow-then', 'flow-else'].includes(e.sourceHandle || ''))
+        .filter(e => e.source === nodeId && !['flow-then', 'flow-else', 'flow-loop'].includes(e.sourceHandle || ''))
         .forEach(e => visitNodeForDisplay(e.target));
     };
 
@@ -1052,12 +1276,30 @@ export class FlowCompiler {
 ${functionCode}
 return { execute: ${this.functionName}, FlowCompilerOutput: ${this.functionName} };
 `;
-    const runtimeFn = new Function(wrappedFunctionCode)() as {
-      execute: () => Promise<any>;
-      FlowCompilerOutput: () => Promise<any>;
-    };
-    console.log('functionCode', functionCode);
-    console.log('displayCode', displayCode);
+    
+    console.log('=== GENERATED FUNCTION CODE ===');
+    console.log(functionCode);
+    console.log('=== GENERATED DISPLAY CODE ===');
+    console.log(displayCode);
+    console.log('=== WRAPPED FUNCTION CODE ===');
+    console.log(wrappedFunctionCode);
+    console.log('=== END GENERATED CODE ===');
+    
+    let runtimeFn;
+    try {
+      runtimeFn = new Function(wrappedFunctionCode)() as {
+        execute: () => Promise<any>;
+        FlowCompilerOutput: () => Promise<any>;
+      };
+    } catch (error) {
+      console.error('=== COMPILATION ERROR ===');
+      console.error('Error:', error);
+      console.error('=== PROBLEMATIC CODE ===');
+      console.error(wrappedFunctionCode);
+      console.error('=== END ERROR DEBUG ===');
+      throw error;
+    }
+    
     return {
       functionName: this.functionName,
       execute: runtimeFn.execute,
