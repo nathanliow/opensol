@@ -16,11 +16,12 @@ export interface FlowNode {
     x: number;
     y: number;
   };
-  selected?: boolean;
   data: {
     inputs?: Inputs;
     output?: Output;
   };
+  selected?: boolean;
+  dragging?: boolean;
 }
 
 export interface FlowEdge {

@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import { useEdges, useNodes, useReactFlow } from '@xyflow/react';
 import TemplateNode from '../TemplateNode';
 import { InputDefinition, createInputDefinition } from '../../../types/InputTypes';
@@ -22,6 +22,32 @@ export default function GetNode({ id }: GetNodeProps) {
   const nodes = useNodes() as FlowNode[];
   const { network } = useConfig();
   
+  useEffect(() => {
+    const nodeData = nodeUtils.getNodeData(nodes, id);
+    const existingFunction = nodeData.inputs?.function?.value;
+    
+    if (existingFunction && typeof existingFunction === 'string' && existingFunction !== selectedFunction) {
+      setSelectedFunction(existingFunction);
+      
+      // Initialize parameters from existing node data
+      const newParameters: Record<string, string> = { 
+        network: String(nodeData.inputs?.network?.value || network || 'devnet')
+      };
+      
+      const functionTemplate = blockFunctionTemplates.find(t => t.metadata.name === existingFunction);
+      if (functionTemplate) {
+        functionTemplate.metadata.parameters.forEach((param) => {
+          const existingValue = nodeData.inputs?.[param.name]?.value;
+          if (existingValue) {
+            newParameters[param.name] = String(existingValue);
+          }
+        });
+      }
+      
+      setParameters(newParameters);
+    }
+  }, [nodes, id, selectedFunction, blockFunctionTemplates, network]);
+
   const handleFunctionChange = useCallback((value: string) => {
     setSelectedFunction(value);
     const newParameters: Record<string, string> = { 

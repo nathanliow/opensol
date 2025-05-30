@@ -14,6 +14,7 @@ import { DashboardContent } from '../../components/dashboard/DashboardContent';
 import { flowTemplates } from '@/flow-templates';
 import { getUserData } from '@/lib/user';
 import { UserData } from '@/types/UserTypes';
+import { courses } from '@/courses';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -46,7 +47,10 @@ export default function DashboardPage() {
   const [modalMode, setModalMode] = useState<'edit' | 'delete'>('edit');
 
   // New state for active tab
-  const [tab, setTab] = useState<'my' | 'public' | 'earnings' | 'tutorial'>('my');
+  const [tab, setTab] = useState<'my' | 'public' | 'earnings' | 'courses'>('my');
+
+  // Add state for tracking expanded courses
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
 
   // Use the selected tab to determine which projects to display
   const displayProjects = tab === 'my' ? projects : publicProjects;
@@ -366,14 +370,18 @@ export default function DashboardPage() {
     }
   };
 
-  // Tutorial units (static for now)
-  const tutorialUnits = [
-    {
-      id: 'intro-blocks',
-      title: 'Introduction to Blocks',
-      description: 'Learn how to place your first Function block and understand basic concepts.'
-    }
-  ];
+  // Add function to toggle course expansion
+  const toggleCourseExpansion = (courseId: string) => {
+    setExpandedCourses(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(courseId)) {
+        newSet.delete(courseId);
+      } else {
+        newSet.add(courseId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <>
@@ -402,25 +410,48 @@ export default function DashboardPage() {
             setTab={setTab} 
           />
 
-          {/* Dashboard Content or Tutorials */}
-          {tab === 'tutorial' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-              {tutorialUnits.map(unit => (
-                <div key={unit.id} className="bg-[#1e1e1e] p-6 rounded-lg shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-2">{unit.title}</h3>
-                    <p className="text-gray-400 text-sm mb-4">{unit.description}</p>
-                  </div>
+          {/* Dashboard Content */}
+          {tab === 'courses' ? (
+            <div className="space-y-4 pt-4">
+              {Object.values(courses).map(course => (
+                <div key={course.id} className="bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden">
+                  {/* Course Header */}
                   <button
-                    onClick={() => {
-                      // Navigate to canvas in tutorial mode
-                      localStorage.removeItem('currentProjectId');
-                      router.push(`/?tutorial=${unit.id}`);
-                    }}
-                    className="mt-auto py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-md font-medium"
+                    onClick={() => toggleCourseExpansion(course.id)}
+                    className="w-full p-6 text-left hover:bg-[#2a2a2a] transition-colors flex items-center justify-between"
                   >
-                    Start
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
+                      <p className="text-gray-400 text-sm">{course.description}</p>
+                    </div>
+                    <div className="ml-4">
+                      {expandedCourses.has(course.id) ? (
+                        <Icons.ChevronDownIcon width={20} height={20} className="text-gray-400" />
+                      ) : (
+                        <Icons.ChevronRightIcon width={20} height={20} className="text-gray-400" />
+                      )}
+                    </div>
                   </button>
+                  
+                  {/* Course Lessons */}
+                  {expandedCourses.has(course.id) && (
+                    <div className="border-t border-gray-700">
+                      {course.lessons.map((lesson, index) => (
+                        <button
+                          key={lesson.id}
+                          onClick={() => {
+                            // Navigate to canvas in course mode with specific lesson
+                            localStorage.removeItem('currentProjectId');
+                            router.push(`/?courseId=${course.id}&lesson=${lesson.id}`);
+                          }}
+                          className="w-full text-left py-3 px-8 ml-4 hover:bg-blue-600/20 border-l-2 border-transparent hover:border-blue-600 transition-colors group"
+                        >
+                          <div className="font-medium text-sm group-hover:text-blue-400">{lesson.title}</div>
+                          <div className="text-gray-400 text-xs mt-1">{lesson.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

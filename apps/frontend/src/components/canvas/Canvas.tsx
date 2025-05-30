@@ -38,10 +38,12 @@ import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { Icons } from "../icons/icons";
 import { Project } from "@/types/ProjectTypes";
 import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/src/types";
-import TutorialPanel from "@/tutorials/components/TutorialPanel";
+import LessonPanel from "@/components/lesson/LessonPanel";
 import { useSearchParams } from "next/navigation";
 import { nodeUtils } from "@/utils/nodeUtils";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
+import { useLesson } from "@/contexts/LessonContext";
+import { courses } from "@/courses";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -66,18 +68,22 @@ function Flow() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const projectLoadedRef = useRef(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const lessonInitializedRef = useRef<string | null>(null);
+  const startingNodesLoadedRef = useRef<string | null>(null);
 
   // Hooks
   const reactFlowInstance = useReactFlow();
   const { supabaseUser } = useUserAccountContext();
   const searchParams = useSearchParams();
   const { canUndo, canRedo, undo, redo, saveState, clearHistory, isApplyingHistory } = useUndoRedo(setNodes, setEdges);
-  const tutorialUnitId = searchParams?.get('tutorial');
-  const tutorialMode = !!tutorialUnitId;
+  const { startLesson, active: lessonActive, courseId, resetLesson, exitLesson, lessonIndex } = useLesson();
+  const urlCourseId = searchParams?.get('courseId');
+  const urlLessonId = searchParams?.get('lesson');
+  const lessonMode = !!(urlCourseId && urlLessonId);
   
   const nodeTypesData = useMemo(() => createNodeTypes(setNodes), [setNodes]);
 
-  const canEdit = tutorialMode || isProjectOwner;
+  const canEdit = lessonMode || isProjectOwner;
 
   // Handle project change notification from Menu component
   const handleProjectChange = useCallback(() => {
@@ -87,10 +93,13 @@ function Flow() {
 
   // Load project from localStorage
   useEffect(() => {
-    if (tutorialMode) {
-      // For tutorials, start with blank canvas
-      setNodes([]);
-      setEdges([]);
+    if (lessonMode) {
+      // For Lessons, only start with blank canvas if no starting nodes have been loaded
+      // Check if starting nodes are already loaded for the current lesson
+      if (startingNodesLoadedRef.current === null) {
+        setNodes([]);
+        setEdges([]);
+      }
       setIsLoading(false);
       return;
     }
@@ -158,11 +167,82 @@ function Flow() {
     return () => {
       projectLoadedRef.current = false;
     };
-  }, [supabaseUser, setNodes, setEdges, isLoading, tutorialMode]);
+  }, [supabaseUser, setNodes, setEdges, isLoading, lessonMode]);
+
+  // Start Lesson lesson when URL parameters are detected
+  useEffect(() => {
+    if (urlCourseId && urlLessonId) {
+      const lessonKey = `${urlCourseId}-${urlLessonId}`;
+      
+      // Only start the lesson if we haven't already initialized this exact lesson
+      if (lessonInitializedRef.current !== lessonKey) {
+        console.log('Starting lesson from URL:', urlCourseId, urlLessonId);
+        lessonInitializedRef.current = lessonKey;
+        startLesson(urlCourseId, urlLessonId);
+      }
+    }
+  }, [urlCourseId, urlLessonId, startLesson]);
+
+  useEffect(() => {
+    if (!lessonActive) {
+      lessonInitializedRef.current = null;
+    }
+  }, [lessonActive]);
+
+  useEffect(() => {
+    if (!lessonActive || !courseId || lessonIndex < 0) {
+      console.log('Early return due to missing data:', { lessonActive, courseId, lessonIndex });
+      return;
+    }
+    
+    const timeoutId = setTimeout(() => {
+      const currentCourse = courses[courseId];
+      if (!currentCourse) {
+        console.log('No course found for courseId:', courseId);
+        return;
+      }
+      
+      const currentLesson = currentCourse.lessons[lessonIndex];
+      if (!currentLesson) {
+        console.log('No lesson found at index:', lessonIndex, 'in course:', currentCourse);
+        return;
+      }
+            
+      if (!currentLesson.startNodes || !currentLesson.startEdges) {
+        console.log('Lesson missing startNodes or startEdges');
+        return;
+      }
+      
+      const lessonKey = `${courseId}-${currentLesson.id}`;
+      
+      // Only load starting nodes if we haven't loaded them for this specific lesson yet
+      if (startingNodesLoadedRef.current !== lessonKey) {
+        setNodes(currentLesson.startNodes);
+        setEdges(currentLesson.startEdges);
+        startingNodesLoadedRef.current = lessonKey;
+        
+        // Clear history and save new state for undo/redo
+        clearHistory();
+        setTimeout(() => {
+          saveState(currentLesson.startNodes || [], currentLesson.startEdges || []);
+        }, 100);
+      } else {
+        console.log('Starting nodes already loaded for this lesson');
+      }
+    }, 50); 
+    
+    return () => clearTimeout(timeoutId);
+  }, [lessonActive, courseId, lessonIndex, setNodes, setEdges, clearHistory, saveState]);
+
+  useEffect(() => {
+    if (!lessonActive) {
+      startingNodesLoadedRef.current = null;
+    }
+  }, [lessonActive]);
 
   // Save state to history when nodes or edges change
   useEffect(() => {
-    if (tutorialMode) return; 
+    if (lessonMode) return; 
     if (!projectLoadedRef.current || isLoading) return; 
     if (isNodeDragging) return; 
     if (isApplyingHistory()) return; 
@@ -175,7 +255,7 @@ function Flow() {
     }, 100); // Reduced debounce time
     
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, tutorialMode, isLoading, isNodeDragging, saveState, isApplyingHistory]);
+  }, [nodes, edges, lessonMode, isLoading, isNodeDragging, saveState, isApplyingHistory]);
 
   // Keyboard shortcuts for undo/redo
   useEffect(() => {
@@ -198,7 +278,8 @@ function Flow() {
   // Auto-save changes to Supabase
   useEffect(() => {
     console.log('nodes', nodes);
-    if (tutorialMode) return; 
+    console.log('edges', edges);
+    if (lessonMode) return; 
     
     if (!projectId || !supabaseUser || isLoading || !projectLoadedRef.current) return;
     if (isNodeDragging) return;
@@ -234,7 +315,7 @@ function Flow() {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
-  }, [nodes, edges, projectId, supabaseUser, isLoading, isNodeDragging, tutorialMode]);
+  }, [nodes, edges, projectId, supabaseUser, isLoading, isNodeDragging, lessonMode]);
 
   const handleClear = useCallback(() => {
     setOutput('');
@@ -506,7 +587,6 @@ function Flow() {
 
   return (
     <div className="w-full h-screen flex">
-      {/* Left section: Canvas */}
       <div className="flex-grow h-full" ref={reactFlowWrapper}>
         <ReactFlow
           nodes={nodes}
@@ -587,7 +667,6 @@ function Flow() {
               setNodes(restoredNodes);
               setEdges(restoredEdges);
               
-              // Clear history and save restored state
               clearHistory();
               setTimeout(() => {
                 saveState(restoredNodes, restoredEdges);
@@ -598,10 +677,9 @@ function Flow() {
         </ReactFlow>
       </div>
 
-      {/* Right section: Tutorial Panel (30% width) */}
-      {tutorialMode && tutorialUnitId && (
+      {lessonActive && (
         <div style={{ width: '30%', maxWidth: '420px', height: '100%' }}>
-          <TutorialPanel unitId={tutorialUnitId} nodes={nodes} edges={edges} />
+          <LessonPanel nodes={nodes} edges={edges} output={output} />
         </div>
       )}
     </div>

@@ -44,7 +44,7 @@ import {
   FiRotateCw,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { IoMdColorWand } from "react-icons/io";
 import { 
   MdCheck, 
@@ -116,6 +116,7 @@ export const Icons = {
   FiUpload,
   FiLogOut,
   ChevronDownIcon,
+  ChevronRightIcon,
   FiGitMerge,
   FiBox,
   FiBook,

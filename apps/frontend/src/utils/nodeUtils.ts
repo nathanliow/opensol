@@ -25,8 +25,32 @@ const HANDLE_STYLES = {
 /**
  * Utility functions for working with nodes and edges in the flow
  */
-export const nodeUtils = {
-  
+export const nodeUtils: {
+  updateNodeInput: (nodeId: string, inputName: string, inputId: string, inputType: InputValueTypeString | undefined, inputValue: InputValueType | undefined, setNodes: (updater: (nodes: Node[]) => Node[]) => void) => void;
+  updateNodeOutput: (nodeId: string, outputType: OutputValueTypeString, outputValue: OutputValueType, setNodes: (updater: (nodes: Node[]) => Node[]) => void) => void;
+  getFlowNode: (nodes: Node[], id: string) => FlowNode | undefined;
+  getValue: (data: Inputs | undefined, id: string, defaultValue: any) => any;
+  isInputConnected: (input: InputDefinition) => boolean;
+  getConnectedValue: (input: InputDefinition) => any;
+  toReactFlowPosition: (position: HandlePosition) => Position;
+  getHandleStyle: (position: HandlePosition, offsetY?: number) => any;
+  validateFlowConnection: (connection: any) => boolean;
+  validateOutputConnection: (connection: any) => boolean;
+  findConnectedEdges: (edges: Edge[], nodeId: string) => Edge[];
+  findOutgoingEdges: (edges: Edge[], nodeId: string) => Edge[];
+  findIncomingEdges: (edges: Edge[], nodeId: string) => Edge[];
+  findSourceNodeForInput: (nodes: Node[], edges: Edge[], targetNodeId: string, inputId: string) => Node | undefined;
+  getConnectedValueFromNodes: (nodes: Node[], edges: Edge[], targetNodeId: string, inputId: string) => any;
+  isInputConnectedInFlow: (edges: Edge[], nodeId: string, inputId: string) => boolean;
+  findNodesConnectedToOutput: (nodes: Node[], edges: Edge[], sourceNodeId: string) => Node[];
+  createInputsFromSchema: (schema: Record<string, { type: string; description?: string; default?: any; enum?: any[]; options?: { value: string; label: string }[] }>) => InputDefinition[];
+  createOutputFromSchema: (schema: { type: string; description?: string }) => any;
+  getExecutionPath: (nodes: FlowNode[], edges: Edge[], startNodeId: string) => FlowNode[];
+  getConnectedValueById: (edges: Edge[], nodes: Node[], nodeId: string, paramName: string) => any;
+  createConnectionGetter: (edges: Edge[], nodes: Node[], nodeId: string, paramName: string) => () => any;
+  getNodeData: (nodes: FlowNode[], id: string) => { inputs: Inputs; output: Output };
+  validateConnection: (connection: any, nodes: FlowNode[]) => boolean;
+} = {
   /**
    * Update a node's input data
    * @param nodeId - The id of the node to update
