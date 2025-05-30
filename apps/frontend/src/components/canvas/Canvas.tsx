@@ -190,6 +190,8 @@ function Flow() {
   }, [lessonActive]);
 
   useEffect(() => {
+    if (!lessonMode) return;
+    
     if (!lessonActive || !courseId || lessonIndex < 0) {
       console.log('Early return due to missing data:', { lessonActive, courseId, lessonIndex });
       return;
@@ -232,7 +234,7 @@ function Flow() {
     }, 50); 
     
     return () => clearTimeout(timeoutId);
-  }, [lessonActive, courseId, lessonIndex, setNodes, setEdges, clearHistory, saveState]);
+  }, [lessonMode, lessonActive, courseId, lessonIndex, setNodes, setEdges, clearHistory, saveState]);
 
   useEffect(() => {
     if (!lessonActive) {

@@ -21,7 +21,7 @@ import BirdeyeNode from "../components/nodes/provider/BirdeyeNode";
  * FRONTEND TYPES FOR NODES AND EDGES
  */
 
-export type NodeCategory = 'Code' | 'Database' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
+export type NodeCategory = 'Code' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
 
 export interface NodeType {
   metadata: NodeTypeMetadata;
@@ -51,8 +51,6 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   MATH: MathNode,
   CONDITIONAL: ConditionalNode,
   REPEAT: RepeatNode,
-
-  // Database
 
   // Blockchain
   GET: GetNode,
@@ -263,9 +261,6 @@ export const nodeTypes: Record<string, NodeType> = {
       value: ''
     }
   },
-  /* -------------------------------------------------------------- */
-  /* -------------------------- Database -------------------------- */
-  /* -------------------------------------------------------------- */
 
   /* -------------------------------------------------------------- */
   /* -------------------------- Blockchain ------------------------ */

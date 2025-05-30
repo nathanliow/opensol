@@ -27,7 +27,7 @@ export const NodeSidebar = ({
     setIsOpen(!isOpen);
   };
 
-  const categories: NodeCategory[] = ['Code', 'Database', 'Blockchain', 'DeFi', 'Provider', 'Misc'];
+  const categories: NodeCategory[] = ['Code', 'Blockchain', 'DeFi', 'Provider', 'Misc'];
   
   // Group nodes by category
   const nodesByCategory = categories.reduce((acc, category) => {
@@ -225,8 +225,6 @@ function getCategoryIcon(category: NodeCategory) {
   switch (category) {
     case "Code":
       return <Icons.FiBox size={14} />;
-    case "Database":
-      return <Icons.FiDatabase size={14} />;
     case "Blockchain":
       return <Icons.FiShare2 size={14} />;
     case "DeFi":

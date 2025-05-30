@@ -138,7 +138,7 @@ Add your node to the `NodeTypes.ts` file:
 import MyNewNode from "../components/nodes/path/to/MyNewNode";
 
 // Add to NodeCategory if needed
-export type NodeCategory = 'Code' | 'Database' | /* ... */ | 'MyCategory';
+export type NodeCategory = 'Code' | /* ... */ | 'MyCategory';
 
 // Add to nodeTypesMetadata
 export const nodeTypesMetadata: Record<string, NodeTypeMetadata> = {

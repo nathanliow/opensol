@@ -1,7 +1,7 @@
 import { Course } from '@/types/CourseTypes';
-import { lesson_1_1 } from './course-1';
+import { lesson_1_1, lesson_1_2, lesson_1_3 } from './course-1';
 import { lesson_2_1, lesson_2_2 } from './course-2';
-import { lesson_3_1 } from './course-3';
+import { lesson_3_1, lesson_3_2 } from './course-3';
 
 export const courses: Record<string, Course> = {
   'course-1': {
@@ -10,12 +10,12 @@ export const courses: Record<string, Course> = {
     description: 'Learn the fundamental concepts of Solana',
     lessons: [
       lesson_1_1, // Overview
-      // lesson_2_2: Accounts (User accounts, Token accounts, Program accounts, System accounts)
-      // lesson-2-3: Transactions (transactions change blockchain state, sending tokens, creating accounts, invoke programs)
-      // lesson-2-4: Blocks (slots)
-      // lesson-2-5: Validators and Consensus
-      // lesson-2-6: Programs
-      // lesson-2-7: Ecosystem
+      lesson_1_2, // Accounts 
+      lesson_1_3, // Transactions 
+      // lesson-1-4: Blocks (slots)
+      // lesson-1-5: Validators, Consensus, and Propagation
+      // lesson-1-6: Programs
+      // lesson-1-7: Ecosystem
     ],
   },
   'course-2': {
@@ -33,7 +33,7 @@ export const courses: Record<string, Course> = {
     description: 'Learn how to use Helius to fetch, read, and understand data from the blockchain',
     lessons: [
       lesson_3_1, // What is Helius?
-      // lesson_3_2: Fetching asset data with Helius
+      lesson_3_2, // Fetching asset data with Helius
       // lesson_3_3: Fetching transaction data with Helius (transaction history, transaction details, pagination etc.)
       // lesson_3_4: Getting PnL of a wallet
     ],

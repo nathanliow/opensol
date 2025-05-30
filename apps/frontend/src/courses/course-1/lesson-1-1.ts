@@ -36,5 +36,11 @@ export const lesson_1_1: Lesson = {
       description: 'Despite this growth, Solana and the web3 industry as a whole is still in its infancy and building the skills to shape the future of Solana can be one of the greatest investments you can make for yourself.',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
     },
+    {
+      id: 'solana-overview-6',
+      title: '',
+      description: 'Solana development typically involves TypeScript and Rust but other languages like Python, Java, and C++ are also used. Most Solana applications don\'t require a program nor harder languages like Rust. Some common frameworks and libraries include [solana/web3.js](https://solana.com/docs/clients/javascript), [Anchor](https://www.anchor-lang.com/docs), and [Gill](https://github.com/solana-foundation/gill).',
+      checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
+    },
   ],
 };

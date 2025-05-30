@@ -16,6 +16,7 @@ import { getBlockProduction } from './provider/helius/getBlockProduction';
 import { getBlocks } from './provider/helius/getBlocks';
 import { getBlockTime } from './provider/helius/getBlockTime';
 import { getClusterNodes } from './provider/helius/getClusterNodes';
+import { getEnhancedTransaction } from './provider/helius/getEnhancedTransaction';
 import { getEpochInfo } from './provider/helius/getEpochInfo';
 import { getEpochSchedule } from './provider/helius/getEpochSchedule';
 import { getFeeForMessage } from './provider/helius/getFeeForMessage';
@@ -33,6 +34,7 @@ import { getMaxRetransmitSlot } from './provider/helius/getMaxRetransmitSlot';
 import { getMaxShredInsertSlot } from './provider/helius/getMaxShredInsertSlot';
 import { getMinimumBalanceForRentExemption } from './provider/helius/getMinimumBalanceForRentExemption';
 import { getNftEditions } from './provider/helius/getNftEditions';
+import { getPriorityFeeEstimate } from './provider/helius/getPriorityFeeEstimate';
 import { getProgramAccounts } from './provider/helius/getProgramAccounts';
 import { getRecentPerformanceSamples } from './provider/helius/getRecentPerformanceSamples';
 import { getSignaturesForAddress } from './provider/helius/getSignaturesForAddress';
@@ -47,6 +49,7 @@ import { getTokenLargestAccounts } from './provider/helius/getTokenLargestAccoun
 import { getTokenSupply } from './provider/helius/getTokenSupply';
 import { getTransaction } from './provider/helius/getTransaction';
 import { getTransactionCount } from './provider/helius/getTransactionCount';
+import { getTransactionHistory } from './provider/helius/getTransactionHistory';
 import { getVersion } from './provider/helius/getVersion';
 import { getVoteAccounts } from './provider/helius/getVoteAccounts';
 import { isBlockhashValid } from './provider/helius/isBlockhashValid';
@@ -102,6 +105,7 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getBlockProduction,
     getBlockCommitment,
     getClusterNodes,
+    getEnhancedTransaction,
     getEpochInfo,
     getEpochSchedule,
     getFeeForMessage,
@@ -119,6 +123,7 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getMaxShredInsertSlot,
     getMinimumBalanceForRentExemption,
     getNftEditions,
+    getPriorityFeeEstimate,
     getProgramAccounts,
     getRecentPerformanceSamples,
     getSignaturesForAddress,
@@ -133,6 +138,7 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getTokenSupply,
     getTransaction,
     getTransactionCount,
+    getTransactionHistory,
     getVersion,
     getVoteAccounts,
     isBlockhashValid,
