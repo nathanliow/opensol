@@ -1,38 +1,18 @@
 import { BlockFunctionTemplate } from "../../../../../frontend/src/components/services/blockTemplateService";
 
-export const getSignaturesForAsset: BlockFunctionTemplate = {
+export const getCompressedBalanceByOwner: BlockFunctionTemplate = {
   metadata: {
-    name: 'getSignaturesForAsset',
+    name: 'getCompressedBalanceByOwner',
     description:
-      'Get a list of transaction signatures related to a compressed asset',
+      'Returns the total balance of the owner\'s compressed accounts.',
     blockCategory: 'Provider',
     blockType: 'HELIUS',
     parameters: [
       {
-        name: 'assetId',
+        name: 'owner',
         type: 'string',
-        description: 'Asset ID to get'
-      },
-      {
-        name: 'page',
-        type: 'number',
-        description: 'Page to get'
-      },
-      {
-        name: 'limit',
-        type: 'number',
-        description: 'Limit to get'
-      },
-      { 
-        name: 'before',
-        type: 'string',
-        description: 'Before to get'
-      },
-      {
-        name: 'after',
-        type: 'string',
-        description: 'After to get'
-      },
+        description: 'The owner of the compressed accounts to get the balance for.'
+      }
     ],
     requiredKeys: ['helius'],
     requiredKeyTiers: {
@@ -40,24 +20,16 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
     },
     output: {
       type: 'object',
-      description: 'List of transaction signatures related to a compressed asset'
+      description: 'Successfully retrieved compressed balance by owner from the Solana blockchain'
     }
   },
   execute: async (params: Record<string, any>) => {
     try {
       const { 
-        assetId, 
-        page, 
-        limit, 
-        before, 
-        after, 
+        owner,
         apiKey, 
         network = 'devnet' 
       } = params;
-      
-      if (!assetId) {
-        throw new Error('Asset ID is required.');
-      }
       
       if (!apiKey) {
         throw new Error('Helius API key is required.');
@@ -65,6 +37,10 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
 
       if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
         throw new Error('Invalid API key tier.');
+      }
+      
+      if (!owner) {
+        throw new Error('Owner is required.');
       }
 
       const response = await fetch(`https://${network}.helius-rpc.com/?api-key=${apiKey.key}`, {
@@ -75,20 +51,10 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
         body: JSON.stringify({
           jsonrpc: '2.0',
           id: 'text',
-          method: 'getSignaturesForAsset',
-          params: {
-            id: assetId,
-            page: page,
-            limit: limit,
-            before: before,
-            after: after,
-            options: {
-              showUnverifiedCollections: false,
-              showCollectionMetadata: false,
-              showFungible: false,
-              showInscription: false,
-            }
-          }
+          method: 'getCompressedBalanceByOwner',
+          params: [{
+            owner: owner
+          }]
         })
       });
 
@@ -100,23 +66,23 @@ export const getSignaturesForAsset: BlockFunctionTemplate = {
 
       return data;
     } catch (error) {
-      console.error('Error in getSignaturesForAsset:', error);
+      console.error('Error in getCompressedAccountProof:', error);
       throw error;
     }
   }
 };
 
-export const getSignaturesForAssetString = `
-export const getSignaturesForAsset = async (params: Record<string, any>) => {
+export const getCompressedBalanceByOwnerString = `
+export const getCompressedBalanceByOwner = async (params: Record<string, any>) => {
   try {
     const { 
-      assetId,
-      page,
-      limit,
-      before,
-      after,
+      owner,
       network = 'devnet' 
     } = params;
+      
+    if (!owner) {
+      throw new Error('Owner is required.');
+    }
 
     const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
       method: 'POST',
@@ -126,30 +92,22 @@ export const getSignaturesForAsset = async (params: Record<string, any>) => {
       body: JSON.stringify({
         jsonrpc: '2.0',
         id: 'text',
-        method: 'getSignaturesForAsset',
-        params: {
-          id: assetId,
-          page: page,
-          limit: limit,
-          before: before,
-          after: after,
-          options: {
-            showUnverifiedCollections: false,
-            showCollectionMetadata: false,
-            showFungible: false,
-            showInscription: false,
-          }
-        }
+        method: 'getCompressedBalanceByOwner',
+        params: [{
+          owner: owner
+        }]
       })
     });
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error('Helius API error (\${response.status}): \${errorText}');
     }
     const data = await response.json();
+
     return data;
   } catch (error) {
-    console.error('Error in getSignaturesForAsset:', error);
+    console.error('Error in getCompressedBalanceByOwner:', error);
     throw error;
   }
 };

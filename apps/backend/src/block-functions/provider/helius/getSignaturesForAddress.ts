@@ -83,3 +83,38 @@ export const getSignaturesForAddress: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getSignaturesForAddressString = `
+export const getSignaturesForAddress = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      before = undefined,
+      limit = 1000,
+      network = 'devnet' 
+    } = params;
+
+    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getSignaturesForAddress',
+        params: [address, { before: before, limit: limit }]
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Helius API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getSignaturesForAddress:', error);
+    throw error;
+  }
+};
+`;

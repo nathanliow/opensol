@@ -102,3 +102,50 @@ export const getPriorityFeeEstimate: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getPriorityFeeEstimateString = `
+export const getPriorityFeeEstimate = async (params: Record<string, any>) => {
+  try {
+    const { 
+      transaction,
+      priorityLevel = 'Min',
+      transactionEncoding = 'Base58',
+      network = 'devnet' 
+    } = params;
+
+    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getPriorityFeeEstimate',
+        params: [
+          {
+            "transaction": transaction,
+            "options": {
+              "transactionEncoding": transactionEncoding,
+              "priorityLevel": priorityLevel,
+              "includeAllPriorityFeeLevels": true,
+              "lookbackSlots": 150,
+              "includeVote": true,
+              "recommended": true,
+              "evaluateEmptySlotAsZero": true
+            }
+          }
+        ]
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Helius API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getPriorityFeeEstimate:', error);
+    throw error;
+};
+`;

@@ -11,14 +11,8 @@ import { enhanceCode } from '../../services/codeEnhanceService';
 import { useConfig } from '../../contexts/ConfigContext';
 import { CopyButton } from '../ui/CopyButton';
 import { FlowNode } from '../../../../backend/src/packages/compiler/src/types';
-import { 
-  uploadImageToPinataString, 
-  uploadMetadataToPinataString, 
-  createFileFromUrlString,
-  transferTokenString,
-  mintTokenString,
-} from '@/code-strings';
 import { formatJSON } from '@/utils/formatJSON';
+import { functionStringMap } from '@/code-strings';
 
 interface ConsoleProps {
   className?: string;
@@ -110,7 +104,7 @@ export const Console = memo(({
   const codeTabs = useMemo<CodeTab[]>(() => {
     const tabs: CodeTab[] = [
       { id: 'main', name: 'main.ts', content: code }
-    ];
+    ];    
     
     // Extract import statements using regex
     const importRegex = /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]([^'"]+)['"]/g;
@@ -123,22 +117,8 @@ export const Console = memo(({
       imports.forEach(importName => {
         // Add tab for each imported function if it doesn't exist
         if (!tabs.some(tab => tab.id === importName)) {
-          let functionCode = '';
-          
-          // Determine content based on import path and function name
-          if (importName === 'mintToken') {
-            functionCode = mintTokenString;
-          } else if (importName === 'transferToken') {
-            functionCode = transferTokenString;
-          } else if (importName === 'uploadImageToPinata') {
-            functionCode = uploadImageToPinataString;
-          } else if (importName === 'uploadMetadataToPinata') {
-            functionCode = uploadMetadataToPinataString;
-          } else if (importName === 'createFileFromUrl') {
-            functionCode = createFileFromUrlString;
-          } else {
-            // Generic template for other functions
-            functionCode = `// ${importName} implementation from ${importPath}
+          // Use the mapping to get the function code, or fallback to generic template
+          const functionCode = functionStringMap[importName] || `// ${importName} implementation from ${importPath}
 export async function ${importName}(params: any) {
   try {
     // Function implementation would be here
@@ -151,7 +131,6 @@ export async function ${importName}(params: any) {
     throw error;
   }
 }`;
-          }
           
           tabs.push({
             id: importName,

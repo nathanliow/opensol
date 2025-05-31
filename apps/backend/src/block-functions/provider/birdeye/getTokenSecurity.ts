@@ -48,7 +48,7 @@ export const getTokenSecurity: BlockFunctionTemplate = {
         headers: {
           accept: 'application/json', 
           'x-chain': 'solana',
-          'X-API-KEY': apiKey
+          'X-API-KEY': apiKey.key
         },
       });
 
@@ -65,3 +65,38 @@ export const getTokenSecurity: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTokenSecurityString = `
+export const getTokenSecurity = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      network = 'mainnet',
+    } = params;
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/defi/token_security?address=\${address}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenSecurity:', error);
+    throw error;
+  }
+};
+`;

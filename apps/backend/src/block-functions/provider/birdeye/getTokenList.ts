@@ -334,3 +334,131 @@ export const getTokenList: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTokenListString = `
+export const getTokenList = async (params: Record<string, any>) => {
+  try {
+    const { 
+      sort_by = 'liquidity',
+      sort_type = 'desc',
+      min_liquidity,
+      max_liquidity,
+      min_market_cap,
+      max_market_cap,
+      min_fdv,
+      max_fdv,
+      min_recent_listing_time,
+      max_recent_listing_time,
+      min_last_trade_unix_time,
+      max_last_trade_unix_time,
+      min_holder,
+      min_volume_1h_usd,
+      min_volume_2h_usd,
+      min_volume_4h_usd,
+      min_volume_8h_usd,
+      min_volume_24h_usd,
+      min_volume_1h_change_percent,
+      min_volume_2h_change_percent,
+      min_volume_4h_change_percent,
+      min_volume_8h_change_percent,
+      min_volume_24h_change_percent,
+      min_price_change_1h_percent,
+      min_price_change_2h_percent,
+      min_price_change_4h_percent,
+      min_price_change_8h_percent,
+      min_price_change_24h_percent,
+      min_trade_1h_count,
+      min_trade_2h_count,
+      min_trade_4h_count,
+      min_trade_8h_count,
+      min_trade_24h_count,
+      offset = 0,
+      limit = 100,
+      network = 'mainnet',
+    } = params;
+
+    // Validate offset and limit constraints
+    if (offset > 10000) {
+      throw new Error('Offset must be less than or equal to 10000.');
+    }
+
+    if (limit < 1 || limit > 100) {
+      throw new Error('Limit must be between 1 and 100.');
+    }
+
+    if (offset + limit > 10000) {
+      throw new Error('Offset + limit must be less than or equal to 10000.');
+    }
+
+    // Build query parameters
+    const queryParams = new URLSearchParams({
+      sort_by,
+      sort_type,
+      offset: offset.toString(),
+      limit: limit.toString()
+    });
+
+    // Add optional parameters if they exist
+    const optionalParams = {
+      min_liquidity,
+      max_liquidity,
+      min_market_cap,
+      max_market_cap,
+      min_fdv,
+      max_fdv,
+      min_recent_listing_time,
+      max_recent_listing_time,
+      min_last_trade_unix_time,
+      max_last_trade_unix_time,
+      min_holder,
+      min_volume_1h_usd,
+      min_volume_2h_usd,
+      min_volume_4h_usd,
+      min_volume_8h_usd,
+      min_volume_24h_usd,
+      min_volume_1h_change_percent,
+      min_volume_2h_change_percent,
+      min_volume_4h_change_percent,
+      min_volume_8h_change_percent,
+      min_volume_24h_change_percent,
+      min_price_change_1h_percent,
+      min_price_change_2h_percent,
+      min_price_change_4h_percent,
+      min_price_change_8h_percent,
+      min_price_change_24h_percent,
+      min_trade_1h_count,
+      min_trade_2h_count,
+      min_trade_4h_count,
+      min_trade_8h_count,
+      min_trade_24h_count
+    };
+
+    // Add non-undefined optional parameters to query
+    Object.entries(optionalParams).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const response = await fetch('https://public-api.birdeye.so/defi/v3/token/list?' + queryParams.toString(), {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenList:', error);
+    throw error;
+  }
+};
+`;

@@ -61,3 +61,38 @@ export const getTokenMarketData: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTokenMarketDataString = `
+export const getTokenMarketData = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      network = 'mainnet'
+    } = params;
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/defi/v3/token/market-data?address=\${address}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenMarketData:', error);
+    throw error;
+  }
+};
+`;

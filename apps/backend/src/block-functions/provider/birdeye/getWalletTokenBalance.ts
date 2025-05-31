@@ -76,3 +76,43 @@ export const getWalletTokenBalance: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getWalletTokenBalanceString = `
+export const getWalletTokenBalance = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      token,
+      network = 'mainnet',
+    } = params;
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    if (!token) {
+      throw new Error('Token is required.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/v1/wallet/token_balance?wallet=\${address}&token_address=\${token}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getWalletTokenBalance:', error);
+    throw error;
+  }
+};
+`;

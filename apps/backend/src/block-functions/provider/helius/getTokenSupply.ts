@@ -67,3 +67,35 @@ export const getTokenSupply: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTokenSupplyString = `
+export const getTokenSupply = async (params: Record<string, any>) => {
+  try {
+    const { 
+      tokenMint,
+      network = 'devnet' 
+    } = params;
+
+    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getTokenSupply',
+        params: [tokenMint]
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Helius API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenSupply:', error);
+    throw error;
+};
+`;

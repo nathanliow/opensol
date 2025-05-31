@@ -121,3 +121,64 @@ export const getAssetsByCreator: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getAssetsByCreatorString = `
+export const getAssetsByCreator = async (params: Record<string, any>) => {
+  try {
+    const { 
+      creatorAddress, 
+      page, 
+      limit, 
+      sortBy, 
+      sortDirection, 
+      before, 
+      after, 
+      network = 'devnet' 
+    } = params;
+
+    if (!creatorAddress) {
+      throw new Error('Creator Address is required.');
+    }
+
+    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getAssetsByCreator',
+        params: {
+          creatorAddress: creatorAddress,
+          page: page,
+          limit: limit,
+          sortBy: {
+            sortBy: sortBy,
+            sortDirection: sortDirection,
+          },
+          before: before,
+          after: after,
+          options: {
+            showUnverifiedCollections: false,
+            showCollectionMetadata: false,
+            showGrandTotal: false,
+            showInscription: false,
+          }
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Helius API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getAssetsByCreator:', error);
+    throw error;
+  }
+};
+`;

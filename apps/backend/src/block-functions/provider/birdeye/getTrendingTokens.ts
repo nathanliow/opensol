@@ -47,7 +47,6 @@ export const getTrendingTokens: BlockFunctionTemplate = {
   execute: async (params: Record<string, any>) => {
     try {
       const { 
-        address,
         sort_by = 'rank',
         sort_type = 'asc',
         offset = 0,
@@ -62,10 +61,6 @@ export const getTrendingTokens: BlockFunctionTemplate = {
 
       if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
         throw new Error('Invalid API key tier.');
-      }
-
-      if (!address) {
-        throw new Error('Address is required.');
       }
 
       if (offset < 0 || offset > 10000) {
@@ -98,3 +93,45 @@ export const getTrendingTokens: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTrendingTokensString = `
+export const getTrendingTokens = async (params: Record<string, any>) => {
+  try {
+    const { 
+      sort_by = 'rank',
+      sort_type = 'asc',
+      offset = 0,
+      limit = 20,
+      network = 'mainnet',
+    } = params;
+
+    if (offset < 0 || offset > 10000) {
+      throw new Error('Offset must be between 0 and 10000.');
+    }
+
+    if (limit < 1 || limit > 20) {
+      throw new Error('Limit must be between 1 and 20.');
+    }
+    
+    const response = await fetch('https://public-api.birdeye.so/defi/token_trending?sort_by=\${sort_by}&sort_type=\${sort_type}&offset=\${offset}&limit=\${limit}', {
+      method: 'GET',
+      headers: { 
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTrendingTokens:', error);
+    throw error;
+  }
+};
+`;

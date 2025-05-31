@@ -752,3 +752,41 @@ export const getTransactionHistory: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTransactionHistoryString = `
+export const getTransactionHistory = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      before,
+      until,
+      limit = 100,
+      type,
+      source,
+      network = 'devnet',
+    } = params;
+
+    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getTransactionHistory',
+        params: [address, { before: before, until: until, limit, type: type, source: source }]
+      })
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Helius API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getTransactionHistory:', error);
+    throw error;
+  }
+};
+`;

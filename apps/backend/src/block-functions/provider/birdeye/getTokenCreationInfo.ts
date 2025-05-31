@@ -65,3 +65,38 @@ export const getTokenCreationInfo: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTokenCreationInfoString = `
+export const getTokenCreationInfo = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      network = 'mainnet'
+    } = params;
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/defi/token_creation_info?address=\${address}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenCreationInfo:', error);
+    throw error;
+  }
+};
+`;

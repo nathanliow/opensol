@@ -46,9 +46,9 @@ export const getHistoricalPrice: BlockFunctionTemplate = {
     try {
       const { 
         address,
-        interval,
-        timeFrom,
-        timeTo,
+        interval = '1m',
+        timeFrom = 0,
+        timeTo = 0,
         apiKey, 
         network = 'mainnet' 
       } = params;
@@ -87,3 +87,41 @@ export const getHistoricalPrice: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getHistoricalPriceString = `
+export const getHistoricalPrice = async (params: Record<string, any>) => {
+  try {
+      const { 
+        address,
+        interval = '1m',
+        timeFrom = 0,
+        timeTo = 0,
+        network = 'mainnet' 
+      } = params;
+
+      if (!address) {
+        throw new Error('Address is required.');
+      }
+
+      const response = await fetch('https://public-api.birdeye.so/defi/history_price?address=\${address}&address_type=token&type=\${interval}&time_from=\${timeFrom}&time_to=\${timeTo}', {
+        method: 'GET',
+        headers: {
+          accept: 'application/json', 
+          'x-chain': 'solana',
+          'X-API-KEY': process.env.BIRDEYE_API_KEY
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+      }
+      const data = await response.json();
+
+      return data;
+    } catch (error) {
+      console.error('Error in getHistoricalPrice:', error);
+      throw error;
+    }
+  }
+`;

@@ -73,3 +73,39 @@ export const getPriceVolume: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getPriceVolumeString = `
+export const getPriceVolume = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      timeframe,
+      network = 'mainnet',
+    } = params;
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/defi/price_volume/single?address=\${address}&type=\${timeframe}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getPriceVolume:', error);
+    throw error;
+  }
+};
+`;

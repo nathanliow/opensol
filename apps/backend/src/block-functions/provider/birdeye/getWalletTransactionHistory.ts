@@ -83,3 +83,44 @@ export const getWalletTransactionHistory: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getWalletTransactionHistoryString = `
+export const getWalletTransactionHistory = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      before = '',
+      limit = 100,
+      network = 'mainnet',
+    } = params;
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    if (limit < 1 || limit > 100) {
+      throw new Error('Limit must be between 1 and 10.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/v1/wallet/tx_list?wallet=\${address}&limit=\${limit}&before=\${before}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getWalletTransactionHistory:', error);
+    throw error;
+  }
+};
+`;

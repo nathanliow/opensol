@@ -67,3 +67,35 @@ export const getPriceAtUnixTime: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getPriceAtUnixTimeString = `
+export const getPriceAtUnixTime = async (params: Record<string, any>) => {
+  try {
+    const { 
+      address,
+      unixTimestamp,
+      network = 'mainnet',
+    } = params;
+
+    const response = await fetch('https://public-api.birdeye.so/defi/historical_price_unix?address=\${address}&unixtime=\${unixTimestamp}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getPriceAtUnixTime:', error);
+    throw error;
+  }
+};
+`;

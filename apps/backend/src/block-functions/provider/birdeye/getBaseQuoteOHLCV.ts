@@ -51,9 +51,9 @@ export const getBaseQuoteOHLCV: BlockFunctionTemplate = {
       const { 
         baseAddress,
         quoteAddress,
-        interval,
-        timeFrom,
-        timeTo,
+        interval = '1m',
+        timeFrom = 0,
+        timeTo = 0,
         apiKey, 
         network = 'mainnet'
       } = params;
@@ -92,3 +92,42 @@ export const getBaseQuoteOHLCV: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getBaseQuoteOHLCVString = `
+export const getBaseQuoteOHLCV = async (params: Record<string, any>) => {
+  try {
+    const { 
+      baseAddress,
+      quoteAddress,
+      interval = '1m',
+      timeFrom = 0,
+      timeTo = 0,
+      network = 'mainnet'
+    } = params;
+
+    if (!baseAddress || !quoteAddress) {
+      throw new Error('Base address and quote address are required.');
+    }
+
+    const response = await fetch('https://public-api.birdeye.so/defi/ohlcv/base_quote?base_address=\${baseAddress}&quote_address=\${quoteAddress}&type=\${interval}&time_from=\${timeFrom}&time_to=\${timeTo}', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error ' + response.status + ': ' + errorText);
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getBaseQuoteOHLCV:', error);
+    throw error;
+  }
+};
+`;

@@ -55,3 +55,33 @@ export const getTradesLatestBlockNumber: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getTradesLatestBlockNumberString = `
+export const getTradesLatestBlockNumber = async (params: Record<string, any>) => {
+  try {
+    const { 
+      network = 'mainnet',
+    } = params;
+
+    const response = await fetch('https://public-api.birdeye.so/defi/v3/txs/latest-block', {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': process.env.BIRDEYE_API_KEY
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTradesLatestBlockNumber:', error);
+    throw error;
+  }
+};
+`;
