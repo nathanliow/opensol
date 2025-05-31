@@ -73,7 +73,7 @@ export const getTokenTopTraders: BlockFunctionTemplate = {
         throw new Error('Birdeye API key is required.');
       }
 
-      if (apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+      if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
         throw new Error('Invalid API key tier.');
       }
 

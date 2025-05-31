@@ -695,7 +695,8 @@ export const getTransactionHistory: BlockFunctionTemplate = {
       {
         name: 'limit',
         type: 'number',
-        description: 'Limit of the transaction'
+        description: 'Limit of the transaction',
+        defaultValue: 100
       },
     ],
     requiredKeys: ['helius'],
@@ -714,7 +715,7 @@ export const getTransactionHistory: BlockFunctionTemplate = {
         address,
         before,
         until,
-        limit = 100,
+        limit: rawLimit = 100,
         type,
         source,
         network = 'devnet',
@@ -728,7 +729,9 @@ export const getTransactionHistory: BlockFunctionTemplate = {
         throw new Error('Invalid API key tier.');
       }
 
-      if (limit < 1 || limit > 100) {
+      const limit = rawLimit === '' || rawLimit === null || rawLimit === undefined ? 100 : Number(rawLimit);
+
+      if (isNaN(limit) || limit < 1 || limit > 100) {
         throw new Error('Limit must be between 1 and 100.');
       }
 

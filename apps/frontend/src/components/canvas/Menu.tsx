@@ -8,6 +8,7 @@ import { useUserAccountContext } from "@/app/providers/UserAccountContext";
 import { signOut } from "@/lib/auth";
 import { ApiKeyModal } from "../modal/ApiKeyModal";
 import { NetworkType } from "@/types/NetworkTypes";
+import { useLesson } from "@/contexts/LessonContext";
 
 interface MenuProps {
   onMenuToggle?: (isOpen: boolean) => void;
@@ -17,6 +18,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
   const { login, logout } = usePrivy();
   const { userAddress, supabaseUser } = useUserAccountContext();
   const { network, setNetwork } = useConfig();
+  const { exitLesson } = useLesson();
   const [isOpen, setIsOpen] = useState(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -70,6 +72,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
   const navigateToDashboard = () => {
     setIsOpen(false);
     router.push('/dashboard');
+    exitLesson();
   };
 
   const openApiKeyModal = () => {

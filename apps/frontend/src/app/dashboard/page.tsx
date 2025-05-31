@@ -15,6 +15,7 @@ import { flowTemplates } from '@/flow-templates';
 import { getUserData } from '@/lib/user';
 import { UserData } from '@/types/UserTypes';
 import { courses } from '@/courses';
+import { useLesson } from '@/contexts/LessonContext';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -123,8 +124,10 @@ export default function DashboardPage() {
     }
   }, [isConnected, router]);
 
+  const { exitLesson } = useLesson();
+
   const handleOpenProject = (id: string) => {    
-    // Save project ID to localStorage
+    exitLesson();
     localStorage.setItem('currentProjectId', id);
 
     router.push('/');
@@ -167,6 +170,9 @@ export default function DashboardPage() {
     try {
       // Show loading animation
       setNavigating(true);
+      
+      // Clear lesson progress when creating a new project
+      exitLesson();
       
       // First clear any existing content by removing currentProjectId
       localStorage.removeItem('currentProjectId');

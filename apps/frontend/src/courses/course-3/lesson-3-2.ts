@@ -3,12 +3,12 @@ import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/sr
 
 export const lesson_3_2: Lesson = {
   id: 'lesson-3-2',
-  title: 'Fetching asset data with Helius',
+  title: 'Fetching Asset Data',
   description: '',
   steps: [
     {
       id: 'welcome',
-      title: 'Fetching assets with Helius',
+      title: 'Fetching assets',
       description: 'We\'re going to use Helius\' DAS (Digital Asset Standard) API to fetch data of an asset (tokens or NFTs).',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
     },
@@ -27,7 +27,7 @@ export const lesson_3_2: Lesson = {
     {
       id: 'select-get-asset',
       title: 'Choose "getAsset"',
-      description: 'Open the HELIUS node and select "getAsset" from the function dropdown to query an asset. This function requires an "assetId" which is the address of the token or NFT. You can find these addresses easily on any DEX/marketplace/terminal like Dexscreener, Magic Eden, or Axiom. Enter in an assetId or use this: EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
+      description: 'Open the HELIUS node and select "getAsset" from the function dropdown to query an asset. This function requires an "assetId" which is the address of the token or NFT. You can find these addresses easily on any DEX/marketplace/terminal like [Dexscreener](https://dexscreener.com/), [Magic Eden](https://magiceden.us/solana), or [Axiom](https://axiom.trade/). Enter in an assetId or use this: EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) =>
         nodes.some(
           (n: FlowNode) =>

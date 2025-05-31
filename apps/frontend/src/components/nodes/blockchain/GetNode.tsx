@@ -112,15 +112,37 @@ export default function GetNode({ id }: GetNodeProps) {
       if (template) {
         const paramInputs: InputDefinition[] = template.metadata.parameters
           .filter(param => param.name !== 'apiKey' && param.name !== 'network')
-          .map(param => {            
-            return createInputDefinition.text({
-              id: `input-${param.name}`,
-              label: param.name,
-              defaultValue: parameters[param.name] || '',
-              description: param.description,
-              getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, param.name),
-              handleId: `input-${param.name}`,
-            });
+          .map(param => {
+            // Check the parameter type and create appropriate input
+            if (param.type === 'dropdown' && param.options) {
+              return createInputDefinition.dropdown({
+                id: `input-${param.name}`,
+                label: param.name,
+                defaultValue: parameters[param.name] || param.defaultValue || '',
+                description: param.description,
+                options: param.options.map(option => ({ value: option, label: option })),
+                getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, param.name),
+                handleId: `input-${param.name}`,
+              });
+            } else if (param.type === 'number') {
+              return createInputDefinition.number({
+                id: `input-${param.name}`,
+                label: param.name,
+                defaultValue: parameters[param.name] || param.defaultValue || 0,
+                description: param.description,
+                getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, param.name),
+                handleId: `input-${param.name}`,
+              });
+            } else {
+              return createInputDefinition.text({
+                id: `input-${param.name}`,
+                label: param.name,
+                defaultValue: parameters[param.name] || param.defaultValue || '',
+                description: param.description,
+                getConnectedValue: nodeUtils.createConnectionGetter(edges, nodes, id, param.name),
+                handleId: `input-${param.name}`,
+              });
+            }
           });
           
         return [...baseInputs, ...paramInputs];

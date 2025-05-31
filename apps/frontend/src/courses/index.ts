@@ -1,7 +1,8 @@
 import { Course } from '@/types/CourseTypes';
 import { lesson_1_1, lesson_1_2, lesson_1_3 } from './course-1';
 import { lesson_2_1, lesson_2_2 } from './course-2';
-import { lesson_3_1, lesson_3_2 } from './course-3';
+import { lesson_3_1, lesson_3_2, lesson_3_3 } from './course-3';
+import { lesson_4_1, lesson_4_2 } from './course-4';
 
 export const courses: Record<string, Course> = {
   'course-1': {
@@ -34,27 +35,31 @@ export const courses: Record<string, Course> = {
     lessons: [
       lesson_3_1, // What is Helius?
       lesson_3_2, // Fetching asset data with Helius
-      // lesson_3_3: Fetching transaction data with Helius (transaction history, transaction details, pagination etc.)
+      lesson_3_3, // Fetching transaction data with Helius 
       // lesson_3_4: Getting PnL of a wallet
     ],
   },
-  // 'course-4': {
-  //   id: 'course-4',
-  //   title: 'Reading from the Blockchain using Birdeye',
-  //   description: 'Learn how to use Birdeye to fetch, read, and understand data from the blockchain',
-  //   lessons: [
-  //   ],
-  // },
+  'course-4': {
+    id: 'course-4',
+    title: 'Reading from the Blockchain using Birdeye',
+    description: 'Learn how to use Birdeye to fetch, read, and understand data from the blockchain',
+    lessons: [
+      lesson_4_1, // What is Birdeye?
+      lesson_4_2, // Fetching token data
+      // lesson_4_3, // Fetching wallet portfolio
+      // lesson_4_4, // Fetching token chart data
+    ],
+  },
   // 'course-5': {
   //   id: 'course-5',
   //   title: 'Tokens',
   //   description: 'Learn how tokens work on Solana',
   //   lessons: [
-  //     // lesson-4-1: Minting a token (account creation, ipfs, Associated Token Account, decimals, metadata)
-  //     // lesson-4-2: Transferring a token (sending to ATA, creating ATA if not already there)
-  //     // lesson-4-3: Getting information about a token (balance, metadata, liquidity, price, etc.)
-  //     // lesson-4-4: something about bonding curves and swapping
-  //     // lesson-4-5: something about token ecosystems (pump, launchpads, etc.)
+  //     // lesson-5-1: Minting a token (account creation, ipfs, Associated Token Account, decimals, metadata)
+  //     // lesson-5-2: Transferring a token (sending to ATA, creating ATA if not already there)
+  //     // lesson-5-3: Getting information about a token (balance, metadata, liquidity, price, etc.)
+  //     // lesson-5-4: something about bonding curves and swapping
+  //     // lesson-5-5: something about token ecosystems (pump, launchpads, etc.)
   //   ],
   // },
   // 'course-6': {

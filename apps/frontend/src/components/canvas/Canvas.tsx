@@ -169,19 +169,27 @@ function Flow() {
     };
   }, [supabaseUser, setNodes, setEdges, isLoading, lessonMode]);
 
-  // Start Lesson lesson when URL parameters are detected
   useEffect(() => {
     if (urlCourseId && urlLessonId) {
       const lessonKey = `${urlCourseId}-${urlLessonId}`;
       
-      // Only start the lesson if we haven't already initialized this exact lesson
       if (lessonInitializedRef.current !== lessonKey) {
         console.log('Starting lesson from URL:', urlCourseId, urlLessonId);
         lessonInitializedRef.current = lessonKey;
         startLesson(urlCourseId, urlLessonId);
       }
+    } else if (lessonActive) {
+      exitLesson();
     }
-  }, [urlCourseId, urlLessonId, startLesson]);
+  }, [urlCourseId, urlLessonId, startLesson, lessonActive, exitLesson]);
+
+  useEffect(() => {
+    return () => {
+      if (lessonActive && !lessonMode) {
+        exitLesson();
+      }
+    };
+  }, [lessonActive, lessonMode, exitLesson]);
 
   useEffect(() => {
     if (!lessonActive) {
@@ -209,18 +217,17 @@ function Flow() {
         console.log('No lesson found at index:', lessonIndex, 'in course:', currentCourse);
         return;
       }
-            
-      if (!currentLesson.startNodes || !currentLesson.startEdges) {
-        console.log('Lesson missing startNodes or startEdges');
-        return;
-      }
       
       const lessonKey = `${courseId}-${currentLesson.id}`;
       
       // Only load starting nodes if we haven't loaded them for this specific lesson yet
       if (startingNodesLoadedRef.current !== lessonKey) {
-        setNodes(currentLesson.startNodes);
-        setEdges(currentLesson.startEdges);
+        if (currentLesson.startNodes) {
+          setNodes(currentLesson.startNodes);
+        }
+        if (currentLesson.startEdges) {
+          setEdges(currentLesson.startEdges);
+        }
         startingNodesLoadedRef.current = lessonKey;
         
         // Clear history and save new state for undo/redo

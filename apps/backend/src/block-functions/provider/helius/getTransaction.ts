@@ -46,10 +46,13 @@ export const getTransaction: BlockFunctionTemplate = {
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
-          id: 'text',
+          id: '1',
           method: 'getTransaction',
           params: [
-            signature
+            signature,
+            {
+              "maxSupportedTransactionVersion": 0
+            }
           ]  
         })
       });

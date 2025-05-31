@@ -116,7 +116,8 @@ export default function LessonPanel({ nodes, edges, output }: LessonPanelProps) 
       <div className="p-4 border-b border-gray-700 flex justify-between items-center">
         <div>
           <h2 className="text-lg font-bold">{currentLesson.title}</h2>
-          <p className="text-sm text-gray-400">{currentCourse.title} - Lesson {lessonIndex + 1}</p>
+          <p className="text-sm text-gray-400">{currentCourse.title}</p>
+          <p className="text-sm text-gray-400">Course {courseId?.slice(-1)} - Lesson {lessonIndex + 1}</p>
         </div>
         <button 
           onClick={resetLesson} 

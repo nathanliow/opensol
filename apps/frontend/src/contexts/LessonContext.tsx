@@ -128,11 +128,10 @@ export function LessonProvider({ children }: { children: ReactNode }) {
   };
 
   const resetLesson = () => {
-    setLessonIndex(0);
     setStepIndex(0);
     
     if (courseId) {
-      const progress: LessonProgress = { courseId, lessonIndex: 0, stepIndex: 0 };
+      const progress: LessonProgress = { courseId, lessonIndex, stepIndex: 0 };
       localStorage.setItem('lessonProgress', JSON.stringify(progress));
     }
   };

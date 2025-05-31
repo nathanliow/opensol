@@ -17,7 +17,8 @@ export const getHistoricalPrice: BlockFunctionTemplate = {
         name: 'interval',
         type: 'dropdown',
         description: 'Time interval for the candlestick data (e.g., "1m", "1H", "1D")',
-        options: ['1m', '3m', '5m', '15m', '30m', '1H', '2H', '4H', '6H', '8H', '12H', '1D', '3D', '1W', '1M']
+        options: ['1m', '3m', '5m', '15m', '30m', '1H', '2H', '4H', '6H', '8H', '12H', '1D', '3D', '1W', '1M'],
+        defaultValue: '1m'
       },
       {
         name: 'timeFrom',
@@ -56,7 +57,7 @@ export const getHistoricalPrice: BlockFunctionTemplate = {
         throw new Error('Birdeye API key is required.');
       }
 
-      if (apiKey.tier != 'standard' || apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+      if (apiKey.tier != 'standard' && apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
         throw new Error('Invalid API key tier.');
       }
 

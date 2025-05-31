@@ -192,7 +192,7 @@ export const getTokenList: BlockFunctionTemplate = {
     ],
     requiredKeys: ['birdeye'],
     requiredKeyTiers: {
-      birdeye: ['starter', 'premium', 'business', 'enterprise']
+      birdeye: ['standard', 'starter', 'premium', 'business', 'enterprise']
     },
     output: {
       type: 'object',
@@ -245,7 +245,7 @@ export const getTokenList: BlockFunctionTemplate = {
         throw new Error('Birdeye API key is required.');
       }
 
-      if (apiKey.tier != 'starter' || apiKey.tier != 'premium' || apiKey.tier != 'business' || apiKey.tier != 'enterprise') {
+      if (apiKey.tier != 'standard' && apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
         throw new Error('Invalid API key tier.');
       }
 
