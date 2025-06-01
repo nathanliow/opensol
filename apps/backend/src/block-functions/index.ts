@@ -16,6 +16,10 @@ import { getBlockProduction } from './provider/helius/getBlockProduction';
 import { getBlocks } from './provider/helius/getBlocks';
 import { getBlockTime } from './provider/helius/getBlockTime';
 import { getClusterNodes } from './provider/helius/getClusterNodes';
+import { getCompressedAccount } from './provider/helius/getCompressedAccount';
+import { getCompressedAccountProof } from './provider/helius/getCompressedAccountProof';
+import { getCompressedBalance } from './provider/helius/getCompressedBalance';
+import { getCompressedBalanceByOwner } from './provider/helius/getCompressedBalanceByOwner';
 import { getEnhancedTransaction } from './provider/helius/getEnhancedTransaction';
 import { getEpochInfo } from './provider/helius/getEpochInfo';
 import { getEpochSchedule } from './provider/helius/getEpochSchedule';
@@ -105,6 +109,10 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getBlockProduction,
     getBlockCommitment,
     getClusterNodes,
+    getCompressedAccount,
+    getCompressedAccountProof,
+    getCompressedBalance,
+    getCompressedBalanceByOwner,
     getEnhancedTransaction,
     getEpochInfo,
     getEpochSchedule,

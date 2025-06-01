@@ -50,6 +50,10 @@ import { getBlockProductionString } from "../../../backend/src/block-functions/p
 import { getBlocksString } from "../../../backend/src/block-functions/provider/helius/getBlocks";
 import { getBlockTimeString } from "../../../backend/src/block-functions/provider/helius/getBlockTime";
 import { getClusterNodesString } from "../../../backend/src/block-functions/provider/helius/getClusterNodes";
+import { getCompressedBalanceByOwnerString } from "../../../backend/src/block-functions/provider/helius/getCompressedBalanceByOwner";
+import { getCompressedAccountString } from "../../../backend/src/block-functions/provider/helius/getCompressedAccount";
+import { getCompressedAccountProofString } from "../../../backend/src/block-functions/provider/helius/getCompressedAccountProof";
+import { getCompressedBalanceString } from "../../../backend/src/block-functions/provider/helius/getCompressedBalance";
 import { getEnhancedTransactionString } from "../../../backend/src/block-functions/provider/helius/getEnhancedTransaction";
 import { getEpochInfoString } from "../../../backend/src/block-functions/provider/helius/getEpochInfo";
 import { getEpochScheduleString } from "../../../backend/src/block-functions/provider/helius/getEpochSchedule";
@@ -142,6 +146,10 @@ export const functionStringMap: Record<string, string> = {
   getBlocks: getBlocksString,
   getBlockTime: getBlockTimeString,
   getClusterNodes: getClusterNodesString,
+  getCompressedAccount: getCompressedAccountString,
+  getCompressedAccountProof: getCompressedAccountProofString,
+  getCompressedBalance: getCompressedBalanceString,
+  getCompressedBalanceByOwner: getCompressedBalanceByOwnerString,
   getEnhancedTransaction: getEnhancedTransactionString,
   getEpochInfo: getEpochInfoString,
   getEpochSchedule: getEpochScheduleString,
