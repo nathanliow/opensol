@@ -5,6 +5,7 @@ export const lesson_2_2: Lesson = {
   id: 'lesson-2-2',
   title: 'Executing a Flow',
   description: '',
+  xp: 100,
   startNodes: [
     {
       "id": "function-1748558297587",

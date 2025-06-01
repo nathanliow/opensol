@@ -389,6 +389,24 @@ export default function DashboardPage() {
     });
   };
 
+  // Helper function to check if a lesson is completed
+  const isLessonCompleted = (lessonId: string): boolean => {
+    return userData?.finished_lessons?.includes(lessonId) || false;
+  };
+
+  // Helper function to check if all lessons in a course are completed
+  const isCourseCompleted = (course: typeof courses[string]): boolean => {
+    if (!userData?.finished_lessons) return false;
+    return course.lessons.every(lesson => userData.finished_lessons.includes(lesson.id));
+  };
+
+  // Helper function to get course completion stats
+  const getCourseCompletionStats = (course: typeof courses[string]): { completed: number; total: number } => {
+    if (!userData?.finished_lessons) return { completed: 0, total: course.lessons.length };
+    const completed = course.lessons.filter(lesson => userData.finished_lessons.includes(lesson.id)).length;
+    return { completed, total: course.lessons.length };
+  };
+
   return (
     <>
       <div className="min-h-screen bg-[#121212] text-white p-4 md:p-6">
@@ -406,7 +424,7 @@ export default function DashboardPage() {
                 <Icons.FiPlusCircle size={18} />
                 New Project
               </button>
-              <DashboardMenu onNewProject={handleNewProject} />
+              <DashboardMenu/>
             </div>
           </div>
 
@@ -419,47 +437,76 @@ export default function DashboardPage() {
           {/* Dashboard Content */}
           {tab === 'courses' ? (
             <div className="space-y-4 pt-4">
-              {Object.values(courses).map(course => (
-                <div key={course.id} className="bg-[#1e1e1e] rounded-lg shadow-lg overflow-hidden">
-                  {/* Course Header */}
-                  <button
-                    onClick={() => toggleCourseExpansion(course.id)}
-                    className="w-full p-6 text-left hover:bg-[#2a2a2a] transition-colors flex items-center justify-between"
-                  >
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
-                      <p className="text-gray-400 text-sm">{course.description}</p>
-                    </div>
-                    <div className="ml-4">
-                      {expandedCourses.has(course.id) ? (
-                        <Icons.ChevronDownIcon width={20} height={20} className="text-gray-400" />
-                      ) : (
-                        <Icons.ChevronRightIcon width={20} height={20} className="text-gray-400" />
-                      )}
-                    </div>
-                  </button>
-                  
-                  {/* Course Lessons */}
-                  {expandedCourses.has(course.id) && (
-                    <div className="border-t border-gray-700">
-                      {course.lessons.map((lesson, index) => (
-                        <button
-                          key={lesson.id}
-                          onClick={() => {
-                            // Navigate to canvas in course mode with specific lesson
-                            localStorage.removeItem('currentProjectId');
-                            router.push(`/?courseId=${course.id}&lesson=${lesson.id}`);
-                          }}
-                          className="w-full text-left py-3 px-8 ml-4 hover:bg-blue-600/20 border-l-2 border-transparent hover:border-blue-600 transition-colors group"
-                        >
-                          <div className="font-medium text-sm group-hover:text-blue-400">{lesson.title}</div>
-                          <div className="text-gray-400 text-xs mt-1">{lesson.description}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+              {Object.values(courses).map(course => {
+                const courseCompleted = isCourseCompleted(course);
+                const completionStats = getCourseCompletionStats(course);
+                
+                return (
+                  <div key={course.id} className={`rounded-lg shadow-lg overflow-hidden ${courseCompleted ? 'bg-green-900/30 border-2 border-green-600/50' : 'bg-[#1e1e1e]'}`}>
+                    {/* Course Header */}
+                    <button
+                      onClick={() => toggleCourseExpansion(course.id)}
+                      className={`w-full p-6 text-left hover:bg-opacity-80 transition-colors flex items-center justify-between ${courseCompleted ? 'hover:bg-green-800/40' : 'hover:bg-[#2a2a2a]'}`}
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold">{course.title}</h3>
+                          {courseCompleted && (
+                            <div className="flex items-center gap-1 text-green-400">
+                              <Icons.FiCheck size={18} />
+                              <span className="text-sm font-medium">Completed</span>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-gray-400 text-sm">{course.description}</p>
+                        <div className="mt-2 text-xs text-gray-500">
+                          {completionStats.completed}/{completionStats.total} lessons completed
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        {expandedCourses.has(course.id) ? (
+                          <Icons.ChevronDownIcon width={20} height={20} className="text-gray-400" />
+                        ) : (
+                          <Icons.ChevronRightIcon width={20} height={20} className="text-gray-400" />
+                        )}
+                      </div>
+                    </button>
+                    
+                    {/* Course Lessons */}
+                    {expandedCourses.has(course.id) && (
+                      <div className="border-t border-gray-700">
+                        {course.lessons.map((lesson, index) => {
+                          const lessonCompleted = isLessonCompleted(lesson.id);
+                          
+                          return (
+                            <button
+                              key={lesson.id}
+                              onClick={() => {
+                                localStorage.removeItem('currentProjectId');
+                                router.push(`/?courseId=${course.id}&lesson=${lesson.id}`);
+                              }}
+                              className="w-full text-left py-3 px-8 ml-4 hover:bg-blue-600/20 border-l-2 border-transparent hover:border-blue-600 transition-colors group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1">
+                                  <div className="font-medium text-sm group-hover:text-blue-400">{lesson.title}</div>
+                                  {lesson.xp && (
+                                    <div className="text-yellow-400 font-medium text-xs mt-1">+{lesson.xp} XP</div>
+                                  )}
+                                  <div className="text-gray-400 text-xs mt-1">{lesson.description}</div>
+                                </div>
+                                {lessonCompleted && (
+                                  <Icons.FiCheck size={16} className="text-green-400 flex-shrink-0" />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <DashboardContent

@@ -5,6 +5,7 @@ export const lesson_2_1: Lesson = {
   id: 'lesson-2-1',
   title: 'Create your first Flow',
   description: '',
+  xp: 100,
   steps: [
     {
       id: 'welcome',

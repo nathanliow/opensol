@@ -5,6 +5,7 @@ import { courses } from '@/courses';
 import { Lesson, LessonStep } from '@/types/CourseTypes';
 import { FlowNode } from '../../../../backend/src/packages/compiler/src/types';
 import { useLesson } from '@/contexts/LessonContext';
+import { useUserAccountContext } from '@/app/providers/UserAccountContext';
 import { Icons } from '../icons/icons';
 
 interface LessonPanelProps {
@@ -72,7 +73,8 @@ const RenderedDescription = ({ description }: { description: string }) => {
 };
 
 export default function LessonPanel({ nodes, edges, output }: LessonPanelProps) {
-  const { active, courseId, lessonIndex, stepIndex, nextStep, previousStep, resetLesson, exitLesson } = useLesson();
+  const { active, courseId, lessonIndex, stepIndex, nextStep, previousStep, resetLesson, exitLesson, completeLessonProgress } = useLesson();
+  const { supabaseUser } = useUserAccountContext();
   const [stepComplete, setStepComplete] = useState(false);
 
   const currentCourse = courseId ? courses[courseId] : undefined;
@@ -96,8 +98,21 @@ export default function LessonPanel({ nodes, edges, output }: LessonPanelProps) 
     );
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!stepComplete) return;
+    
+    const isLastStepOfLesson = stepIndex === currentLesson!.steps.length - 1;
+    const isLastLessonOfCourse = currentCourse && lessonIndex === currentCourse.lessons.length - 1;
+    
+    // If this is the last step of the lesson, update user progress
+    if (isLastStepOfLesson && supabaseUser) {
+      try {
+        await completeLessonProgress(supabaseUser.id);
+      } catch (error) {
+        console.error('Error completing lesson progress:', error);
+      }
+    }
+    
     nextStep();
     setStepComplete(false);
   };

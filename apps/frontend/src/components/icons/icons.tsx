@@ -5,6 +5,7 @@ import {
   FiUser,
   FiEyeOff,
   FiArrowRight,
+  FiArrowLeft,
   FiLayers,
   FiList, 
   FiGrid, 
@@ -15,7 +16,9 @@ import {
   FiGitMerge, 
   FiBox, 
   FiBook,
+  FiBookmark,
   FiClock, 
+  FiCalendar,
   FiMenu, 
   FiMousePointer, 
   FiX, 
@@ -42,6 +45,7 @@ import {
   FiLoader,
   FiRotateCcw,
   FiRotateCw,
+  FiAward,
 } from "react-icons/fi";
 import { FaRegSquare } from "react-icons/fa";
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -120,7 +124,9 @@ export const Icons = {
   FiGitMerge,
   FiBox,
   FiBook,
+  FiBookmark,
   FiClock,
+  FiCalendar,
   FiSearch,
   FiTrash2,
   FiGrid,
@@ -142,6 +148,7 @@ export const Icons = {
   FiGlobe,
   FiLayers,
   FiArrowRight,
+  FiArrowLeft,
   FiArrowDown,
   FiEyeOff,
   FiUser,
@@ -158,4 +165,5 @@ export const Icons = {
   BsBarChartFill,
   FiRotateCcw,
   FiRotateCw,
+  FiAward,
 };

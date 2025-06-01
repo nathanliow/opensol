@@ -5,6 +5,7 @@ export const lesson_4_2: Lesson = {
   id: 'lesson-4-2',
   title: 'Fetching Token Data',
   description: '',
+  xp: 100,
   steps: [
     {
       id: 'add-birdeye-node',

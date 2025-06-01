@@ -5,6 +5,7 @@ export const lesson_4_1: Lesson = {
   id: 'lesson-4-1',
   title: 'What is Birdeye?',
   description: '',
+  xp: 100,
   steps: [
     {
       id: 'what-is-birdeye',

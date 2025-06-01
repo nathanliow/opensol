@@ -13,4 +13,6 @@ export interface UserData {
     year: string;  // Ex: 2025
     earnings: number;
   }[];
+  xp: number;
+  finished_lessons: string[]
 }

@@ -5,6 +5,7 @@ export const lesson_1_2: Lesson = {
   id: 'lesson-1-2',
   title: 'Accounts',
   description: '',
+  xp: 50,
   steps: [
     {
       id: 'solana-accounts-1',

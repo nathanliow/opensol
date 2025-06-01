@@ -5,6 +5,7 @@ export const lesson_3_1: Lesson = {
   id: 'lesson-3-1',
   title: 'What is Helius?',
   description: '',
+  xp: 100,
   steps: [
     {
       id: 'what-is-helius',

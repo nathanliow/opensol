@@ -3,8 +3,9 @@ import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/sr
 
 export const lesson_3_3: Lesson = {
   id: 'lesson-3-3',
-  title: 'Fetching Transactions',
+  title: 'Fetching transaction data with Helius',
   description: '',
+  xp: 100,
   steps: [
     {
       id: 'welcome',

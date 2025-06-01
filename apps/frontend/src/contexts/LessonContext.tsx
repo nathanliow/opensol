@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { courses, CourseId } from '../courses';
 import { LessonProgress } from '../types/CourseTypes';
+import { updateUserLessonProgress } from '../lib/user';
 
 interface LessonContextShape {
   active: boolean;
@@ -12,6 +13,7 @@ interface LessonContextShape {
   previousStep: () => void;
   resetLesson: () => void;
   exitLesson: () => void;
+  completeLessonProgress: (userId: string) => Promise<void>;
 }
 
 const LessonContext = createContext<LessonContextShape>({
@@ -24,6 +26,7 @@ const LessonContext = createContext<LessonContextShape>({
   previousStep: () => {},
   resetLesson: () => {},
   exitLesson: () => {},
+  completeLessonProgress: async () => {},
 });
 
 export const useLesson = () => useContext(LessonContext);
@@ -88,6 +91,22 @@ export function LessonProvider({ children }: { children: ReactNode }) {
     setStepIndex(0);
   };
 
+  const completeLessonProgress = async (userId: string) => {
+    if (!courseId) return;
+    
+    const currentCourse = courses[courseId];
+    if (!currentCourse) return;
+
+    const currentLesson = currentCourse.lessons[lessonIndex];
+    if (!currentLesson) return;
+
+    try {
+      await updateUserLessonProgress(userId, currentLesson.id, currentLesson.xp);
+    } catch (error) {
+      console.error('Error updating lesson progress:', error);
+    }
+  };
+
   const nextStep = () => {
     if (!courseId) return;
     const currentCourse = courses[courseId];
@@ -98,7 +117,8 @@ export function LessonProvider({ children }: { children: ReactNode }) {
 
     if (stepIndex < currentLesson.steps.length - 1) {
       const newStepIndex = stepIndex + 1;
-      setStepIndex(newStepIndex);      const progress: LessonProgress = { courseId: courseId, lessonIndex, stepIndex: newStepIndex };
+      setStepIndex(newStepIndex);
+      const progress: LessonProgress = { courseId: courseId, lessonIndex, stepIndex: newStepIndex };
       localStorage.setItem('lessonProgress', JSON.stringify(progress));
     } else {
       if (lessonIndex < currentCourse.lessons.length - 1) {
@@ -155,6 +175,7 @@ export function LessonProvider({ children }: { children: ReactNode }) {
         previousStep,
         resetLesson,
         exitLesson,
+        completeLessonProgress,
       }}
     >
       {children}

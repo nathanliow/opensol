@@ -16,6 +16,7 @@ export interface Lesson {
   steps: LessonStep[];
   startNodes?: FlowNode[];
   startEdges?: FlowEdge[];
+  xp: number; // XP points for completing the lesson
 } 
 
 export interface LessonStep {

@@ -75,6 +75,11 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
     exitLesson();
   };
 
+  const navigateToProfile = () => {
+    setIsOpen(false);
+    router.push('/profile');
+  };
+
   const openApiKeyModal = () => {
     setIsApiKeyModalOpen(true);
     setIsOpen(false);
@@ -95,10 +100,13 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
           {isOpen && (
             <div className="absolute top-12 right-0 w-64 max-h-[calc(100vh-150px)] overflow-y-auto p-2 bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg z-50">
               {userAddress && (
-                <div className="py-3 px-3 border-b border-[#333333] text-xs">
+                <button
+                  onClick={navigateToProfile}
+                  className="w-full text-left py-3 px-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
+                >
                   <div className="font-medium text-gray-300">Connected Wallet</div>
                   <div className="mt-1 font-mono text-gray-400 truncate">{userAddress}</div>
-                </div>
+                </button>
               )}
               <div>
                 <div className="py-1">
