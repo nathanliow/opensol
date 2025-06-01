@@ -18,8 +18,17 @@ import { getBlockTime } from './provider/helius/getBlockTime';
 import { getClusterNodes } from './provider/helius/getClusterNodes';
 import { getCompressedAccount } from './provider/helius/getCompressedAccount';
 import { getCompressedAccountProof } from './provider/helius/getCompressedAccountProof';
+import { getCompressedAccountsByOwner } from './provider/helius/getCompressedAccountsByOwner';
 import { getCompressedBalance } from './provider/helius/getCompressedBalance';
 import { getCompressedBalanceByOwner } from './provider/helius/getCompressedBalanceByOwner';
+import { getCompressedMintTokenHolders } from './provider/helius/getCompressedMintTokenHolders';
+import { getCompressedTokenAccountBalance } from './provider/helius/getCompressedTokenAccountBalance';
+import { getCompressedTokenAccountsByDelegate } from './provider/helius/getCompressedTokenAccountsByDelegate';
+import { getCompressedTokenBalancesByOwner } from './provider/helius/getCompressedTokenBalancesByOwner';
+import { getCompressionSignaturesForAccount } from './provider/helius/getCompressionSignaturesForAccount';
+import { getCompressionSignaturesForAddress } from './provider/helius/getCompressionSignaturesForAddress';
+import { getCompressionSignaturesForOwner } from './provider/helius/getCompressionSignaturesForOwner';
+import { getCompressionSignaturesForTokenOwner } from './provider/helius/getCompressionSignaturesForTokenOwner';
 import { getEnhancedTransaction } from './provider/helius/getEnhancedTransaction';
 import { getEpochInfo } from './provider/helius/getEpochInfo';
 import { getEpochSchedule } from './provider/helius/getEpochSchedule';
@@ -29,14 +38,21 @@ import { getGenesisHash } from './provider/helius/getGenesisHash';
 import { getHealth } from './provider/helius/getHealth';
 import { getHighestSnapshotSlot } from './provider/helius/getHighestSnapshotSlot';
 import { getIdentity } from './provider/helius/getIdentity';
+import { getIndexerHealth } from './provider/helius/getIndexerHealth';
+import { getIndexerSlot } from './provider/helius/getIndexerSlot';
 import { getInflationGovernor } from './provider/helius/getInflationGovernor';
 import { getInflationRate } from './provider/helius/getInflationRate';
 import { getLargestAccounts } from './provider/helius/getLargestAccounts';
 import { getLatestBlockhash } from './provider/helius/getLatestBlockhash';
+import { getLatestCompressionSignatures } from './provider/helius/getLatestCompressionSignatures';
+import { getLatestNonVotingSignatures } from './provider/helius/getLatestNonVotingSignatures';
 import { getLeaderSchedule } from './provider/helius/getLeaderSchedule';
 import { getMaxRetransmitSlot } from './provider/helius/getMaxRetransmitSlot';
 import { getMaxShredInsertSlot } from './provider/helius/getMaxShredInsertSlot';
 import { getMinimumBalanceForRentExemption } from './provider/helius/getMinimumBalanceForRentExemption';
+import { getMultipleCompressedAccounts } from './provider/helius/getMultipleCompressedAccounts';
+import { getMultipleCompressedAccountProofs } from './provider/helius/getMultipleCompressedAccountProofs';
+import { getMultipleNewAddressProofs } from './provider/helius/getMultipleNewAddressProofs';
 import { getNftEditions } from './provider/helius/getNftEditions';
 import { getPriorityFeeEstimate } from './provider/helius/getPriorityFeeEstimate';
 import { getProgramAccounts } from './provider/helius/getProgramAccounts';
@@ -54,6 +70,8 @@ import { getTokenSupply } from './provider/helius/getTokenSupply';
 import { getTransaction } from './provider/helius/getTransaction';
 import { getTransactionCount } from './provider/helius/getTransactionCount';
 import { getTransactionHistory } from './provider/helius/getTransactionHistory';
+import { getTransactionWithCompressionInfo } from './provider/helius/getTransactionWithCompressionInfo';
+import { getValidityProof } from './provider/helius/getValidityProof';
 import { getVersion } from './provider/helius/getVersion';
 import { getVoteAccounts } from './provider/helius/getVoteAccounts';
 import { isBlockhashValid } from './provider/helius/isBlockhashValid';
@@ -111,8 +129,17 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getClusterNodes,
     getCompressedAccount,
     getCompressedAccountProof,
+    getCompressedAccountsByOwner,
     getCompressedBalance,
     getCompressedBalanceByOwner,
+    getCompressedMintTokenHolders,
+    getCompressedTokenAccountBalance,
+    getCompressedTokenAccountsByDelegate,
+    getCompressedTokenBalancesByOwner,
+    getCompressionSignaturesForAccount,
+    getCompressionSignaturesForAddress,
+    getCompressionSignaturesForOwner,
+    getCompressionSignaturesForTokenOwner,
     getEnhancedTransaction,
     getEpochInfo,
     getEpochSchedule,
@@ -122,14 +149,21 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getHealth,
     getHighestSnapshotSlot,
     getIdentity,
+    getIndexerHealth,
+    getIndexerSlot,
     getInflationGovernor,
     getInflationRate,
     getLargestAccounts,
     getLatestBlockhash,
+    getLatestCompressionSignatures,
+    getLatestNonVotingSignatures,
     getLeaderSchedule,
     getMaxRetransmitSlot,
     getMaxShredInsertSlot,
     getMinimumBalanceForRentExemption,
+    getMultipleCompressedAccounts,
+    getMultipleCompressedAccountProofs,
+    getMultipleNewAddressProofs,
     getNftEditions,
     getPriorityFeeEstimate,
     getProgramAccounts,
@@ -147,6 +181,8 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getTransaction,
     getTransactionCount,
     getTransactionHistory,
+    getTransactionWithCompressionInfo,
+    getValidityProof,
     getVersion,
     getVoteAccounts,
     isBlockhashValid,

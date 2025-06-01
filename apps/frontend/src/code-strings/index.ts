@@ -53,7 +53,16 @@ import { getClusterNodesString } from "../../../backend/src/block-functions/prov
 import { getCompressedBalanceByOwnerString } from "../../../backend/src/block-functions/provider/helius/getCompressedBalanceByOwner";
 import { getCompressedAccountString } from "../../../backend/src/block-functions/provider/helius/getCompressedAccount";
 import { getCompressedAccountProofString } from "../../../backend/src/block-functions/provider/helius/getCompressedAccountProof";
+import { getCompressedAccountsByOwnerString } from "../../../backend/src/block-functions/provider/helius/getCompressedAccountsByOwner";
 import { getCompressedBalanceString } from "../../../backend/src/block-functions/provider/helius/getCompressedBalance";
+import { getCompressedMintTokenHoldersString } from "../../../backend/src/block-functions/provider/helius/getCompressedMintTokenHolders";
+import { getCompressedTokenAccountBalanceString } from "../../../backend/src/block-functions/provider/helius/getCompressedTokenAccountBalance";
+import { getCompressedTokenAccountsByDelegateString } from "../../../backend/src/block-functions/provider/helius/getCompressedTokenAccountsByDelegate";
+import { getCompressedTokenBalancesByOwnerString } from "../../../backend/src/block-functions/provider/helius/getCompressedTokenBalancesByOwner";
+import { getCompressionSignaturesForAccountString } from "../../../backend/src/block-functions/provider/helius/getCompressionSignaturesForAccount";
+import { getCompressionSignaturesForAddressString } from "../../../backend/src/block-functions/provider/helius/getCompressionSignaturesForAddress";
+import { getCompressionSignaturesForOwnerString } from "../../../backend/src/block-functions/provider/helius/getCompressionSignaturesForOwner";
+import { getCompressionSignaturesForTokenOwnerString } from "../../../backend/src/block-functions/provider/helius/getCompressionSignaturesForTokenOwner";
 import { getEnhancedTransactionString } from "../../../backend/src/block-functions/provider/helius/getEnhancedTransaction";
 import { getEpochInfoString } from "../../../backend/src/block-functions/provider/helius/getEpochInfo";
 import { getEpochScheduleString } from "../../../backend/src/block-functions/provider/helius/getEpochSchedule";
@@ -63,14 +72,21 @@ import { getGenesisHashString } from "../../../backend/src/block-functions/provi
 import { getHealthString } from "../../../backend/src/block-functions/provider/helius/getHealth";
 import { getHighestSnapshotSlotString } from "../../../backend/src/block-functions/provider/helius/getHighestSnapshotSlot";
 import { getIdentityString } from "../../../backend/src/block-functions/provider/helius/getIdentity";
+import { getIndexerHealthString } from "../../../backend/src/block-functions/provider/helius/getIndexerHealth"; 
+import { getIndexerSlotString } from "../../../backend/src/block-functions/provider/helius/getIndexerSlot";
 import { getInflationGovernorString } from "../../../backend/src/block-functions/provider/helius/getInflationGovernor";
 import { getInflationRateString } from "../../../backend/src/block-functions/provider/helius/getInflationRate";
 import { getLargestAccountsString } from "../../../backend/src/block-functions/provider/helius/getLargestAccounts";
 import { getLatestBlockhashString } from "../../../backend/src/block-functions/provider/helius/getLatestBlockhash";
+import { getLatestCompressionSignaturesString } from "../../../backend/src/block-functions/provider/helius/getLatestCompressionSignatures";
+import { getLatestNonVotingSignaturesString } from "../../../backend/src/block-functions/provider/helius/getLatestNonVotingSignatures";
 import { getLeaderScheduleString } from "../../../backend/src/block-functions/provider/helius/getLeaderSchedule";
 import { getMaxRetransmitSlotString } from "../../../backend/src/block-functions/provider/helius/getMaxRetransmitSlot";
 import { getMaxShredInsertSlotString } from "../../../backend/src/block-functions/provider/helius/getMaxShredInsertSlot";
 import { getMinimumBalanceForRentExemptionString } from "../../../backend/src/block-functions/provider/helius/getMinimumBalanceForRentExemption";
+import { getMultipleCompressedAccountsString } from "../../../backend/src/block-functions/provider/helius/getMultipleCompressedAccounts";
+import { getMultipleCompressedAccountProofsString } from "../../../backend/src/block-functions/provider/helius/getMultipleCompressedAccountProofs";
+import { getMultipleNewAddressProofsString } from "../../../backend/src/block-functions/provider/helius/getMultipleNewAddressProofs";
 import { getNftEditionsString } from "../../../backend/src/block-functions/provider/helius/getNftEditions";
 import { getPriorityFeeEstimateString } from "../../../backend/src/block-functions/provider/helius/getPriorityFeeEstimate";
 import { getProgramAccountsString } from "../../../backend/src/block-functions/provider/helius/getProgramAccounts";
@@ -87,6 +103,8 @@ import { getTokenLargestAccountsString } from "../../../backend/src/block-functi
 import { getTokenSupplyString } from "../../../backend/src/block-functions/provider/helius/getTokenSupply";
 import { getTransactionString } from "../../../backend/src/block-functions/provider/helius/getTransaction";
 import { getTransactionHistoryString } from "../../../backend/src/block-functions/provider/helius/getTransactionHistory";
+import { getTransactionWithCompressionInfoString } from "../../../backend/src/block-functions/provider/helius/getTransactionWithCompressionInfo"; 
+import { getValidityProofString } from "../../../backend/src/block-functions/provider/helius/getValidityProof";
 import { getVersionString } from "../../../backend/src/block-functions/provider/helius/getVersion";
 import { getVoteAccountsString } from "../../../backend/src/block-functions/provider/helius/getVoteAccounts";
 import { isBlockhashValidString } from "../../../backend/src/block-functions/provider/helius/isBlockhashValid";
@@ -148,8 +166,17 @@ export const functionStringMap: Record<string, string> = {
   getClusterNodes: getClusterNodesString,
   getCompressedAccount: getCompressedAccountString,
   getCompressedAccountProof: getCompressedAccountProofString,
+  getCompressedAccountsByOwner: getCompressedAccountsByOwnerString,
   getCompressedBalance: getCompressedBalanceString,
   getCompressedBalanceByOwner: getCompressedBalanceByOwnerString,
+  getCompressedMintTokenHolders: getCompressedMintTokenHoldersString,
+  getCompressedTokenAccountBalance: getCompressedTokenAccountBalanceString,
+  getCompressedTokenAccountsByDelegate: getCompressedTokenAccountsByDelegateString,
+  getCompressedTokenBalancesByOwner: getCompressedTokenBalancesByOwnerString,
+  getCompressionSignaturesForAccount: getCompressionSignaturesForAccountString,
+  getCompressionSignaturesForAddress: getCompressionSignaturesForAddressString,
+  getCompressionSignaturesForOwner: getCompressionSignaturesForOwnerString,
+  getCompressionSignaturesForTokenOwner: getCompressionSignaturesForTokenOwnerString,
   getEnhancedTransaction: getEnhancedTransactionString,
   getEpochInfo: getEpochInfoString,
   getEpochSchedule: getEpochScheduleString,
@@ -159,14 +186,21 @@ export const functionStringMap: Record<string, string> = {
   getHealth: getHealthString,
   getHighestSnapshotSlot: getHighestSnapshotSlotString,
   getIdentity: getIdentityString,
+  getIndexerHealth: getIndexerHealthString,
+  getIndexerSlot: getIndexerSlotString,
   getInflationGovernor: getInflationGovernorString,
   getInflationRate: getInflationRateString,
   getLargestAccounts: getLargestAccountsString,
   getLatestBlockhash: getLatestBlockhashString,
+  getLatestCompressionSignatures: getLatestCompressionSignaturesString,
+  getLatestNonVotingSignatures: getLatestNonVotingSignaturesString,
   getLeaderSchedule: getLeaderScheduleString,
   getMaxRetransmitSlot: getMaxRetransmitSlotString,
   getMaxShredInsertSlot: getMaxShredInsertSlotString,
   getMinimumBalanceForRentExemption: getMinimumBalanceForRentExemptionString,
+  getMultipleCompressedAccounts: getMultipleCompressedAccountsString,
+  getMultipleCompressedAccountProofs: getMultipleCompressedAccountProofsString,
+  getMultipleNewAddressProofs: getMultipleNewAddressProofsString,
   getNftEditions: getNftEditionsString,
   getPriorityFeeEstimate: getPriorityFeeEstimateString,
   getProgramAccounts: getProgramAccountsString,
@@ -183,6 +217,8 @@ export const functionStringMap: Record<string, string> = {
   getTokenSupply: getTokenSupplyString,
   getTransaction: getTransactionString,
   getTransactionHistory: getTransactionHistoryString,
+  getTransactionWithCompressionInfo: getTransactionWithCompressionInfoString,
+  getValidityProof: getValidityProofString,
   getVersion: getVersionString,
   getVoteAccounts: getVoteAccountsString,
   isBlockhashValid: isBlockhashValidString,
