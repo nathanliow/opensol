@@ -115,16 +115,11 @@ export const nodeTypes: Record<string, NodeType> = {
       textColor: 'text-black'
     },
     defaultInputs: {
-      x: {
-        handleId: 'input-x',
-        type: 'string',
-        value: ''
+      object: {
+        handleId: 'input-object',
+        type: 'object',
+        value: {}
       },
-      y: {
-        handleId: 'input-y',
-        type: 'string',
-        value: ''
-      }
     },
     defaultOutput: {
       handleId: 'output',
@@ -143,7 +138,23 @@ export const nodeTypes: Record<string, NodeType> = {
       secondaryColor: 'blue-400',
       textColor: 'text-black'
     },
-    defaultInputs: {},
+    defaultInputs: {
+      x: {
+        handleId: 'input-x',
+        type: 'string',
+        value: ''
+      },
+      y: {
+        handleId: 'input-y',
+        type: 'string',
+        value: ''
+      },
+      operator: {
+        handleId: 'input-operator',
+        type: 'string',
+        value: '>'
+      }
+    },
     defaultOutput: {
       handleId: 'output',
       type: 'string',
