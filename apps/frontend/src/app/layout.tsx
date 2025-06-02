@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "openSOL",
-  description: "connect, run, copy",
+  description: "A no-code solution for building on Solana",
 };
 
 export default function RootLayout({

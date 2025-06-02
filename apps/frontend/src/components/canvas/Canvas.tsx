@@ -44,6 +44,7 @@ import { nodeUtils } from "@/utils/nodeUtils";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 import { useLesson } from "@/contexts/LessonContext";
 import { courses } from "@/courses";
+import ConnectionLine from "./ConnectionLine";
 
 // Internal component that uses ReactFlow hooks
 function Flow() {
@@ -604,6 +605,7 @@ function Flow() {
           edgeTypes={edgeTypes}
           onNodesChange={canEdit ? handleNodesChange : undefined}
           onEdgesChange={canEdit ? onEdgesChange : undefined}
+          connectionLineComponent={ConnectionLine}
           onConnect={canEdit ? onConnect : undefined}
           onConnectStart={canEdit ? onConnectStart : undefined}
           onConnectEnd={canEdit ? onConnectEnd : undefined}

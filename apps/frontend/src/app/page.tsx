@@ -9,13 +9,11 @@ import BlockchainAnimation from '@/components/animations/BlockchainAnimation';
 export default function Home() {
   const { isConnected, login, supabaseUser, isLoading } = useUserAccountContext();
 
-  // Handle scroll for navbar transparency
   useEffect(() => {
     // This empty effect helps ensure Privvy is initialized properly
     // before we try to render any authenticated content
   }, []);
 
-  // If connected, render the Canvas component which handles project loading from localStorage
   if (isConnected) {
     return (
       <div className="w-screen h-screen">
