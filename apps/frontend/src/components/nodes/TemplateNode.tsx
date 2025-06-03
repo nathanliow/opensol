@@ -7,6 +7,7 @@ import { CustomHandle } from '../../types/HandleTypes';
 import SearchableDropdown from '../ui/SearchableDropdown';
 import { NodeTypeMetadata } from '../../types/NodeTypes';
 import { nodeUtils } from '../../utils/nodeUtils';
+import { DocumentationIcon } from './DocumentationIcon';
 
 // Template node props interface
 export interface TemplateNodeProps {
@@ -526,11 +527,13 @@ const TemplateNode: FC<TemplateNodeProps> = ({
   return (
     <div 
       ref={nodeRef}
-      className={`${metadata.backgroundColor} p-1 rounded-md border ${metadata.borderColor}`}
+      className={`${metadata.backgroundColor} p-1 rounded-md border ${metadata.borderColor} relative`}
       style={{ 
         boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1)'
       }}
     >
+      <DocumentationIcon documentationUrl={metadata.documentationUrl} />
+      
       <div className={`text-center font-bold ${metadata.textColor} mb-2 border-b ${metadata.borderColor} pb-1`}>
         {metadata.label}
       </div>

@@ -33,6 +33,7 @@ export interface NodeTypeMetadata {
   id: string;
   label: string;
   category: NodeCategory;
+  documentationUrl?: string; // URL for documentation
 
   backgroundColor: string; // bg-xxxx-xxxx (tailwind)
   borderColor: string; // border-xxxx-xxxx (tailwind)
@@ -79,6 +80,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'CONST',
       label: 'CONST',
       category: 'Code',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/code/const',
       backgroundColor: 'bg-blue-500',
       borderColor: 'border-blue-700',
       primaryColor: 'blue-500',
@@ -108,6 +110,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'OBJECT', 
       label: 'OBJECT', 
       category: 'Code', 
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/code/object',
       backgroundColor: 'bg-blue-400',
       borderColor: 'border-blue-600',
       primaryColor: 'blue-400', 
@@ -132,6 +135,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'CONDITIONAL',
       label: 'CONDITIONAL',
       category: 'Code',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/code/conditional',
       backgroundColor: 'bg-blue-300',
       borderColor: 'border-blue-500',
       primaryColor: 'blue-200',
@@ -166,6 +170,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'REPEAT',
       label: 'REPEAT',
       category: 'Code',
+      documentationUrl: '',
       backgroundColor: 'bg-blue-300',
       borderColor: 'border-blue-500',
       primaryColor: 'blue-300',
@@ -205,6 +210,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'MATH',
       label: 'MATH',
       category: 'Code',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/code/math',
       backgroundColor: 'bg-blue-200',
       borderColor: 'border-blue-400',
       primaryColor: 'blue-200',
@@ -229,6 +235,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'FUNCTION',
       label: 'FUNCTION',
       category: 'Code',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/code/function',
       backgroundColor: 'bg-gray-200',
       borderColor: 'border-gray-400',
       primaryColor: 'gray-200',
@@ -253,6 +260,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'PRINT',
       label: 'PRINT',
       category: 'Code',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/code/print',
       backgroundColor: 'bg-yellow-200',
       borderColor: 'border-yellow-400',
       primaryColor: 'yellow-200',
@@ -282,6 +290,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'GET', 
       label: 'GET', 
       category: 'Blockchain', 
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/blockchain/get',
       backgroundColor: 'bg-purple-400',
       borderColor: 'border-purple-600',
       primaryColor: 'purple-500', 
@@ -311,6 +320,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'MINT',
       label: 'MINT',
       category: 'Blockchain',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/blockchain/mint',
       backgroundColor: 'bg-purple-300',
       borderColor: 'border-purple-500',
       primaryColor: 'purple-400',
@@ -355,6 +365,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'TRANSFER',
       label: 'TRANSFER',
       category: 'Blockchain',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/blockchain/transfer',
       backgroundColor: 'bg-purple-200',
       borderColor: 'border-purple-400',
       primaryColor: 'purple-300',
@@ -397,6 +408,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'HELIUS',
       label: 'HELIUS',
       category: 'Provider',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/provider/helius',
       backgroundColor: 'bg-[#E84125]',
       borderColor: 'border-[#E84125]',
       primaryColor: '[#E84125]',
@@ -426,6 +438,7 @@ export const nodeTypes: Record<string, NodeType> = {
       id: 'BIRDEYE',
       label: 'BIRDEYE',
       category: 'Provider',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/provider/birdeye',
       backgroundColor: 'bg-[#fb8d05]',
       borderColor: 'border-[#fb8d05]',
       primaryColor: '[#fb8d05]',

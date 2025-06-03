@@ -6,6 +6,7 @@ import { nodeTypes } from '../../../types/NodeTypes';
 import blockTemplateService from '../../services/blockTemplateService';
 import { OutputDefinition } from '@/types/OutputTypes';
 import { nodeUtils } from '@/utils/nodeUtils';
+import { FlowNode } from '../../../../../backend/src/packages/compiler/src/types';
 
 interface MathNodeProps {
   id: string;
@@ -17,7 +18,7 @@ export default function MathNode({ id }: MathNodeProps) {
   const [parameters, setParameters] = useState<Record<string, string | number>>({});
   const blockTemplates = blockTemplateService.getTemplatesByType('MATH');
   const edges = useEdges();
-  const nodes = useNodes();
+  const nodes = useNodes() as FlowNode[];
 
   const getConnectedValue = useCallback((paramName: string) => {
     const edge = edges.find(e => 
@@ -29,7 +30,7 @@ export default function MathNode({ id }: MathNodeProps) {
     const sourceNode = nodes.find(n => n.id === edge.source);
     if (!sourceNode) return null;
     
-    return sourceNode.data.value;
+    return sourceNode.data.output?.value;
   }, [edges, id, nodes]);
 
   // Check for connected inputs and update parameters
