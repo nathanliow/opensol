@@ -21,7 +21,7 @@ import BirdeyeNode from "../components/nodes/provider/BirdeyeNode";
  * FRONTEND TYPES FOR NODES AND EDGES
  */
 
-export type NodeCategory = 'Code' | 'Blockchain' | 'DeFi' | 'Provider' | 'Misc';
+export type NodeCategory = 'Code' | 'Blockchain' | 'Provider' | 'Misc';
 
 export interface NodeType {
   metadata: NodeTypeMetadata;
@@ -395,10 +395,6 @@ export const nodeTypes: Record<string, NodeType> = {
       value: {}
     }
   },
-
-  /* -------------------------------------------------------------- */
-  /* -------------------------- DeFi ------------------------------ */
-  /* -------------------------------------------------------------- */
 
   /* -------------------------------------------------------------- */
   /* -------------------------- Provider -------------------------- */

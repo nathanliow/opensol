@@ -27,9 +27,8 @@ export const NodeSidebar = ({
     setIsOpen(!isOpen);
   };
 
-  const categories: NodeCategory[] = ['Code', 'Blockchain', 'DeFi', 'Provider', 'Misc'];
+  const categories: NodeCategory[] = ['Code', 'Blockchain', 'Provider', 'Misc'];
   
-  // Group nodes by category
   const nodesByCategory = categories.reduce((acc, category) => {
     acc[category] = Object.values(nodeTypes).filter(
       (type) => type.metadata.category === category
@@ -37,14 +36,12 @@ export const NodeSidebar = ({
     return acc;
   }, {} as Record<NodeCategory, NodeType[]>);
 
-  // Set category refs
   const setCategoryRef = (element: HTMLDivElement | null, category: string) => {
     if (element) {
       categoryRefs.current[category] = element;
     }
   };
 
-  // Scroll to category when tab changes
   useEffect(() => {
     if (categoryRefs.current[activeTab] && nodeListRef.current) {
       categoryRefs.current[activeTab]?.scrollIntoView({ 
@@ -205,7 +202,6 @@ export const NodeSidebar = ({
                   ))}
                 </div>
 
-                {/* Read-Only Notice (if applicable) */}
                 {isReadOnly && (
                   <div className="flex items-center justify-center bg-amber-700/20 text-amber-400 px-2 py-2 mx-2 mb-2 rounded-md text-xs">
                     View Only - Cannot Add Nodes
@@ -227,8 +223,6 @@ function getCategoryIcon(category: NodeCategory) {
       return <Icons.FiBox size={14} />;
     case "Blockchain":
       return <Icons.FiShare2 size={14} />;
-    case "DeFi":
-      return <Icons.PiMoneyWavyLight size={18} />;
     case "Provider":
       return <Icons.FiCommand size={14} />;
     case "Misc":
