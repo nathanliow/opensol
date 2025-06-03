@@ -483,6 +483,7 @@ const TemplateNode: FC<TemplateNodeProps> = ({
   const updateNodeInternals = useUpdateNodeInternals();
   const nodeRef = useRef<HTMLDivElement>(null);
   const [nodeHeight, setNodeHeight] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const edges = useEdges();
   const nodes = useNodes();
   
@@ -531,8 +532,10 @@ const TemplateNode: FC<TemplateNodeProps> = ({
       style={{ 
         boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.1)'
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <DocumentationIcon documentationUrl={metadata.documentationUrl} />
+      {isHovered && <DocumentationIcon documentationUrl={metadata.documentationUrl} />}
       
       <div className={`text-center font-bold ${metadata.textColor} mb-2 border-b ${metadata.borderColor} pb-1`}>
         {metadata.label}

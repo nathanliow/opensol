@@ -1,18 +1,17 @@
 import { memo, useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import React from 'react';
 import { useNodes, useEdges, Panel } from '@xyflow/react';
-import { CodeDisplay } from '../code/CodeDisplay';
 import { RunButton } from '../canvas/RunButton';
 import { Icons } from '../icons/icons';
 import { LLMInput } from '../llm/LLMInput';
 import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
-import { enhanceCode } from '../../services/codeEnhanceService';
 import { useConfig } from '../../contexts/ConfigContext';
-import { CopyButton } from '../ui/CopyButton';
 import { FlowNode } from '../../../../backend/src/packages/compiler/src/types';
-import { formatJSON } from '@/utils/formatJSON';
 import { functionStringMap } from '@/code-strings';
+import { CodeContent, CodeTab } from './CodeContent';
+import { OutputContent } from './OutputContent';
+import { DebugContent } from './DebugContent';
 
 interface ConsoleProps {
   className?: string;
@@ -42,12 +41,6 @@ interface Message {
   error?: boolean;
 }
 
-interface CodeTab {
-  id: string;
-  name: string;
-  content: string;
-}
-
 export const Console = memo(({ 
   className = '', 
   output = '', 
@@ -66,7 +59,6 @@ export const Console = memo(({
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [messageIdCounter, setMessageIdCounter] = useState(0);
-  const [isEnhancing, setIsEnhancing] = useState(false);
   const nodes = useNodes() as FlowNode[];
   const edges = useEdges();
   const { apiKeys } = useConfig();
@@ -74,14 +66,11 @@ export const Console = memo(({
   // Track the previous forceCollapse value
   const prevForceCollapseRef = useRef(forceCollapse);
   
-  // Update when forceCollapse changes
   useEffect(() => {
-    // If menu was opened (forceCollapse changed from false to true)
     if (forceCollapse && !prevForceCollapseRef.current) {
       setIsCollapsed(true);
     }
     
-    // Update the ref with current value for next comparison
     prevForceCollapseRef.current = forceCollapse;
   }, [forceCollapse]);
 
@@ -154,10 +143,10 @@ export async function ${importName}(params: any) {
     }
   }, [code]);
 
-  const getActiveCodeContent = () => {
+  const getActiveCodeContent = useCallback(() => {
     const tab = codeTabs.find(tab => tab.id === activeCodeTab);
     return tab ? tab.content : code;
-  };
+  }, [codeTabs, activeCodeTab, code]);
 
   const handleClear = useCallback(() => {
     if (onClear) {
@@ -224,20 +213,6 @@ export async function ${importName}(params: any) {
   }, [edges]);
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
-
-  const handleEnhanceCode = async () => {
-    if (!code || isEnhancing || !apiKeys.openai) return;
-    
-    setIsEnhancing(true);
-    try {
-      const enhancedCode = await enhanceCode(code, apiKeys.openai);
-      onCodeGenerated(enhancedCode);
-    } catch (error) {
-      console.error('Error enhancing code:', error);
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
 
   return (
     <Panel position="bottom-right">
@@ -366,54 +341,18 @@ export async function ${importName}(params: any) {
           <div className="flex flex-col h-[calc(100%-40px)]">
             <div className="flex-1 overflow-y-auto p-4 font-mono text-sm whitespace-pre">
               {activeTab === 'output' && (
-                <div className="flex-1 overflow-y-auto p-4 font-mono text-sm">
-                  {formatJSON(output)}
-                </div>
+                <OutputContent output={output} />
               )}
               {activeTab === 'debug' && (
-                <pre className="whitespace-pre-wrap">{debug}</pre>
+                <DebugContent debug={debug} />
               )}
               {activeTab === 'code' && (
-                <div className="relative flex flex-col h-full">
-                  {/* Buttons for enhance and copy */}
-                  <div className="absolute top-14 right-4 z-50">
-                    <div className="flex justify-end px-4 items-center gap-4">
-                      <button
-                        onClick={handleEnhanceCode}
-                        disabled={isEnhancing}
-                        className={`p-2 rounded text-gray-500 cursor-pointer ${isEnhancing ? 'opacity-50' : 'hover:text-white'} transition-colors`}
-                        title="Enhance variable names"
-                      >
-                        <Icons.IoMdColorWand size={24} className={`${isEnhancing ? 'animate-pulse' : ''}`}/>
-                      </button>
-                      <CopyButton text={getActiveCodeContent()} />
-                    </div>
-                  </div>
-                  
-                  {/* Code tabs - positioned at the top with clear styling */}
-                  <div className="flex w-full border-b-2 border-[#333333] overflow-x-auto mb-4">
-                    {codeTabs.map(tab => {
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveCodeTab(tab.id)}
-                          className={`px-6 py-2 mr-1 rounded-t-lg flex-shrink-0 ${
-                            activeCodeTab === tab.id
-                              ? 'bg-[#2D2D2D] text-blue-400 font-bold border-b-2 border-blue-500'
-                              : 'bg-[#1E1E1E] text-gray-400 hover:text-white'
-                          }`}
-                        >
-                          {tab.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Content area - below the tabs */}
-                  <div className="flex-1 overflow-auto">
-                    <CodeDisplay code={getActiveCodeContent().replace(/const HELIUS_API_KEY = ".*";/, 'const HELIUS_API_KEY = process.env.HELIUS_API_KEY;')} />
-                  </div>
-                </div>
+                <CodeContent 
+                  codeTabs={codeTabs}
+                  activeCodeTab={activeCodeTab}
+                  setActiveCodeTab={setActiveCodeTab}
+                  getActiveCodeContent={getActiveCodeContent}
+                />
               )}
               {activeTab === 'ai' && (
                 <div className="flex flex-col h-full">
@@ -442,7 +381,6 @@ export async function ${importName}(params: any) {
                               onClick={() => {
                                 const messageIndex = messages.indexOf(message);
                                 const point = restorePoints.find(p => p.messageIndex === messageIndex);
-                                console.log('messageIndex', messageIndex, 'restorePoints', restorePoints);
                                 if (point && onRestoreFlow) {
                                   onRestoreFlow(point.nodes, point.edges);
                                   setMessages(prev => prev.slice(0, messageIndex + 1));
