@@ -55,6 +55,10 @@ export const getAssetsByOwner: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         ownerAddress, 
         page, 
@@ -65,7 +69,7 @@ export const getAssetsByOwner: BlockFunctionTemplate = {
         after, 
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!ownerAddress) {
         throw new Error('Owner Address is required.');

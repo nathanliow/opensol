@@ -30,12 +30,16 @@ export const getPriceAtUnixTime: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         address,
         unixTimestamp,
         apiKey, 
         network = 'mainnet',
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');

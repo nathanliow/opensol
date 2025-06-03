@@ -55,6 +55,10 @@ export const getAssetsByCreator: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         creatorAddress, 
         page, 
@@ -65,7 +69,7 @@ export const getAssetsByCreator: BlockFunctionTemplate = {
         after, 
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!creatorAddress) {
         throw new Error('Creator Address is required.');

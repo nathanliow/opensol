@@ -60,6 +60,10 @@ export const getAssetsByGroup: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         groupKey, 
         groupValue, 
@@ -71,7 +75,7 @@ export const getAssetsByGroup: BlockFunctionTemplate = {
         after, 
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!groupKey) {
         throw new Error('Group Key is required.');

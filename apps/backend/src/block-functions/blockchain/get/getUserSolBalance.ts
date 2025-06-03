@@ -25,12 +25,16 @@ export const getUserSolBalance: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       // Extract parameters
       const { 
         address, 
         apiKey, 
         network = 'mainnet' 
-      } = params;
+      } = filteredParams;
       
       if (!address) {
         throw new Error('Wallet address is required.');

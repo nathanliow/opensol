@@ -58,6 +58,10 @@ export const getTokenTopTraders: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         address,
         timeframe = '24h',
@@ -67,7 +71,7 @@ export const getTokenTopTraders: BlockFunctionTemplate = {
         limit = 10,
         apiKey, 
         network = 'mainnet',
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');

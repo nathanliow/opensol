@@ -70,6 +70,10 @@ export const getTokenMintBurn: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         address,
         sort_by = 'block_time',
@@ -81,7 +85,7 @@ export const getTokenMintBurn: BlockFunctionTemplate = {
         limit = 100,
         apiKey, 
         network = 'mainnet',
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');

@@ -38,13 +38,17 @@ export const getTokenHolders: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         address,
         limit = 100,
         offset = 0,
         apiKey, 
         network = 'mainnet',
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Birdeye API key is required.');

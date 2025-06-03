@@ -25,11 +25,15 @@ export const getBalance: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         address, 
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!address) {
         throw new Error('Address is required.');

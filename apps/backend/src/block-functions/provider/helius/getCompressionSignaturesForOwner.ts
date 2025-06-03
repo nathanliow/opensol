@@ -34,13 +34,17 @@ export const getCompressionSignaturesForOwner: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         owner,
         cursor,
         limit,
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Helius API key is required.');

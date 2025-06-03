@@ -35,13 +35,17 @@ export const getSignaturesForAddress: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         address,
         before = undefined,
         limit = 1000,
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Helius API key is required.');

@@ -55,6 +55,10 @@ export const getAssetsByAuthority: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         authorityAddress, 
         page, 
@@ -65,7 +69,7 @@ export const getAssetsByAuthority: BlockFunctionTemplate = {
         after, 
         apiKey, 
         network = 'devnet' 
-      } = params;
+      } = filteredParams;
       
       if (!authorityAddress) {
         throw new Error('Authority Address is required.');

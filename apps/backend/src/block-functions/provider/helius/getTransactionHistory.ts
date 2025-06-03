@@ -710,16 +710,20 @@ export const getTransactionHistory: BlockFunctionTemplate = {
   },
   execute: async (params: Record<string, any>) => {
     try {
+      const filteredParams = Object.fromEntries(
+        Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+      );
+
       const { 
         apiKey, 
         address,
         before,
         until,
-        limit: rawLimit = 100,
+        limit = 100,
         type,
         source,
         network = 'devnet',
-      } = params;
+      } = filteredParams;
       
       if (!apiKey) {
         throw new Error('Helius API key is required.');
@@ -729,13 +733,12 @@ export const getTransactionHistory: BlockFunctionTemplate = {
         throw new Error('Invalid API key tier.');
       }
 
-      const limit = rawLimit === '' || rawLimit === null || rawLimit === undefined ? 100 : Number(rawLimit);
 
-      if (isNaN(limit) || limit < 1 || limit > 100) {
+      if (limit < 1 || limit > 100) {
         throw new Error('Limit must be between 1 and 100.');
       }
 
-      const response = await fetch(`https://api.helius.xyz/v0/addresses/${address}/transactions?api-key=${apiKey.key}&before=${before}${until ? `&until=${until}` : ''}&limit=${limit}${type ? `&type=${type}` : ''}${source ? `&source=${source}` : ''}`, {
+      const response = await fetch(`https://api.helius.xyz/v0/addresses/${address}/transactions?api-key=${apiKey.key}&before=${before ? `&before=${before}` : ''}${until ? `&until=${until}` : ''}&limit=${limit}${type ? `&type=${type}` : ''}${source ? `&source=${source}` : ''}`, {
         method: 'GET',
       });
 
