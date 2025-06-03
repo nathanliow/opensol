@@ -28,7 +28,7 @@ export const getAccountInfo: BlockFunctionTemplate = {
       const filteredParams = Object.fromEntries(
         Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
       );
-      
+
       const { 
         pubkey,
         apiKey, 
@@ -80,7 +80,7 @@ export const getAccountInfo = async (params: Record<string, any>) => {
       network = 'devnet' 
     } = params;
 
-    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+    const response = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}\`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

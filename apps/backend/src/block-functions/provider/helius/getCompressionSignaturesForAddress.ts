@@ -103,7 +103,7 @@ export const getCompressionSignaturesForAddress = async (params: Record<string, 
       throw new Error('Address is required.');
     }
 
-    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+    const response = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}\`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

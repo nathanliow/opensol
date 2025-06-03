@@ -112,7 +112,7 @@ export const getCompressedMintTokenHolders = async (params: Record<string, any>)
       throw new Error('Limit must be greater than 0.');
     }
 
-    const response = await fetch('https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}', {
+    const response = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${process.env.HELIUS_API_KEY}\`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
