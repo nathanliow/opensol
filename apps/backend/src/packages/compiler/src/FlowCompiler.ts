@@ -132,7 +132,7 @@ export class FlowCompiler {
       .slice(1, -1)
       .join('\n');
     
-    const functionCode = `async function ${functionName}Function(params) {
+    const functionCode = `async function ${functionName}(params) {
       try {
         ${functionBody}
       } catch (error) {
@@ -460,7 +460,6 @@ export class FlowCompiler {
       if (functionName && typeof functionName === 'string' && functionName.trim() !== 'Untitled Function') {
         const trimmedName = functionName.trim();
         if (trimmedName.includes(' ')) {
-          // Convert to camelCase: "Example Function" -> "exampleFunction"
           const words = trimmedName.split(' ');
           this.functionName = words[0].toLowerCase() + 
             words.slice(1).map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join('');
@@ -601,7 +600,6 @@ export class FlowCompiler {
           `  ${JSON.stringify(tokenAddress)},`, 
           `  ${JSON.stringify(amount)},`, 
           `  ${JSON.stringify(recipient)},`,
-          `  ${JSON.stringify(node.id || '')},`,
           `);`
         ].join('\n');
       }

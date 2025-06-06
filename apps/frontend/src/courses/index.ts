@@ -58,7 +58,7 @@ export const courses: Record<string, Course> = {
     lessons: [
       course_5.lesson_5_1, // How do tokens work? 50xp
       course_5.lesson_5_2, // Minting a token 100xp
-      // lesson-5-2: Transferring a token (sending to ATA, creating ATA if not already there) 100xp
+      course_5.lesson_5_3, // Transferring a token 100xp
       // lesson-5-3: Getting information about a token (balance, metadata, liquidity, price, etc.) 100xp
       // lesson-5-4: something about bonding curves and swapping 100xp
       // lesson-5-5: something about token ecosystems (pump, launchpads, etc.) 100xp
