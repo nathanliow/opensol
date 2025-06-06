@@ -132,13 +132,7 @@ export class FlowCompiler {
       .slice(1, -1)
       .join('\n');
     
-    // For the mintToken function, we don't need to create a function body
-    // since we'll be injecting the real functions
-    if (templateName === 'mintToken' && this.noImports) {
-      return '';
-    }
-    
-    const functionCode = `async function ${functionName}(params) {
+    const functionCode = `async function ${functionName}Function(params) {
       try {
         ${functionBody}
       } catch (error) {
@@ -564,8 +558,10 @@ export class FlowCompiler {
           `}`,
           ``,
           `// Create and upload metadata`,
-          `let finalMetadataUri_${varName} = "";`,
-          `if (!finalMetadataUri_${varName}) {`,
+          `let finalMetadataUri_${varName} = null;`,
+          `let metadataUploadAttempted_${varName} = false;`,
+          `if (!metadataUploadAttempted_${varName}) {`,
+          `  metadataUploadAttempted_${varName} = true;`,
           `  try {`,
           `    const metadata = {`,
           `      name: ${JSON.stringify(name)},`,
@@ -578,6 +574,7 @@ export class FlowCompiler {
           `    finalMetadataUri_${varName} = await uploadMetadataToPinata(metadata);`,
           `  } catch (error) {`,
           `    console.error('Error uploading metadata to Pinata:', error);`,
+          `    finalMetadataUri_${varName} = "";`,
           `  }`,
           `}`,
           ``,
@@ -1048,7 +1045,7 @@ export class FlowCompiler {
       : '';
 
     const codeLines = [
-      `async function ${this.functionName}() {`,
+      `async function ${this.functionName}Function() {`,
       defineApiKey,
       `  let printOutput = '';`,
       `  NODE_CODE_HERE`,
@@ -1274,7 +1271,7 @@ export class FlowCompiler {
 
     const wrappedFunctionCode = `
 ${functionCode}
-return { execute: ${this.functionName}, FlowCompilerOutput: ${this.functionName} };
+return { execute: ${this.functionName}Function, FlowCompilerOutput: ${this.functionName}Function };
 `;
     
     console.log('=== GENERATED FUNCTION CODE ===');

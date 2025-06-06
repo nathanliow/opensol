@@ -1,6 +1,6 @@
 import { pinata } from '@/pinataConfig';
 
-export const uploadImageToPinata = async (file: File): Promise<string> => {
+export async function uploadImageToPinata(file: File): Promise<string> {
   try {
     const urlRequest = await fetch("/api/pinata/url");
     if (!urlRequest.ok) {
@@ -20,7 +20,7 @@ export const uploadImageToPinata = async (file: File): Promise<string> => {
   }
 }
 
-export const uploadImageToPinataString = `export const uploadImageToPinata = async (file: File): Promise<string> => {
+export const uploadImageToPinataString = `export async function uploadImageToPinata(file: File): Promise<string> {
   try {
     // Set up a /api/pinata/url route.ts file to get the signed URL
     const urlRequest = await fetch("/api/pinata/url");

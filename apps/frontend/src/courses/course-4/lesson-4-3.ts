@@ -1,27 +1,35 @@
 import { Lesson } from "@/types/CourseTypes";
 import { FlowEdge, FlowNode } from "../../../../backend/src/packages/compiler/src/types";
 
-export const lesson_4_2: Lesson = {
-  id: 'lesson-4-2',
-  title: 'Fetching Token Data',
+export const lesson_4_3: Lesson = {
+  id: 'lesson-4-3',
+  title: 'Fetching Wallet Portfolio',
   description: '',
   xp: 100,
   steps: [
     {
+      id: 'disclaimer',
+      title: 'Disclaimer',
+      description: 'This lesson requires a paid Birdeye API key with a tier of Starter or higher. The lesson can still be completed but the output will be an error.',
+      checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
+        return true;
+      },
+    },
+    {
       id: 'add-birdeye-node',
       title: 'Add a BIRDEYE node',
-      description: 'Drag a BIRDEYE node onto the canvas and select "getPrice" from the function dropdown to query a token. This will use the [price API](https://docs.birdeye.so/reference/get-defi-price) and return the current price and liquidity for the token.',
+      description: 'Drag a BIRDEYE node onto the canvas and select "getWalletPortfolio" from the function dropdown to query a token. This will use the [wallet portfolio API](https://docs.birdeye.so/reference/get-v1-wallet-token_list) and return the portfolio of the wallet.',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
         return nodes.some((n: FlowNode) => 
           n.type === 'BIRDEYE' && 
-          n.data?.inputs?.function?.value === 'getPrice'
+          n.data?.inputs?.function?.value === 'getWalletPortfolio'
         );
       },
     },
     {
       id: 'add-const',
       title: 'Add a CONST node',
-      description: 'Drag a CONST node onto the canvas and set its type to "string". Enter in a token address or use this: EwBUeMFm8Zcn79iJkDns3NdcL8t8B6Xikh9dKgZtpump',
+      description: 'Drag a CONST node onto the canvas and set its type to "string". Enter in a wallet address or use this: A4DCAjDwkq5jYhNoZ5Xn2NbkTLimARkerVv81w2dhXgL',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) =>
         nodes.some(
           (n: FlowNode) =>
@@ -65,30 +73,50 @@ export const lesson_4_2: Lesson = {
     {
       id: 'run-flow',
       title: 'Run the flow',
-      description: 'Click the Run button to execute the flow. You should see the token price data printed in the console.',
+      description: 'Click the Run button to execute the flow. You should see the wallet portfolio data printed in the console. ',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
         return !!(output && output.length > 0);
       },
     },
     {
-      id: 'birdeye-node-get-historical-price',
-      title: 'Add a BIRDEYE node',
-      description: 'Drag a BIRDEYE node onto the canvas and select "getHistoricalPrice" from the function dropdown to query a token. This will use the [historicalPrice API](https://docs.birdeye.so/reference/get-defi-history_price) and return the historical prices for the token between two unix timestamps. Fill out the timeFrom and timeTo fields with the start and end times of the historical price data you want to fetch. You can use timeFrom: 1748700279 and timeTo: 1748720279',
+      id: 'add-helius-node',
+      title: 'Add a HELIUS node',
+      description: 'Another way to fetch the wallet portfolio is to use Helius. Drag a HELIUS node onto the canvas and select "getTokenAccountsByOwner" from the function dropdown to query a token. This will use the [token accounts by owner API](https://www.helius.dev/docs/rpc/guides/gettokenaccountsbyowner) and return the token accounts of the wallet.',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
         return nodes.some((n: FlowNode) => 
-          n.type === 'BIRDEYE' && 
-          n.data?.inputs?.function?.value === 'getHistoricalPrice' &&
-          n.data?.inputs?.timeFrom?.value &&
-          n.data?.inputs?.timeTo?.value &&
-          String(n.data.inputs.timeFrom.value).length > 0 &&
-          String(n.data.inputs.timeTo.value).length > 0
+          n.type === 'HELIUS' && 
+          n.data?.inputs?.function?.value === 'getTokenAccountsByOwner'
         );
+      },
+    },
+    {
+      id: 'connect-const-to-helius',
+      title: 'Connect CONST to HELIUS',
+      description: 'Connect the output handle of the CONST node to the address input handle of the HELIUS node.',
+      checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
+        const constNode = nodes.find((n: FlowNode) => n.type === 'CONST');
+        const heliusNode = nodes.find((n: FlowNode) => n.type === 'HELIUS');
+        
+        return !!(constNode && heliusNode && 
+          edges?.some((e: FlowEdge) => e.source === constNode.id && e.target === heliusNode.id));
+      },
+    },
+    {
+      id: 'connect-helius-to-print',
+      title: 'Connect HELIUS to PRINT',
+      description: 'Connect the bottom handle of the HELIUS node to the top handle of the PRINT node.',
+      checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
+        const heliusNode = nodes.find((n: FlowNode) => n.type === 'HELIUS');
+        const printNode = nodes.find((n: FlowNode) => n.type === 'PRINT');
+
+        return !!(heliusNode && printNode && 
+          edges?.some((e: FlowEdge) => e.source === heliusNode.id && e.target === printNode.id));
       },
     },
     {
       id: 'run-flow',
       title: 'Run the flow',
-      description: 'Click the Run button to execute the flow. You should an array of token price data printed in the console.',
+      description: 'Click the Run button to execute the flow. You should see the wallet portfolio data printed in the console. ',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => {
         return !!(output && output.length > 0);
       },
@@ -107,7 +135,7 @@ export const lesson_4_2: Lesson = {
               "name": {
                   "handleId": "input-name",
                   "type": "string",
-                  "value": "Fetch Token Data"
+                  "value": "Fetch Wallet Portfolio"
               }
           },
           "output": {

@@ -25,7 +25,7 @@ import { useConfig } from '@/contexts/ConfigContext';
 
 export const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
-export const useTokenMint = () => {
+export function useTokenMint() {
   const { authenticated } = usePrivy();
   const { ready, wallets } = useSolanaWallets();
   const solanaWallet = wallets[0];
@@ -209,8 +209,7 @@ export const useTokenMint = () => {
   return { mintToken };
 }; 
 
-export const mintTokenString = `
-// Example uses Privy to access connected wallet, 
+export const mintTokenString = `// Example uses Privy to access connected wallet, 
 // details may change using other wallet providers
 import { 
   Connection, 
@@ -240,8 +239,9 @@ const { authenticated } = usePrivy();
 const { ready, wallets } = useSolanaWallets();
 const solanaWallet = wallets[0];
 const network = 'mainnet'; // or 'devnet'
+export const METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 
-async function mintToken(
+export async function mintToken(
   name: string,
   symbol: string,
   description: string,

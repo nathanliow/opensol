@@ -99,6 +99,7 @@ import { getStakeMinimumDelegationString } from "../../../backend/src/block-func
 import { getSupplyString } from "../../../backend/src/block-functions/provider/helius/getSupply";
 import { getTokenAccountBalanceString } from "../../../backend/src/block-functions/provider/helius/getTokenAccountBalance";
 import { getTokenAccountsString } from "../../../backend/src/block-functions/provider/helius/getTokenAccounts";
+import { getTokenAccountsByOwnerString } from "../../../backend/src/block-functions/provider/helius/getTokenAccountsByOwner";
 import { getTokenLargestAccountsString } from "../../../backend/src/block-functions/provider/helius/getTokenLargestAccounts";
 import { getTokenSupplyString } from "../../../backend/src/block-functions/provider/helius/getTokenSupply";
 import { getTransactionString } from "../../../backend/src/block-functions/provider/helius/getTransaction";
@@ -213,6 +214,7 @@ export const functionStringMap: Record<string, string> = {
   getSupply: getSupplyString,
   getTokenAccountBalance: getTokenAccountBalanceString,
   getTokenAccounts: getTokenAccountsString,
+  getTokenAccountsByOwner: getTokenAccountsByOwnerString,
   getTokenLargestAccounts: getTokenLargestAccountsString,
   getTokenSupply: getTokenSupplyString,
   getTransaction: getTransactionString,

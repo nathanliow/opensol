@@ -14,13 +14,13 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useSolanaWallets } from '@privy-io/react-auth/solana';
 import { useConfig } from '@/contexts/ConfigContext';
 
-export const createTokenTransferTransaction = async (
+export async function createTokenTransferTransaction(
   connection: Connection,
   amount: number,
   recipientAddress: string,
   senderAddress: string,
   tokenMint: string,
-): Promise<Transaction> => {
+): Promise<Transaction> {
   try {
     const mintInfo = await getMint(connection, new PublicKey(tokenMint));
     const transferAmount = BigInt(amount * 10 ** mintInfo.decimals);
@@ -146,8 +146,7 @@ export const useTokenTransfer = () => {
   return { transferToken };
 };
 
-export const transferTokenString = `
-// Example uses Privy to access connected wallet, 
+export const transferTokenString = `// Example uses Privy to access connected wallet, 
 // details may change using other wallet providers
 import { 
   Connection, 
@@ -165,13 +164,13 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useSolanaWallets } from '@privy-io/react-auth/solana';
 
 // Helper function to create a token transfer transaction
-const createTokenTransferTransaction = async (
+export async function createTokenTransferTransaction(
   connection: Connection,
   amount: number,
   recipientAddress: string,
   senderAddress: string,
   tokenMint: string,
-): Promise<Transaction> => {
+): Promise<Transaction> {
   try {
     const mintInfo = await getMint(connection, new PublicKey(tokenMint));
     const transferAmount = BigInt(amount * 10 ** mintInfo.decimals);
@@ -231,7 +230,7 @@ const { ready, wallets } = useSolanaWallets();
 const solanaWallet = wallets[0];
 const network = 'mainnet'; // or 'devnet'
 
-async function transferToken(
+export async function transferToken(
   tokenAddress: string,
   amount: number,
   recipientAddress: string,

@@ -49,7 +49,7 @@ export default function MintNode({ id }: MintNodeProps) {
   const inputs: InputDefinition[] = useMemo(() => [
     createInputDefinition.text({
       id: 'input-name',
-      label: 'Token Name',
+      label: 'Name',
       defaultValue: name,
       placeholder: 'Enter token name',
       required: true,

@@ -159,8 +159,8 @@ export const lesson_3_3: Lesson = {
       "id": "function-1748670572868",
       "type": "FUNCTION",
       "position": {
-          "x": 395.4147249372667,
-          "y": 338.10934551020216
+          "x": 0,
+          "y": 0
       },
       "data": {
           "inputs": {

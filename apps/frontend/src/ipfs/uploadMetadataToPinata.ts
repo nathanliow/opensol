@@ -1,6 +1,6 @@
 import { pinata } from "@/pinataConfig";
 
-export const uploadMetadataToPinata = async (jsonMetadata: Record<string, any>): Promise<string> => {
+export async function uploadMetadataToPinata(jsonMetadata: Record<string, any>): Promise<string> {
   try {
     const urlRequest = await fetch("/api/pinata/url");
     if (!urlRequest.ok) {
@@ -20,8 +20,7 @@ export const uploadMetadataToPinata = async (jsonMetadata: Record<string, any>):
   }
 };
 
-export const uploadMetadataToPinataString = `
-export const uploadMetadataToPinata = async (jsonMetadata: Record<string, any>): Promise<string> => {
+export const uploadMetadataToPinataString = `export async function uploadMetadataToPinata(jsonMetadata: Record<string, any>): Promise<string> {
   try {
     // Set up a /api/pinata/url route.ts file to get the signed URL
     const urlRequest = await fetch("/api/pinata/url");

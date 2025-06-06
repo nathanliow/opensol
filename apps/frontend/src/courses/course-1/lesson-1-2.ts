@@ -22,19 +22,31 @@ export const lesson_1_2: Lesson = {
     {
       id: 'solana-accounts-3',
       title: '',
-      description: 'Data accounts store data and state of a program. Common data accounts include token accounts which store the balance of a token that the owner is holding. This means that a user account has to own a token account for each of their token or one has to be made if they don\'t have one yet.',
+      description: 'Data accounts store data and state of a program. Common data accounts include token accounts which store the balance of a token that the owner is holding. This means that a user account has to own a token account for each of their token or one has to be made if they don\'t have one yet. To create a new account, a minimum balance of SOL called the "rent-exempt" amount must be held by the account as a storage cost.',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
     },
     {
       id: 'solana-accounts-4',
       title: '',
-      description: 'Program accounts store executeable code and they can be upgraded to update the code. Transactions can then invoke instructions that are apart of the program to perform certain actions like swapping, withdrawing, etc.',
+      description: 'Program accounts store executable code and they can be upgraded to update the code. Transactions can then invoke instructions that are part of the program to perform certain actions like swapping, withdrawing, etc. Programs are read-only executable files that mutate the state of other accounts but remain unchanged themselves.',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
     },
     {
       id: 'solana-accounts-5',
       title: '',
       description: 'Native program accounts are special pre-deployed programs that handle core functionality for tokens, accounts, voting, upgrading, and more.',
+      checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
+    },
+    {
+      id: 'solana-accounts-6',
+      title: '',
+      description: 'Program Derived Addresses (PDAs) are special types of accounts owned by programs rather than users. Since programs are read-only, they use PDAs to store state. PDAs exist "off-curve" meaning they don\'t have private keys. Their addresses are derived from parameters (like keywords or account addresses) combined with the program ID. Only the owning program can programmatically sign for and modify a PDA.',
+      checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
+    },
+    {
+      id: 'solana-accounts-7',
+      title: '',
+      description: 'Associated Token Accounts (ATAs) are specific examples of PDAs used to hold tokens. The Associated Token Account program ensures that each wallet can only have one ATA for each token type, providing a standardized way to manage token accounts. When you hold tokens, they are actually stored in these ATA accounts that are derived from your wallet address and the token mint address.',
       checkComplete: (nodes: FlowNode[], edges: FlowEdge[], output?: string) => true,
     },
   ],

@@ -65,6 +65,7 @@ import { getStakeMinimumDelegation } from './provider/helius/getStakeMinimumDele
 import { getSupply } from './provider/helius/getSupply';
 import { getTokenAccountBalance } from './provider/helius/getTokenAccountBalance';
 import { getTokenAccounts } from './provider/helius/getTokenAccounts';
+import { getTokenAccountsByOwner } from './provider/helius/getTokenAccountsByOwner';
 import { getTokenLargestAccounts } from './provider/helius/getTokenLargestAccounts';
 import { getTokenSupply } from './provider/helius/getTokenSupply';
 import { getTransaction } from './provider/helius/getTransaction';
@@ -176,6 +177,7 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getSupply,
     getTokenAccountBalance,
     getTokenAccounts,
+    getTokenAccountsByOwner,
     getTokenLargestAccounts,
     getTokenSupply,
     getTransaction,

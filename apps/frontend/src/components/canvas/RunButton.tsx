@@ -220,7 +220,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
           try {
             ${cleanedFunctionCode}
             
-            return await ${functionName}();
+            return await ${functionName}Function();
           } catch (error) {
             console.error("Execution error:", error);
             return { output: "Execution Error: " + error.message };
