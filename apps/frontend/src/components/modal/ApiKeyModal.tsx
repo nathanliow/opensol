@@ -6,7 +6,7 @@ import {
   ApiKeyType, 
   HeliusApiKeyTiers, 
   BirdeyeApiKeyTiers 
-} from "../../types/KeyTypes";
+} from "@/types/KeyTypes";
 
 interface ApiKeyModalProps {
   isOpen: boolean;
