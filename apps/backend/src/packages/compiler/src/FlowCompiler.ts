@@ -4,7 +4,7 @@ import {
   BlockFunctionTemplateParameters
 } from '../../../../../frontend/src/components/services/blockTemplateService';
 import { nodeUtils } from '@/utils/nodeUtils';
-import { ApiKey, ApiKeyType } from '@/types/KeyTypes';
+import { ApiKey, ApiKeyType } from '../../../../../frontend/src/types/KeyTypes';
 import { NetworkType } from '@/types/NetworkTypes';
 import { 
   InputValueType, 
