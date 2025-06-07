@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { useConfig } from "../../contexts/ConfigContext";
 import { Icons } from "../icons/icons";
-import { ApiKey, ApiKeyType, HeliusApiKeyTiers, BirdeyeApiKeyTiers } from "@/types/KeyTypes";
+import { 
+  ApiKey, 
+  ApiKeyType, 
+  HeliusApiKeyTiers, 
+  BirdeyeApiKeyTiers 
+} from "../../types/KeyTypes";
 
 interface ApiKeyModalProps {
   isOpen: boolean;
