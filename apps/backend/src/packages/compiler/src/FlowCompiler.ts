@@ -1,10 +1,12 @@
-import { FlowNode, FlowEdge } from './types';
 import { 
+  FlowNode, 
+  FlowEdge, 
   BlockFunctionTemplate, 
-  BlockFunctionTemplateParameters
-} from '../../../../../frontend/src/components/services/blockTemplateService';
+  BlockFunctionTemplateParameters, 
+  ApiKey, 
+  ApiKeyType 
+} from './types';
 import { nodeUtils } from '@/utils/nodeUtils';
-import { ApiKey, ApiKeyType } from '../../../../../frontend/src/types/KeyTypes';
 import { NetworkType } from '@/types/NetworkTypes';
 import { 
   InputValueType, 
