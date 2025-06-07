@@ -10,7 +10,7 @@ export default function Home() {
   const { isConnected, login, supabaseUser, isLoading } = useUserAccountContext();
 
   useEffect(() => {
-    // This empty effect helps ensure Privvy is initialized properly
+    // This empty effect helps ensure Privy is initialized properly
     // before we try to render any authenticated content
   }, []);
 
