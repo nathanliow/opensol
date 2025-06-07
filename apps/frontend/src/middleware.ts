@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 // This function is executed for every request
 export async function middleware(request: NextRequest) {
@@ -18,7 +17,11 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const cookieStore = await cookies();
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
     
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,11 +29,11 @@ export async function middleware(request: NextRequest) {
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              response.cookies.set(name, value, options)
             );
           },
         },
@@ -49,7 +52,7 @@ export async function middleware(request: NextRequest) {
     }
     
     // If session exists, continue with the request
-    return NextResponse.next();
+    return response;
   } catch (error) {
     console.error('Middleware authentication error:', error);
     // On error, allow the request to proceed to avoid blocking legitimate requests
