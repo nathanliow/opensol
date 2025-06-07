@@ -15,7 +15,7 @@
     "@privy-io/react-auth": "^2.6.2",
     "@solana/kit": "^2.1.0",
     "@solana/spl-token": "^0.4.13",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.1",
     "@xyflow/react": "^12.4.4",
     "date-fns": "^4.1.0",
@@ -36,6 +36,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 
 // Add retry limitation to prevent infinite loops
 const MAX_SIGN_UP_ATTEMPTS = 2;
@@ -18,8 +18,22 @@ export async function POST(request: NextRequest) {
     const password = createPasswordFromWallet(wallet);
     const cookieStore = await cookies();
 
-    // Initialize Supabase client (server-side)
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          },
+        },
+      }
+    );
     
     // First try to sign in
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
