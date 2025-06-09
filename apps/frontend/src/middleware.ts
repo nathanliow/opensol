@@ -3,10 +3,7 @@ import type { NextRequest } from 'next/server';
 
 // This function is executed for every request
 export async function middleware(request: NextRequest) {
-  // Temporarily disabled middleware to debug 404 issues
-  return NextResponse.next();
   
-  /*
   const pathname = request.nextUrl.pathname;
   
   // Skip middleware for public routes and API routes
@@ -41,7 +38,6 @@ export async function middleware(request: NextRequest) {
     // On error, allow the request to proceed
     return NextResponse.next();
   }
-  */
 }
 
 // Only run middleware on specific protected paths
