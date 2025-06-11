@@ -72,7 +72,7 @@ export const DashboardMenu = () => {
           {userAddress && (
             <button
               onClick={navigateToProfile}
-              className="w-full text-left p-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
+              className="cursor-pointer w-full text-left p-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
             >
               <div className="font-medium text-gray-300">Connected Wallet</div>
               <div className="mt-1 font-mono text-gray-400 truncate">{userAddress}</div>
@@ -88,12 +88,19 @@ export const DashboardMenu = () => {
               <Icons.FiFolder size={16} />
               Go to Dashboard
             </button>
+            <button
+              onClick={() => window.open('https://opensol-2.gitbook.io/opensol', '_blank')}
+              className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+            >
+              <Icons.FiBook size={16} />
+              Documentation
+            </button>
           </div>
           {/* API Keys Button */}
           <div className="py-1">
             <button
               onClick={openApiKeyModal}
-              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+              className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
             >
               <Icons.FiKey size={16} />
               Manage API Keys
@@ -103,7 +110,7 @@ export const DashboardMenu = () => {
           <div className="border-t border-[#333333] py-1">
             <button
               onClick={handleLogout}
-              className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+              className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
             >
               <Icons.FiLogOut size={16} />
               Disconnect Wallet

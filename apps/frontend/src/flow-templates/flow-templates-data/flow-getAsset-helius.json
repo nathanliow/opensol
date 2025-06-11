@@ -4,190 +4,247 @@
   "category": "Helius",
   "nodes": [
     {
-      "id": "function-1747277489220",
-      "type": "FUNCTION",
-      "data": {
-        "inputs": {
-          "name": {
-            "handleId": "input-name",
-            "type": "string",
-            "value": "Getting Asset"
-          }
-        },
-        "output": {
-          "type": "string",
-          "value": "",
-          "handleId": "output"
-        }
-      },
-      "connections": {
-        "inputs": [],
-        "outputs": [
-          {
-            "to": "helius-1747894965040",
-            "type": "HELIUS",
-            "handleId": "flow-bottom"
-          }
-        ]
-      }
-    },
-    {
-      "id": "print-1747292570610",
-      "type": "PRINT",
-      "data": {
-        "inputs": {
-          "template": {
-            "handleId": "input-template",
-            "type": "string",
-            "value": "$output$"
-          }
-        },
-        "output": {
-          "handleId": "output",
-          "type": "string",
-          "value": "$output$"
-        }
-      },
-      "connections": {
-        "inputs": [
-          {
-            "from": "helius-1747894965040",
-            "type": "HELIUS",
-            "handleId": "flow-top"
-          }
-        ],
-        "outputs": []
-      }
-    },
-    {
-      "id": "helius-1747894965040",
-      "type": "HELIUS",
-      "data": {
-        "inputs": {
-          "assetId": {
-            "handleId": "input-assetId",
-            "type": "string",
-            "value": "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk"
-          },
-          "network": {
-            "handleId": "input-network",
-            "type": "string",
-            "value": "mainnet"
-          },
-          "function": {
-            "handleId": "input-function",
-            "type": "string",
-            "value": "getAsset"
-          },
-          "signature": {
-            "type": "string",
-            "value": "",
-            "handleId": "input-signature"
-          },
-          "blockNumbers": {
-            "type": "string",
-            "value": "",
-            "handleId": "input-blockNumbers"
-          }
-        },
-        "output": {
-          "handleId": "output",
-          "type": "object",
-          "value": {}
-        }
-      },
-      "connections": {
-        "inputs": [
-          {
-            "from": "function-1747277489220",
-            "type": "FUNCTION",
-            "handleId": "flow-top"
-          },
-          {
-            "from": "const-1747974926752",
-            "type": "CONST",
-            "handleId": "input-assetId"
-          }
-        ],
-        "outputs": [
-          {
-            "to": "print-1747292570610",
-            "type": "PRINT",
-            "handleId": "flow-bottom"
-          }
-        ]
-      }
-    },
-    {
-      "id": "const-1747974926752",
+      "id": "const-1749621164430",
       "type": "CONST",
-      "data": {
-        "inputs": {
-          "dataType": {
-            "handleId": "input-dataType",
-            "type": "string",
-            "value": "string"
-          },
-          "value": {
-            "handleId": "input-value",
-            "type": "string",
-            "value": "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk"
-          }
-        },
-        "output": {
-          "handleId": "output",
-          "type": "string",
-          "value": "6FtbGaqgZzti1TxJksBV4PSya5of9VqA9vJNDxPwbonk"
-        }
+      "position": {
+          "x": 240.67626357122003,
+          "y": 295.0944802085949
       },
-      "connections": {
-        "inputs": [],
-        "outputs": [
-          {
-            "to": "helius-1747894965040",
-            "type": "HELIUS",
-            "handleId": "output"
+      "data": {
+          "inputs": {
+              "dataType": {
+                  "handleId": "input-dataType",
+                  "type": "string",
+                  "value": "string"
+              },
+              "value": {
+                  "handleId": "input-value",
+                  "type": "string",
+                  "value": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+              }
+          },
+          "output": {
+              "handleId": "output",
+              "type": "string",
+              "value": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
           }
-        ]
-      }
+      },
+      "measured": {
+          "width": 243,
+          "height": 115
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "function-1749621171174",
+      "type": "FUNCTION",
+      "position": {
+          "x": 546.5600338157957,
+          "y": 142.02858100234798
+      },
+      "data": {
+          "inputs": {
+              "name": {
+                  "handleId": "input-name",
+                  "type": "string",
+                  "value": "Getting Asset"
+              }
+          },
+          "output": {
+              "handleId": "output",
+              "type": "string",
+              "value": ""
+          }
+      },
+      "measured": {
+          "width": 243,
+          "height": 81
+      },
+      "selected": false,
+      "dragging": false
+    },
+    {
+      "id": "helius-1749621210483",
+      "type": "HELIUS",
+      "position": {
+          "x": 547.0014446711123,
+          "y": 294.4921809675752
+      },
+      "data": {
+          "inputs": {
+              "function": {
+                  "handleId": "input-function",
+                  "type": "string",
+                  "value": "getAsset"
+              },
+              "network": {
+                  "handleId": "input-network",
+                  "type": "string",
+                  "value": "devnet"
+              },
+              "assetId": {
+                  "handleId": "input-assetId",
+                  "type": "string",
+                  "value": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+              }
+          },
+          "output": {
+              "handleId": "output",
+              "type": "object",
+              "value": {
+                  "jsonrpc": "2.0",
+                  "result": {
+                      "interface": "FungibleToken",
+                      "id": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump",
+                      "content": {
+                          "$schema": "https://schema.metaplex.com/nft1.0.json",
+                          "json_uri": "https://ipfs.io/ipfs/QmYfe8zVGHA1heej47AkBX3Nnetg2h2kqj5yymz1xyKeHb",
+                          "files": [
+                              {
+                                  "uri": "https://ipfs.io/ipfs/QmQr3Fz4h1etNsF7oLGMRHiCzhB5y9a7GjyodnF7zLHK1g",
+                                  "cdn_uri": "https://cdn.helius-rpc.com/cdn-cgi/image//https://ipfs.io/ipfs/QmQr3Fz4h1etNsF7oLGMRHiCzhB5y9a7GjyodnF7zLHK1g",
+                                  "mime": "image/png"
+                              }
+                          ],
+                          "metadata": {
+                              "description": "",
+                              "name": "Fartcoin ",
+                              "symbol": "Fartcoin ",
+                              "token_standard": "Fungible"
+                          },
+                          "links": {
+                              "image": "https://ipfs.io/ipfs/QmQr3Fz4h1etNsF7oLGMRHiCzhB5y9a7GjyodnF7zLHK1g"
+                          }
+                      },
+                      "authorities": [
+                          {
+                              "address": "TSLvdd1pWpHVjahSpsvCXUbgwsL3JAcvokwaKt1eokM",
+                              "scopes": [
+                                  "full"
+                              ]
+                          }
+                      ],
+                      "compression": {
+                          "eligible": false,
+                          "compressed": false,
+                          "data_hash": "",
+                          "creator_hash": "",
+                          "asset_hash": "",
+                          "tree": "",
+                          "seq": 0,
+                          "leaf_id": 0
+                      },
+                      "grouping": [],
+                      "royalty": {
+                          "royalty_model": "creators",
+                          "target": null,
+                          "percent": 0,
+                          "basis_points": 0,
+                          "primary_sale_happened": false,
+                          "locked": false
+                      },
+                      "creators": [],
+                      "ownership": {
+                          "frozen": false,
+                          "delegated": false,
+                          "delegate": null,
+                          "ownership_model": "token",
+                          "owner": ""
+                      },
+                      "supply": null,
+                      "mutable": false,
+                      "burnt": false,
+                      "token_info": {
+                          "symbol": "Fartcoin",
+                          "supply": 999991894473264,
+                          "decimals": 6,
+                          "token_program": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                          "price_info": {
+                              "price_per_token": 1.330416,
+                              "currency": "USDC"
+                          }
+                      }
+                  },
+                  "id": "text"
+              }
+          }
+      },
+      "measured": {
+          "width": 243,
+          "height": 115
+      },
+      "selected": true,
+      "dragging": false
+    },
+    {
+      "id": "print-1749621221672",
+      "type": "PRINT",
+      "position": {
+          "x": 540.6628061312763,
+          "y": 509.1003715305915
+      },
+      "data": {
+          "inputs": {
+              "template": {
+                  "handleId": "input-template",
+                  "type": "string",
+                  "value": "$output$"
+              }
+          },
+          "output": {
+              "handleId": "output",
+              "type": "string",
+              "value": "$output$"
+          }
+      },
+      "measured": {
+          "width": 254,
+          "height": 117
+      },
+      "selected": false,
+      "dragging": false
     }
   ],
   "edges": [
     {
-      "from": {
-        "id": "function-1747277489220",
-        "type": "FUNCTION"
-      },
-      "to": {
-        "id": "helius-1747894965040",
-        "type": "HELIUS"
-      },
-      "sourceHandle": "flow-bottom",
-      "targetHandle": "flow-top"
-    },
-    {
-      "from": {
-        "id": "helius-1747894965040",
-        "type": "HELIUS"
-      },
-      "to": {
-        "id": "print-1747292570610",
-        "type": "PRINT"
-      },
-      "sourceHandle": "flow-bottom",
-      "targetHandle": "flow-top"
-    },
-    {
-      "from": {
-        "id": "const-1747974926752",
-        "type": "CONST"
-      },
-      "to": {
-        "id": "helius-1747894965040",
-        "type": "HELIUS"
-      },
+      "source": "const-1749621164430",
       "sourceHandle": "output",
-      "targetHandle": "input-assetId"
+      "target": "helius-1749621210483",
+      "targetHandle": "input-assetId",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+          "strokeWidth": 2,
+          "stroke": "white"
+      },
+      "id": "xy-edge__const-1749621164430output-helius-1749621210483input-assetId"
+    },
+    {
+      "source": "function-1749621171174",
+      "sourceHandle": "flow-bottom",
+      "target": "helius-1749621210483",
+      "targetHandle": "flow-top",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+          "strokeWidth": 2,
+          "stroke": "white"
+      },
+      "id": "xy-edge__function-1749621171174flow-bottom-helius-1749621210483flow-top"
+    },
+    {
+      "source": "helius-1749621210483",
+      "sourceHandle": "flow-bottom",
+      "target": "print-1749621221672",
+      "targetHandle": "flow-top",
+      "type": "smoothstep",
+      "animated": true,
+      "style": {
+          "strokeWidth": 2,
+          "stroke": "white"
+      },
+      "id": "xy-edge__helius-1749621210483flow-bottom-print-1749621221672flow-top"
     }
   ],
   "viewport": {

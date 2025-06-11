@@ -7,13 +7,13 @@ import { Panel } from "@xyflow/react";
 import { Icons } from "../icons/icons";
 import { useRouter } from "next/navigation";
 import { useUserAccountContext } from "@/app/providers/UserAccountContext";
-import { useTokenTransfer } from "@/hooks/useTokenTransfer";
+// import { useTokenTransfer } from "@/hooks/useTokenTransfer";
 import { 
   createProject, 
   copyProject, 
 } from "@/lib/projects";
 import { Project } from "@/types/ProjectTypes";
-import { usePrivy } from "@privy-io/react-auth";
+// import { usePrivy } from "@privy-io/react-auth";
 import { getUserData } from "@/lib/user";
 import { UserData } from "@/types/UserTypes";
 
@@ -53,13 +53,13 @@ export const Toolbar = ({
   const projectMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTogglingVisibility, setIsTogglingVisibility] = useState(false);
-  const [tipAmount, setTipAmount] = useState(0);
-  const [isTipping, setIsTipping] = useState(false);
+  // const [tipAmount, setTipAmount] = useState(0);
+  // const [isTipping, setIsTipping] = useState(false);
   const [creatorData, setCreatorData] = useState<UserData | null>(null);
   const router = useRouter();
   const { supabaseUser } = useUserAccountContext();
-  const { login } = usePrivy();
-  const { transferToken } = useTokenTransfer();
+  // const { login } = usePrivy();
+  // const { transferToken } = useTokenTransfer();
 
   useEffect(() => {
     // Update isPublic when projectData changes
@@ -258,48 +258,48 @@ export const Toolbar = ({
     }
   };
 
-  const handleTipProject = async () => {
-    try {
-      if (!supabaseUser) {
-        await login();
-        return;
-      }
+  // const handleTipProject = async () => {
+  //   try {
+  //     if (!supabaseUser) {
+  //       await login();
+  //       return;
+  //     }
 
-      if (!projectId || !projectData || !tipAmount || !creatorData || isTipping || tipAmount <= 0) {
-        console.error('Missing required data for tipping');
-        return;
-      }
+  //     if (!projectId || !projectData || !tipAmount || !creatorData || isTipping || tipAmount <= 0) {
+  //       console.error('Missing required data for tipping');
+  //       return;
+  //     }
 
-      setIsTipping(true);
+  //     setIsTipping(true);
 
-      // Call tip API to update supabase
-      const response = await fetch(`/api/projects/${projectId}/tip`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          amount: tipAmount, 
-          recipientUserId: creatorData.user_id 
-        }),
-      });
+  //     // Call tip API to update supabase
+  //     const response = await fetch(`/api/projects/${projectId}/tip`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       credentials: 'include',
+  //       body: JSON.stringify({ 
+  //         amount: tipAmount, 
+  //         recipientUserId: creatorData.user_id 
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error('Failed to update database earnings');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to update database earnings');
+  //     }
 
-      // Send USDC tip
-      await transferToken("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", tipAmount, creatorData.wallet_address, true);
-      alert('Tip sent successfully!');
-      setTipAmount(0);
-    } catch (error) {
-      console.error('Error sending tip:', error);
-      alert('Failed to send tip. Please make sure your wallet is connected and try again.');
-    } finally {
-      setIsTipping(false);
-    }
-  };
+  //     // Send USDC tip
+  //     await transferToken("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", tipAmount, creatorData.wallet_address, true);
+  //     alert('Tip sent successfully!');
+  //     setTipAmount(0);
+  //   } catch (error) {
+  //     console.error('Error sending tip:', error);
+  //     alert('Failed to send tip. Please make sure your wallet is connected and try again.');
+  //   } finally {
+  //     setIsTipping(false);
+  //   }
+  // };
 
   const isProjectOwner = projectData?.user_id === supabaseUser?.id;
 
@@ -448,7 +448,7 @@ export const Toolbar = ({
                   <Icons.FiDownload size={16} />
                   Export Flow
                 </button>
-                {supabaseUser && (
+                {/* {supabaseUser && (
                   <div className="flex flex-row items-center gap-2">
                     <div
                       className="w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
@@ -478,7 +478,7 @@ export const Toolbar = ({
                         )}
                       </button>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           )}

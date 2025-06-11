@@ -35,7 +35,7 @@ export const ProjectCard = ({
         <div className="mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h3 className="font-bold truncate text-lg">{project.name.length > 10 ? project.name.slice(0, 10) + '...' : project.name}</h3>
+              <h3 className="font-bold truncate text-lg">{project.name}</h3>
               {tab === 'my' && (
                 <div className="flex gap-2">
                   <button

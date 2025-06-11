@@ -102,7 +102,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
               {userAddress && (
                 <button
                   onClick={navigateToProfile}
-                  className="w-full text-left py-3 px-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
+                  className="cursor-pointer w-full text-left py-3 px-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
                 >
                   <div className="font-medium text-gray-300">Connected Wallet</div>
                   <div className="mt-1 font-mono text-gray-400 truncate">{userAddress}</div>
