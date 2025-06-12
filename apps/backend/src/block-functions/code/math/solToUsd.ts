@@ -31,3 +31,17 @@ export const solToUsd: BlockFunctionTemplate = {
 
   }
 };
+
+export const solToUsdString = `export const solToUsd = async (params: Record<string, any>) => {
+  try {
+    const priceResponse = await fetch('https://lite-api.jup.ag/price/v2?ids=So11111111111111111111111111111111111111112');
+
+    const priceData = await priceResponse.json();
+    const solPrice = priceData.data.So11111111111111111111111111111111111111112.price;
+
+    return Number((params.solAmount * solPrice).toFixed(2));
+  } catch (error) {
+    console.error('Error in solToUsd:', error);
+    throw error;
+  }
+}`

@@ -3,6 +3,8 @@ import { uploadImageToPinataString } from "@/ipfs/uploadImageToPinata";
 import { createFileFromUrlString } from "@/utils/createFileFromUrl";
 import { transferTokenString } from "@/hooks/useTokenTransfer";
 import { mintTokenString } from "@/hooks/useTokenMint";
+import { solToUsdString } from "../../../backend/src/block-functions/code/math/solToUsd";
+import { usdToSolString } from "../../../backend/src/block-functions/code/math/usdToSol";
 
 // Birdeye
 import { getBaseQuoteOHLCVString } from "../../../backend/src/block-functions/provider/birdeye/getBaseQuoteOHLCV";
@@ -118,6 +120,8 @@ export const functionStringMap: Record<string, string> = {
   uploadImageToPinata: uploadImageToPinataString,
   uploadMetadataToPinata: uploadMetadataToPinataString,
   createFileFromUrl: createFileFromUrlString,
+  solToUsd: solToUsdString,
+  usdToSol: usdToSolString,
   
   // Birdeye functions
   getBaseQuoteOHLCV: getBaseQuoteOHLCVString,
