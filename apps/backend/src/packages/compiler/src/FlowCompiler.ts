@@ -131,6 +131,7 @@ export class FlowCompiler {
       .split('\n')
       .slice(1, -1)
       .join('\n');
+    console.log('functionBody: ', functionBody);
     
     const functionCode = `async function ${functionName}(params) {
       try {
@@ -140,6 +141,8 @@ export class FlowCompiler {
         throw error;
       }
     }`;
+
+    console.log('functionCode: ', functionCode);
     this.getFunctions.set(templateName, functionCode);
     return functionCode;
   }
