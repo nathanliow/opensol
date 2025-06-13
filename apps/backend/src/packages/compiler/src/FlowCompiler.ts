@@ -10,6 +10,7 @@ import {
   InputValueType, 
   InputValueTypeString 
 } from '@/types/InputTypes';
+import { functionStringMap } from '@/code-strings';
 
 export class FlowCompiler {
   private nodes: FlowNode[];
@@ -131,8 +132,6 @@ export class FlowCompiler {
       .split('\n')
       .slice(1, -1)
       .join('\n');
-    console.log('template: ', template);
-    console.log('functionBody: ', functionBody);
     
     const functionCode = `async function ${functionName}(params) {
       try {
