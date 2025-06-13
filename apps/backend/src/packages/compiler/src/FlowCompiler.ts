@@ -10,7 +10,6 @@ import {
   InputValueType, 
   InputValueTypeString 
 } from '@/types/InputTypes';
-import { functionStringMap } from '@/code-strings/index';
 
 export class FlowCompiler {
   private nodes: FlowNode[];
@@ -127,32 +126,12 @@ export class FlowCompiler {
       throw new Error(`Template not found for function: ${templateName}`);
     }
     const functionName = this.setFunctionImport(template);
-    
-    console.log('this.templates: ', this.templates);
+    const functionBody = template.execute
+      .toString()
+      .split('\n')
+      .slice(1, -1)
+      .join('\n');
     console.log('template: ', template);
-    console.log('template.execute: ', template.execute);
-    console.log('template.execute.toString(): ', template.execute.toString());
-    
-    // Try to get the function from the predefined string map first
-    let functionBody = '';
-    if (functionStringMap[templateName]) {
-      console.log('Using functionStringMap for:', templateName);
-      // Extract function body from the predefined string
-      const functionString = functionStringMap[templateName];
-      functionBody = functionString
-        .replace(/^export\s+const\s+\w+\s*=\s*async\s*\([^)]*\)\s*=>\s*\{/, '')
-        .replace(/\};?\s*$/, '')
-        .trim();
-    } else {
-      console.log('Fallback to template.execute.toString() for:', templateName);
-      // Fallback to the original method
-      functionBody = template.execute
-        .toString()
-        .split('\n')
-        .slice(1, -1)
-        .join('\n');
-    }
-    
     console.log('functionBody: ', functionBody);
     
     const functionCode = `async function ${functionName}(params) {
