@@ -40,27 +40,17 @@ export default function DashboardPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
-  const [createStep, setCreateStep] = useState(1); // Step 1: Details, Step 2: Template selection
-
-  // Modified state for project actions
+  const [createStep, setCreateStep] = useState(1); 
+  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editedProjectName, setEditedProjectName] = useState('');
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [modalMode, setModalMode] = useState<'edit' | 'delete'>('edit');
-
-  // New state for active tab
   const [tab, setTab] = useState<Tab>('my');
-
-  // Add state for tracking expanded courses
-  const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
-
-  // Use the selected tab to determine which projects to display
-  const displayProjects = tab === 'my' ? projects : publicProjects;
-
-  // State for user profile data
   const [userData, setUserData] = useState<UserData | null>(null);
 
-  // Fetch user profile when supabaseUser changes
+  const displayProjects = tab === 'my' ? projects : publicProjects;
+
   useEffect(() => {
     if (supabaseUser) {
       const fetchUserData = async () => {
@@ -79,17 +69,13 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         
-        // Only fetch user's projects if the user is logged in
         if (supabaseUser && supabaseUser.id) {
-          // Fetch user's projects
           const userProjects = await getUserProjects(supabaseUser.id);
           setProjects(userProjects);
         } else {
-          // Clear projects array if not logged in
           setProjects([]);
         }
         
-        // Fetch public projects (can be done without login)
         const response = await fetch('/api/projects/public');
         if (response.ok) {
           const data = await response.json();
@@ -135,13 +121,11 @@ export default function DashboardPage() {
   };
 
   const handleNewProject = () => {
-    // Reset form state
     setNewProjectName('');
     setNewProjectDescription('');
     setSelectedTemplate(null);
     setCreateStep(1);
     
-    // Show the new project modal
     setShowNewProjectModal(true);
   };
   
@@ -169,20 +153,15 @@ export default function DashboardPage() {
     }
     
     try {
-      // Show loading animation
       setNavigating(true);
       
-      // Clear lesson progress when creating a new project
       exitLesson();
       
-      // First clear any existing content by removing currentProjectId
       localStorage.removeItem('currentProjectId');
       
-      // Get nodes and edges from selected template or use empty arrays
       const nodes = selectedTemplate?.nodes || [];
       const edges = selectedTemplate?.edges || [];
       
-      // Create a new project with template data if available
       const newProject: Project = await createProject({
         name: newProjectName,
         description: newProjectDescription,
@@ -193,29 +172,24 @@ export default function DashboardPage() {
         earnings: 0
       });
       
-      // Save project ID to localStorage
       localStorage.setItem('currentProjectId', newProject.id || '');
       
-      // Close modal
       setShowNewProjectModal(false);
       
-      // Reset form
       setNewProjectName('');
       setNewProjectDescription('');
       setSelectedTemplate(null);
       setCreateStep(1);
       
-      // Force refresh and navigate to home page
       router.refresh();
       router.push('/');
     } catch (error) {
       console.error('Failed to create project:', error);
       alert('Failed to create project. Please try again.');
-      setNavigating(false); // Stop loading animation on error
+      setNavigating(false); 
     }
   };
 
-  // Handle sorting when a column header is clicked
   const requestSort = (key: keyof Project) => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -225,7 +199,7 @@ export default function DashboardPage() {
   };
 
   const handleEditProject = (e: React.MouseEvent, project: Project) => {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation(); 
     setEditingProject(project);
     setEditedProjectName(project.name);
     setModalMode('edit');
@@ -236,17 +210,14 @@ export default function DashboardPage() {
     if (!editingProject || !editedProjectName.trim()) return;
     
     try {
-      // Call your API to update the project name
       const updatedProject = await updateProject(editingProject.id!, {
         name: editedProjectName.trim()
       });
       
-      // Update the projects list
       setProjects(projects.map(p => 
         p.id === updatedProject.id ? updatedProject : p
       ));
       
-      // Close the modal
       setShowProjectModal(false);
       setEditingProject(null);
     } catch (error) {
@@ -260,13 +231,10 @@ export default function DashboardPage() {
     
     try {
       await deleteProject(editingProject.id!);
-      // If the deleted project is the current one in localStorage, remove it
       if (localStorage.getItem('currentProjectId') === editingProject.id) {
         localStorage.removeItem('currentProjectId');
       }
-      // Update the projects list
       setProjects(projects.filter(p => p.id !== editingProject.id));
-      // Close the modal
       setShowProjectModal(false);
       setEditingProject(null);
     } catch (error) {
@@ -275,17 +243,14 @@ export default function DashboardPage() {
     }
   };
 
-  // Handle star toggle
   const handleStarToggle = async (projectId: string) => {
     if (!supabaseUser) return;
 
     try {
       console.log('Toggling star for project:', projectId);
       
-      // Optimistically update UI
       const isCurrentlyStarred = starredProjects.has(projectId);
       
-      // Update local state immediately for better UX
       setStarredProjects(prev => {
         const newSet = new Set(prev);
         if (isCurrentlyStarred) {
@@ -296,7 +261,6 @@ export default function DashboardPage() {
         return newSet;
       });
 
-      // Update UI with optimistic star count
       setProjects(prev =>
         prev.map(p =>
           p.id === projectId
@@ -313,7 +277,6 @@ export default function DashboardPage() {
         )
       );
       
-      // Make the API call
       const response = await fetch(`/api/projects/${projectId}/toggle-star`, {
         method: 'POST',
         headers: {
@@ -325,7 +288,6 @@ export default function DashboardPage() {
         const { stars, hasStarred } = await response.json();
         console.log('Star toggled successfully:', { stars, hasStarred });
         
-        // Update with actual values from server
         setProjects(prev =>
           prev.map(p =>
             p.id === projectId
@@ -342,7 +304,6 @@ export default function DashboardPage() {
           )
         );
       } else {
-        // Revert optimistic update if API call failed
         console.error('Failed to toggle star:', await response.text());
         
         setStarredProjects(prev => {
@@ -355,7 +316,6 @@ export default function DashboardPage() {
           return newSet;
         });
         
-        // Revert optimistic star count update
         setProjects(prev =>
           prev.map(p =>
             p.id === projectId
@@ -377,7 +337,6 @@ export default function DashboardPage() {
     }
   };
 
-  // Add function to toggle course expansion
   const toggleCourseExpansion = (courseId: string) => {
     setExpandedCourses(prev => {
       const newSet = new Set(prev);
@@ -390,18 +349,15 @@ export default function DashboardPage() {
     });
   };
 
-  // Helper function to check if a lesson is completed
   const isLessonCompleted = (lessonId: string): boolean => {
     return userData?.finished_lessons?.includes(lessonId) || false;
   };
 
-  // Helper function to check if all lessons in a course are completed
   const isCourseCompleted = (course: typeof courses[string]): boolean => {
     if (!userData?.finished_lessons) return false;
     return course.lessons.every(lesson => userData.finished_lessons.includes(lesson.id));
   };
 
-  // Helper function to get course completion stats
   const getCourseCompletionStats = (course: typeof courses[string]): { completed: number; total: number } => {
     if (!userData?.finished_lessons) return { completed: 0, total: course.lessons.length };
     const completed = course.lessons.filter(lesson => userData.finished_lessons.includes(lesson.id)).length;
