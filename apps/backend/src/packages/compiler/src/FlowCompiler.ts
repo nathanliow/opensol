@@ -10,7 +10,7 @@ import {
   InputValueType, 
   InputValueTypeString 
 } from '@/types/InputTypes';
-import { functionStringMap } from '@/code-strings';
+import { functionExecuteStringMap } from '@/code-strings';
 
 export class FlowCompiler {
   private nodes: FlowNode[];
@@ -23,7 +23,7 @@ export class FlowCompiler {
     importPath: string;
   }[] = []; // function to path mapping (ex: getUserSolBalance -> @opensol/templates)
   private printOutputs: string[] = [];
-  private getFunctions: Map<string, string> = new Map();
+  private injectedFunctions: Map<string, string> = new Map(); // functions to inject into executed code
   private apiKeys: Record<ApiKeyType, ApiKey> = {"helius": { key: "", tier: null }, "openai": { key: "", tier: null }, "birdeye": { key: "", tier: null }};
   private network: NetworkType = 'devnet';
   private noImports: boolean = false;
@@ -115,35 +115,37 @@ export class FlowCompiler {
    * Generates the helper function body from the template's execute method.
    * When inlineFunctions is true, the function body is generated; otherwise, it is omitted.
    */
-  private maybeGenerateFunctionBody(templateName: string, inlineFunctions: boolean): string {
+  private generateFunctionCode(templateName: string, inlineFunctions: boolean): string {
     if (!inlineFunctions) {
       return '';
     }
-    if (this.getFunctions.has(templateName)) {
+    if (this.injectedFunctions.has(templateName)) {
       return '';
     }
     const template = this.templates[templateName];
     if (!template) {
       throw new Error(`Template not found for function: ${templateName}`);
     }
-    const functionName = this.setFunctionImport(template);
-    const functionBody = template.execute
-      .toString()
-      .split('\n')
-      .slice(1, -1)
-      .join('\n');
+    // const functionName = this.setFunctionImport(template);
+    // const functionBody = template.execute
+    //   .toString()
+    //   .split('\n')
+    //   .slice(1, -1)
+    //   .join('\n');
     
-    const functionCode = `async function ${functionName}(params) {
-      try {
-        ${functionBody}
-      } catch (error) {
-        console.error('Error in ${templateName}:', error);
-        throw error;
-      }
-    }`;
+    // const functionCode = `async function ${functionName}(params) {
+    //   try {
+    //     ${functionBody}
+    //   } catch (error) {
+    //     console.error('Error in ${templateName}:', error);
+    //     throw error;
+    //   }
+    // }`;
+
+    const functionCode = functionExecuteStringMap[templateName];
 
     console.log('functionCode: ', functionCode);
-    this.getFunctions.set(templateName, functionCode);
+    this.injectedFunctions.set(templateName, functionCode);
     return functionCode;
   }
 
@@ -489,8 +491,7 @@ export class FlowCompiler {
         const templateName = node.data.inputs?.['function']?.value || '';
         if (!templateName || typeof templateName !== 'string') return '';
         const functionName = this.setFunctionImport(this.templates[templateName]);
-        // Generate function body if needed (for inlining)
-        this.maybeGenerateFunctionBody(templateName, true);
+        this.generateFunctionCode(templateName, true);
 
         const templateParams = this.getTemplateParams(templateName);
         const nodeInputs = nodeUtils.getFlowNode(this.nodes, node.id)?.data.inputs;
@@ -1020,7 +1021,7 @@ export class FlowCompiler {
   private generateFinalCode(inlineFunctions: boolean, hideApiKey: boolean): string {
     let functionBodies = '';
     if (inlineFunctions) {
-      functionBodies = Array.from(this.getFunctions.values()).join('\n\n');
+      functionBodies = Array.from(this.injectedFunctions.values()).join('\n\n');
     }
 
     // Only include import statements in display code, not executable code
@@ -1082,7 +1083,7 @@ export class FlowCompiler {
     this.typeCounters = {}; 
     this.functionName = 'execute';
     this.printOutputs = [];
-    this.getFunctions.clear();
+    this.injectedFunctions.clear();
     this.imports = [];
     this.processedNodes.clear(); 
     this.currentIndentLevel = 0; 

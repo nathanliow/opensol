@@ -39,7 +39,7 @@ import { getWalletTransactionHistoryString } from "../../../backend/src/block-fu
 
 // Helius
 import { getAccountInfoString } from "../../../backend/src/block-functions/provider/helius/getAccountInfo";
-import { getAssetString } from "../../../backend/src/block-functions/provider/helius/getAsset";
+import { getAssetExecuteString, getAssetDisplayString } from "../../../backend/src/block-functions/provider/helius/getAsset";
 import { getAssetProofString } from "../../../backend/src/block-functions/provider/helius/getAssetProof";
 import { getAssetsByAuthorityString } from "../../../backend/src/block-functions/provider/helius/getAssetsByAuthority";
 import { getAssetsByCreatorString } from "../../../backend/src/block-functions/provider/helius/getAssetsByCreator";
@@ -113,7 +113,7 @@ import { getVoteAccountsString } from "../../../backend/src/block-functions/prov
 import { isBlockhashValidString } from "../../../backend/src/block-functions/provider/helius/isBlockhashValid";
 import { minimumLedgerSlotString } from "../../../backend/src/block-functions/provider/helius/minimumLedgerSlot";
 
-export const functionStringMap: Record<string, string> = {
+export const functionDisplayStringMap: Record<string, string> = {
   // Core functions
   mintToken: mintTokenString,
   transferToken: transferTokenString,
@@ -156,7 +156,7 @@ export const functionStringMap: Record<string, string> = {
   
   // Helius functions
   getAccountInfo: getAccountInfoString,
-  getAsset: getAssetString,
+  getAsset: getAssetDisplayString,
   getAssetProof: getAssetProofString,
   getAssetsByAuthority: getAssetsByAuthorityString,
   getAssetsByCreator: getAssetsByCreatorString,
@@ -229,4 +229,8 @@ export const functionStringMap: Record<string, string> = {
   getVoteAccounts: getVoteAccountsString,
   isBlockhashValid: isBlockhashValidString,
   minimumLedgerSlot: minimumLedgerSlotString,
+};
+
+export const functionExecuteStringMap: Record<string, string> = {
+  getAsset: getAssetExecuteString,
 };

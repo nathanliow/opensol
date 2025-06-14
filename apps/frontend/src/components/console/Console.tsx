@@ -8,7 +8,7 @@ import { LoadingDots } from '../ui/LoadingDots';
 import { callLLM } from '../../services/llmService';
 import { useConfig } from '../../contexts/ConfigContext';
 import { FlowNode } from '../../../../backend/src/packages/compiler/src/types';
-import { functionStringMap } from '@/code-strings';
+import { functionDisplayStringMap } from '@/code-strings';
 import { CodeContent, CodeTab } from './CodeContent';
 import { OutputContent } from './OutputContent';
 import { DebugContent } from './DebugContent';
@@ -107,7 +107,7 @@ export const Console = memo(({
         // Add tab for each imported function if it doesn't exist
         if (!tabs.some(tab => tab.id === importName)) {
           // Use the mapping to get the function code, or fallback to generic template
-          const functionCode = functionStringMap[importName] || `// ${importName} implementation from ${importPath}
+          const functionCode = functionDisplayStringMap[importName] || `// ${importName} implementation from ${importPath}
 export async function ${importName}(params: any) {
   try {
     // Function implementation would be here
