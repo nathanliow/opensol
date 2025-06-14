@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface DashboardTabsProps {
-  tab: 'my' | 'public' | 'earnings' | 'courses';
-  setTab: (tab: 'my' | 'public' | 'earnings' | 'courses') => void;
+  tab: 'my' | 'public' | 'courses';
+  setTab: (tab: 'my' | 'public' | 'courses') => void;
 }
 
 export const DashboardTabs = ({ tab, setTab }: DashboardTabsProps) => {
@@ -21,12 +21,12 @@ export const DashboardTabs = ({ tab, setTab }: DashboardTabsProps) => {
         >
           Public Projects
         </button>
-        <button
+        {/* <button
           className={`px-4 py-2 font-medium ${tab === 'earnings' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-gray-300'}`}
           onClick={() => setTab('earnings')}
         >
           Earnings
-        </button>
+        </button> */}
         <button
           className={`px-4 py-2 font-medium ${tab === 'courses' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-400 hover:text-gray-300'}`}
           onClick={() => setTab('courses')}
@@ -37,7 +37,7 @@ export const DashboardTabs = ({ tab, setTab }: DashboardTabsProps) => {
 
       <div className="mb-4">
         <h2 className="text-xl font-semibold text-white/90">
-          {tab === 'my' ? 'Your Projects' : tab === 'public' ? 'Public Projects' : tab === 'courses' ? 'Courses' : 'Earnings'}
+          {tab === 'my' ? 'Your Projects' : tab === 'public' ? 'Public Projects' : 'Courses'}
         </h2>
       </div>
     </>
