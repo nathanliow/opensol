@@ -1,8 +1,9 @@
+import { Tab } from '@/types/TabTypes';
 import React from 'react';
 
 interface DashboardTabsProps {
-  tab: 'my' | 'public' | 'courses';
-  setTab: (tab: 'my' | 'public' | 'courses') => void;
+  tab: Tab;
+  setTab: (tab: Tab) => void;
 }
 
 export const DashboardTabs = ({ tab, setTab }: DashboardTabsProps) => {

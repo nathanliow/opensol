@@ -16,6 +16,7 @@ import { getUserData } from '@/lib/user';
 import { UserData } from '@/types/UserTypes';
 import { courses } from '@/courses';
 import { useLesson } from '@/contexts/LessonContext';
+import { Tab } from '@/types/TabTypes';
 
 export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -48,7 +49,7 @@ export default function DashboardPage() {
   const [modalMode, setModalMode] = useState<'edit' | 'delete'>('edit');
 
   // New state for active tab
-  const [tab, setTab] = useState<'my' | 'public' | 'earnings' | 'courses'>('my');
+  const [tab, setTab] = useState<Tab>('my');
 
   // Add state for tracking expanded courses
   const [expandedCourses, setExpandedCourses] = useState<Set<string>>(new Set());
@@ -517,7 +518,7 @@ export default function DashboardPage() {
               viewMode={viewMode}
               setViewMode={setViewMode}
               loading={loading}
-              tab={tab as 'my' | 'public' | 'earnings'}
+              tab={tab}
               handleOpenProject={handleOpenProject}
               handleEditProject={handleEditProject}
               handleStarToggle={handleStarToggle}

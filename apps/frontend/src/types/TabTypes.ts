@@ -1,0 +1,1 @@
+export type Tab = 'my' | 'public' | 'courses';
