@@ -72,13 +72,25 @@ export async function signOut() {
 
 // Create or update a user profile
 export async function upsertUserProfile(userId: string, walletAddress: string, displayName?: string) {
+  // First check if user profile already exists
+  const { data: existingProfile } = await supabase
+    .from('user_profiles')
+    .select('display_name')
+    .eq('user_id', userId)
+    .single();
+  
+  // If profile exists and has a display name, don't overwrite it
+  const shouldUseExistingDisplayName = existingProfile?.display_name && existingProfile.display_name !== walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4);
+  
   const { data, error } = await supabase
     .from('user_profiles')
     .upsert({
       id: userId,
       user_id: userId,
       wallet_address: walletAddress,
-      display_name: displayName || walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4)
+      display_name: shouldUseExistingDisplayName 
+        ? existingProfile.display_name 
+        : (displayName || walletAddress.slice(0, 4) + '...' + walletAddress.slice(-4))
     }, {
       onConflict: 'user_id'
     })
