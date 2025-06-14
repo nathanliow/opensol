@@ -112,8 +112,7 @@ export const getPairTrades: BlockFunctionTemplate = {
   }
 };
 
-export const getPairTradesString = `
-export const getPairTrades = async (params: Record<string, any>) => {
+export const getPairTradesDisplayString = `export const getPairTrades = async (params: Record<string, any>) => {
   try {
     const { 
       address,
@@ -152,6 +151,69 @@ export const getPairTrades = async (params: Record<string, any>) => {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getPairTrades:', error);
+    throw error;
+  }
+};
+`;
+
+export const getPairTradesExecuteString = `async function getPairTrades(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      address,
+      apiKey, 
+      txnType = 'swap',
+      sortType = 'desc',
+      offset = 0,
+      limit = 50,
+      network = 'mainnet',
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Birdeye API key is required.');
+    }
+
+    if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    if (!address) {
+      throw new Error('Pair address is required.');
+    }
+
+    if (offset < 0 || offset > 50000) {
+      throw new Error('Offset must be between 0 and 50000.');
+    }
+
+    if (limit < 1 || limit > 50) {
+      throw new Error('Limit must be between 1 and 50.');
+    }
+
+    if (offset + limit > 50000) {
+      throw new Error('Offset and limit must be less than 50000.');
+    }
+
+    const response = await fetch(\`https://public-api.birdeye.so/defi/txs/pair?address=\${address}&offset=\${offset}&limit=\${limit}&tx_type=\${txnType}&sort_type=\${sortType}\`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': apiKey.key
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Birdeye API error (\${response.status}): \${errorText}\`);
     }
     const data = await response.json();
 

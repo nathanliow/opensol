@@ -225,10 +225,17 @@ function Flow() {
       if (startingNodesLoadedRef.current !== lessonKey) {
         if (currentLesson.startNodes) {
           setNodes(currentLesson.startNodes);
+        } else {
+          setNodes([]);
         }
+        
+        // Always clear edges when starting a new lesson, even if no startEdges specified
         if (currentLesson.startEdges) {
           setEdges(currentLesson.startEdges);
+        } else {
+          setEdges([]);
         }
+        
         startingNodesLoadedRef.current = lessonKey;
         
         // Clear history and save new state for undo/redo

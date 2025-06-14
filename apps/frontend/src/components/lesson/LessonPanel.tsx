@@ -51,7 +51,7 @@ const RenderedDescription = ({ description }: { description: string }) => {
   const parts = parseLinks(description);
   
   return (
-    <p className="mb-6 text-gray-300 whitespace-pre-line">
+    <p className="mb-6 text-gray-300 whitespace-pre-line break-words">
       {parts.map((part, index) => {
         if (part.type === 'link') {
           return (
@@ -60,7 +60,7 @@ const RenderedDescription = ({ description }: { description: string }) => {
               href={part.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-300 underline"
+              className="text-blue-400 hover:text-blue-300 underline break-all"
             >
               {part.content}
             </a>
@@ -129,9 +129,9 @@ export default function LessonPanel({ nodes, edges, output }: LessonPanelProps) 
   return (
     <div className="h-full w-full bg-[#1e1e1e] border-l border-gray-800 flex flex-col" style={{ minWidth: 300 }}>
       <div className="p-4 border-b border-gray-700 flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-bold">{currentLesson.title}</h2>
-          <p className="text-sm text-gray-400">{currentCourse.title}</p>
+        <div className="break-words flex-1 min-w-0">
+          <h2 className="text-lg font-bold break-words">{currentLesson.title}</h2>
+          <p className="text-sm text-gray-400 break-words">{currentCourse.title}</p>
           <p className="text-sm text-gray-400">Course {courseId?.slice(-1)} - Lesson {lessonIndex + 1}</p>
         </div>
         <button 
@@ -143,8 +143,8 @@ export default function LessonPanel({ nodes, edges, output }: LessonPanelProps) 
         </button>
       </div>
 
-      <div className="flex-1 p-4 overflow-y-auto">
-        <h3 className="text-md font-semibold mb-2">
+      <div className="flex-1 p-4 overflow-y-auto break-words">
+        <h3 className="text-md font-semibold mb-2 break-words">
           Step {stepIndex + 1} / {currentLesson.steps.length}: {currentStep.title}
         </h3>
         <RenderedDescription description={currentStep.description} />

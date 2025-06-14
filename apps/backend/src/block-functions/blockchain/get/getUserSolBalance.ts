@@ -74,3 +74,107 @@ export const getUserSolBalance: BlockFunctionTemplate = {
     }
   }
 };
+
+export const getUserSolBalanceDisplayString = `export const getUserSolBalance = async (params: Record<string, any>) => {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    // Extract parameters
+    const { 
+      address, 
+      apiKey, 
+      network = 'mainnet' 
+    } = filteredParams;
+    
+    if (!address) {
+      throw new Error('Wallet address is required.');
+    }
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    // Fetch the SOL balance for the account
+    const balanceResponse = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${apiKey.key}\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'balance',
+        method: 'getBalance',
+        params: [address]
+      })
+    });
+
+    if (!balanceResponse.ok) {
+      const errorText = await balanceResponse.text();
+      throw new Error(\`Helius API error (\${balanceResponse.status}): \${errorText}\`);
+    }
+    const balanceData = await balanceResponse.json();
+
+    // Return combined results
+    return {
+      result: balanceData.result.value*1e-9
+    }
+  } catch (error) {
+    console.error('Error in getUserSolBalance:', error);
+    throw error;
+  }
+};
+`;
+
+export const getUserSolBalanceExecuteString = `async function getUserSolBalance(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    // Extract parameters
+    const { 
+      address, 
+      apiKey, 
+      network = 'mainnet' 
+    } = filteredParams;
+    
+    if (!address) {
+      throw new Error('Wallet address is required.');
+    }
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    // Fetch the SOL balance for the account
+    const balanceResponse = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${apiKey.key}\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'balance',
+        method: 'getBalance',
+        params: [address]
+      })
+    });
+
+    if (!balanceResponse.ok) {
+      const errorText = await balanceResponse.text();
+      throw new Error(\`Helius API error (\${balanceResponse.status}): \${errorText}\`);
+    }
+    const balanceData = await balanceResponse.json();
+
+    // Return combined results
+    return {
+      result: balanceData.result.value*1e-9
+    }
+  } catch (error) {
+    console.error('Error in getUserSolBalance:', error);
+    throw error;
+  }
+};
+`;

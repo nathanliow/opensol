@@ -78,8 +78,7 @@ export const getTokenAllTrades: BlockFunctionTemplate = {
   }
 };
 
-export const getTokenAllTradesString = `
-export const getTokenAllTrades = async (params: Record<string, any>) => {
+export const getTokenAllTradesDisplayString = `export const getTokenAllTrades = async (params: Record<string, any>) => {
   try {
     const { 
       address,
@@ -112,4 +111,52 @@ export const getTokenAllTrades = async (params: Record<string, any>) => {
     throw error;
   }
 };
+`;
+
+export const getTokenAllTradesExecuteString = `async function getTokenAllTrades(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      address,
+      timeframe = '24h',
+      apiKey, 
+      network = 'mainnet',
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Birdeye API key is required.');
+    }
+
+    if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    if (!address || !timeframe) {
+      throw new Error('Address and timeframe are required.');
+    }
+
+    const response = await fetch(\`https://public-api.birdeye.so/defi/v3/all-time/trades/single?time_frame=\${timeframe}&address=\${address}\`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': apiKey.key
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Birdeye API error (\${response.status}): \${errorText}\`);
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenAllTrades:', error);
+    throw error;
+  }
+}; 
 `;

@@ -107,8 +107,7 @@ export const getPriorityFeeEstimate: BlockFunctionTemplate = {
   }
 };
 
-export const getPriorityFeeEstimateString = `
-export const getPriorityFeeEstimate = async (params: Record<string, any>) => {
+export const getPriorityFeeEstimateDisplayString = `export const getPriorityFeeEstimate = async (params: Record<string, any>) => {
   try {
     const { 
       transaction,
@@ -151,5 +150,67 @@ export const getPriorityFeeEstimate = async (params: Record<string, any>) => {
   } catch (error) {
     console.error('Error in getPriorityFeeEstimate:', error);
     throw error;
+};
+`;
+
+export const getPriorityFeeEstimateExecuteString = `async function getPriorityFeeEstimate(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      apiKey, 
+      transaction,
+      priorityLevel = 'Min',
+      transactionEncoding = 'Base58',
+      network = 'devnet' 
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    const response = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${apiKey.key}\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getPriorityFeeEstimate',
+        params: [
+          {
+            "transaction": transaction,
+            "options": {
+              "transactionEncoding": transactionEncoding,
+              "priorityLevel": priorityLevel,
+              "includeAllPriorityFeeLevels": true,
+              "lookbackSlots": 150,
+              "includeVote": true,
+              "recommended": true,
+              "evaluateEmptySlotAsZero": true
+            }
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Helius API error (\${response.status}): \${errorText}\`);
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getPriorityFeeEstimate:', error);
+    throw error;
+  }
 };
 `;

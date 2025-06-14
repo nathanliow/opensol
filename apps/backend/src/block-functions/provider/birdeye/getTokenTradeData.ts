@@ -70,8 +70,7 @@ export const getTokenTradeData: BlockFunctionTemplate = {
   }
 };
 
-export const getTokenTradeDataString = `
-export const getTokenTradeData = async (params: Record<string, any>) => {
+export const getTokenTradeDataDisplayString = `export const getTokenTradeData = async (params: Record<string, any>) => {
   try {
     const { 
       address,
@@ -94,6 +93,53 @@ export const getTokenTradeData = async (params: Record<string, any>) => {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenTradeData:', error);
+    throw error;
+  }
+};
+`;
+
+export const getTokenTradeDataExecuteString = `async function getTokenTradeData(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      address,
+      apiKey, 
+      network = 'mainnet',
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Birdeye API key is required.');
+    }
+
+    if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    const response = await fetch(\`https://public-api.birdeye.so/defi/v3/token/trade-data/single?address=\${address}\`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': apiKey.key
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Birdeye API error (\${response.status}): \${errorText}\`);
     }
     const data = await response.json();
 

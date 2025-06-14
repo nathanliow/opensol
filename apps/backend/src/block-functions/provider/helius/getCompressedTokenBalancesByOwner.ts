@@ -101,8 +101,7 @@ export const getCompressedTokenBalancesByOwner: BlockFunctionTemplate = {
   }
 };
 
-export const getCompressedTokenBalancesByOwnerString = `
-export const getCompressedTokenBalancesByOwner = async (params: Record<string, any>) => {
+export const getCompressedTokenBalancesByOwnerDisplayString = `export const getCompressedTokenBalancesByOwner = async (params: Record<string, any>) => {
   try {
     const { 
       owner,
@@ -137,6 +136,69 @@ export const getCompressedTokenBalancesByOwner = async (params: Record<string, a
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error('Helius API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getCompressedTokenBalancesByOwner:', error);
+    throw error;
+  }
+};
+`;
+
+export const getCompressedTokenBalancesByOwnerExecuteString = `async function getCompressedTokenBalancesByOwner(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      owner,
+      cursor,
+      limit,
+      mint,
+      apiKey, 
+      network = 'devnet' 
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
+      throw new Error('Invalid API key tier.');
+    }
+    
+    if (!owner) {
+      throw new Error('Owner is required.');
+    }
+
+    if (limit < 0) {
+      throw new Error('Limit must be greater than 0.');
+    }
+
+    const response = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${apiKey.key}\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getCompressedTokenBalancesByOwnerV2',
+        params: [{
+          owner: owner,
+          cursor: cursor,
+          limit: limit,
+          mint: mint
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Helius API error (\${response.status}): \${errorText}\`);
     }
     const data = await response.json();
 

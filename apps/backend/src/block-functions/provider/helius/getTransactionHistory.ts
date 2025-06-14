@@ -756,8 +756,7 @@ export const getTransactionHistory: BlockFunctionTemplate = {
   }
 };
 
-export const getTransactionHistoryString = `
-export const getTransactionHistory = async (params: Record<string, any>) => {
+export const getTransactionHistoryDisplayString = `export const getTransactionHistory = async (params: Record<string, any>) => {
   try {
     const { 
       address,
@@ -786,6 +785,54 @@ export const getTransactionHistory = async (params: Record<string, any>) => {
       throw new Error('Helius API error (\${response.status}): \${errorText}');
     }
     const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getTransactionHistory:', error);
+    throw error;
+  }
+};
+`;
+
+export const getTransactionHistoryExecuteString = `async function getTransactionHistory(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      apiKey, 
+      address,
+      before,
+      until,
+      limit = 100,
+      type,
+      source,
+      network = 'devnet',
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
+      throw new Error('Invalid API key tier.');
+    }
+
+
+    if (limit < 1 || limit > 100) {
+      throw new Error('Limit must be between 1 and 100.');
+    }
+
+    const response = await fetch(\`https://api.helius.xyz/v0/addresses/\${address}/transactions?api-key=\${apiKey.key}&before=\${before ? \`&before=\${before}\` : ''}\${until ? \`&until=\${until}\` : ''}&limit=\${limit}\${type ? \`&type=\${type}\` : ''}\${source ? \`&source=\${source}\` : ''}\`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Helius API error (\${response.status}): \${errorText}\`);
+    }
+    const data = await response.json();
+
     return data;
   } catch (error) {
     console.error('Error in getTransactionHistory:', error);

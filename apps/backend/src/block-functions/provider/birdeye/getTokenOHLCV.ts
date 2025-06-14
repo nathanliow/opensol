@@ -119,8 +119,7 @@ export const getTokenOHLCV: BlockFunctionTemplate = {
   }
 };
 
-export const getTokenOHLCVString = `
-export const getTokenOHLCV = async (params: Record<string, any>) => {
+export const getTokenOHLCVDisplayString = `export const getTokenOHLCV = async (params: Record<string, any>) => {
   try {
     const { 
       address,
@@ -167,6 +166,77 @@ export const getTokenOHLCV = async (params: Record<string, any>) => {
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error('Birdeye API error (\${response.status}): \${errorText}');
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenOHLCV:', error);
+    throw error;
+  }
+};
+`;
+
+export const getTokenOHLCVExecuteString = `async function getTokenOHLCV(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      address,
+      interval,
+      currency = 'usd',
+      time_from,
+      time_to,
+      apiKey, 
+      network = 'mainnet',
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Birdeye API key is required.');
+    }
+
+    if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    if (!interval) {
+      throw new Error('Interval is required.');
+    }
+
+    if (!time_from) {
+      throw new Error('Time from is required.');
+    }
+
+    if (time_from < 0 || time_from > 10000000000) { 
+      throw new Error('Time from must be between 0 and 10000000000.');
+    }
+
+    if (!time_to) {
+      throw new Error('Time to is required.');
+    }
+
+    if (time_to < 0 || time_to > 10000000000) { 
+      throw new Error('Time to must be between 0 and 10000000000.');
+    }
+
+    const response = await fetch(\`https://public-api.birdeye.so/defi/ohlcv?address=\${address}&type=\${interval}&currency=\${currency}&time_from=\${time_from}&time_to=\${time_to}\`, {
+      method: 'GET',
+      headers: { 
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': apiKey.key
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Birdeye API error (\${response.status}): \${errorText}\`);
     }
     const data = await response.json();
 

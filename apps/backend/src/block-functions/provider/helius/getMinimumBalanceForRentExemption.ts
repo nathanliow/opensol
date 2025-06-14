@@ -72,8 +72,7 @@ export const getMinimumBalanceForRentExemption: BlockFunctionTemplate = {
   }
 };
 
-export const getMinimumBalanceForRentExemptionString = `
-export const getMinimumBalanceForRentExemption = async (params: Record<string, any>) => {
+export const getMinimumBalanceForRentExemptionDisplayString = `export const getMinimumBalanceForRentExemption = async (params: Record<string, any>) => {
   try {
     const { 
       accountDataLength,
@@ -97,6 +96,55 @@ export const getMinimumBalanceForRentExemption = async (params: Record<string, a
       throw new Error('Helius API error (\${response.status}): \${errorText}');
     }
     const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getMinimumBalanceForRentExemption:', error);
+    throw error;
+  }
+};
+`;
+
+export const getMinimumBalanceForRentExemptionExecuteString = `async function getMinimumBalanceForRentExemption(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      accountDataLength,
+      apiKey, 
+      network = 'devnet' 
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    const response = await fetch(\`https://\${network}.helius-rpc.com/?api-key=\${apiKey.key}\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 'text',
+        method: 'getMinimumBalanceForRentExemption',
+        params: [
+          accountDataLength
+        ]  
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Helius API error (\${response.status}): \${errorText}\`);
+    }
+    const data = await response.json();
+
     return data;
   } catch (error) {
     console.error('Error in getMinimumBalanceForRentExemption:', error);

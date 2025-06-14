@@ -138,8 +138,7 @@ export const getTokenMintBurn: BlockFunctionTemplate = {
   }
 };
 
-export const getTokenMintBurnString = `
-export const getTokenMintBurn = async (params: Record<string, any>) => {
+export const getTokenMintBurnDisplayString = `export const getTokenMintBurn = async (params: Record<string, any>) => {
   try {
     const { 
       address,
@@ -194,4 +193,74 @@ export const getTokenMintBurn = async (params: Record<string, any>) => {
     throw error;
   }
 };
+`;
+
+export const getTokenMintBurnExecuteString = `async function getTokenMintBurn(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      address,
+      sort_by = 'block_time',
+      sort_type = 'desc',
+      type = 'all',
+      after_time,
+      before_time,
+      offset = 0,
+      limit = 100,
+      apiKey, 
+      network = 'mainnet',
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Birdeye API key is required.');
+    }
+
+    if (apiKey.tier != 'starter' && apiKey.tier != 'premium' && apiKey.tier != 'business' && apiKey.tier != 'enterprise') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    if (!address) {
+      throw new Error('Address is required.');
+    }
+
+    if (after_time < 0 || before_time < 0) {
+      throw new Error('Time values must be greater than 0.');
+    }
+
+    if (offset < 0 || offset > 10000) {
+      throw new Error('Offset must be between 0 and 10000.');
+    }
+
+    if (limit < 1 || limit > 100) {
+      throw new Error('Limit must be between 1 and 100.');
+    }
+
+    if (offset + limit > 10000) {
+      throw new Error('Offset + limit must be less than 10000.');
+    }
+
+    const response = await fetch(\`https://public-api.birdeye.so/defi/v3/token/mint-burn-txs?address=\${address}&sort_by=\${sort_by}&sort_type=\${sort_type}&type=\${type}&after_time=\${after_time}&before_time=\${before_time}&offset=\${offset}&limit=\${limit}\`, {
+      method: 'GET',
+      headers: {
+        accept: 'application/json', 
+        'x-chain': 'solana',
+        'X-API-KEY': apiKey.key
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Birdeye API error (\${response.status}): \${errorText}\`);
+    }
+    const data = await response.json();
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTokenMintBurn:', error);
+    throw error;
+  }
+}; 
 `;

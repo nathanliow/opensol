@@ -67,8 +67,7 @@ export const getEnhancedTransaction: BlockFunctionTemplate = {
   }
 };
 
-export const getEnhancedTransactionString = `
-export const getEnhancedTransaction = async (params: Record<string, any>) => {
+export const getEnhancedTransactionDisplayString = `export const getEnhancedTransaction = async (params: Record<string, any>) => {
   try {
     const { 
       signature,
@@ -93,6 +92,50 @@ export const getEnhancedTransaction = async (params: Record<string, any>) => {
       throw new Error('Helius API error (\${response.status}): \${errorText}');
     }
     const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in getEnhancedTransaction:', error);
+    throw error;
+  }
+};
+`;
+
+export const getEnhancedTransactionExecuteString = `async function getEnhancedTransaction(params) {
+  try {
+    const filteredParams = Object.fromEntries(
+      Object.entries(params).filter(([key, value]) => value !== "" && value !== null)
+    );
+
+    const { 
+      signature,
+      apiKey, 
+      network = 'devnet' 
+    } = filteredParams;
+    
+    if (!apiKey) {
+      throw new Error('Helius API key is required.');
+    }
+
+    if (apiKey.tier != 'free' && apiKey.tier != 'developer' && apiKey.tier != 'business' && apiKey.tier != 'professional') {
+      throw new Error('Invalid API key tier.');
+    }
+
+    const response = await fetch(\`https://api.helius.xyz/v0/transactions?api-key=\${apiKey.key}\`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        transactions: [signature]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(\`Helius API error (\${response.status}): \${errorText}\`);
+    }
+    const data = await response.json();
+
     return data;
   } catch (error) {
     console.error('Error in getEnhancedTransaction:', error);

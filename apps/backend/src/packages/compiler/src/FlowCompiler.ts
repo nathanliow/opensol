@@ -126,25 +126,9 @@ export class FlowCompiler {
     if (!template) {
       throw new Error(`Template not found for function: ${templateName}`);
     }
-    // const functionName = this.setFunctionImport(template);
-    // const functionBody = template.execute
-    //   .toString()
-    //   .split('\n')
-    //   .slice(1, -1)
-    //   .join('\n');
-    
-    // const functionCode = `async function ${functionName}(params) {
-    //   try {
-    //     ${functionBody}
-    //   } catch (error) {
-    //     console.error('Error in ${templateName}:', error);
-    //     throw error;
-    //   }
-    // }`;
 
     const functionCode = functionExecuteStringMap[templateName];
 
-    console.log('functionCode: ', functionCode);
     this.injectedFunctions.set(templateName, functionCode);
     return functionCode;
   }
