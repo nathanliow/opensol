@@ -41,49 +41,57 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           You must preserve the structure and validity of the flow while making requested modifications.
           Return only valid JSON in the format: { "nodes": [...], "edges": [...] }
           
-          The nodes consist of GET, HELIUS, FUNCTION, PRINT, CONST
+          The nodes consist of GET, HELIUS, FUNCTION, PRINT, CONST, CONDITIONAL, MINT, TRANSFER
           GET: consists of functions retrieving and processing data from the blockchain
             - getUserSolBalance, parameters: address, apiKey, network
-          HELIUS: consists of functions using the Helius API for Solana operations, grouped by category:
-            NFT and Asset Operations:
+          HELIUS: consists of functions using the Helius API for Solana operations:
+            - getAccountInfo: parameters: pubkey, apiKey, network
             - getAsset: parameters: assetId, apiKey, network
             - getAssetProof: parameters: assetId, apiKey, network
             - getAssetsByAuthority: parameters: authorityAddress, page, limit, apiKey, network
             - getAssetsByCreator: parameters: creatorAddress, page, limit, apiKey, network
             - getAssetsByGroup: parameters: groupKey, groupValue, page, limit, apiKey, network
             - getAssetsByOwner: parameters: ownerAddress, page, limit, apiKey, network
-            - getNftEditions: parameters: mint, page, limit, apiKey, network
-            - getSignaturesForAsset: parameters: assetId, before, until, limit, apiKey, network
-
-            Account and Token Operations:
-            - getAccountInfo: parameters: address, apiKey, network
             - getBalance: parameters: address, apiKey, network
-            - getProgramAccounts: parameters: programId, apiKey, network
-            - getTokenAccountBalance: parameters: account, apiKey, network
-            - getTokenAccounts: parameters: address, apiKey, network
-            - getTokenLargestAccounts: parameters: mint, apiKey, network
-            - getTokenSupply: parameters: mint, apiKey, network
-
-            Block and Transaction Operations:
+            - getBlockCommitment: parameters: blockNumber, apiKey, network
             - getBlockHeight: parameters: apiKey, network
             - getBlockProduction: parameters: apiKey, network
             - getBlocks: parameters: start, end, apiKey, network
             - getBlockTime: parameters: block, apiKey, network
-            - getTransaction: parameters: signature, apiKey, network
-            - getTransactionCount: parameters: apiKey, network
-            - getLatestBlockhash: parameters: apiKey, network
-            - isBlockhashValid: parameters: blockhash, apiKey, network
-
-            System Information:
             - getClusterNodes: parameters: apiKey, network
             - getEpochInfo: parameters: apiKey, network
             - getEpochSchedule: parameters: apiKey, network
             - getHealth: parameters: apiKey, network
             - getIdentity: parameters: apiKey, network
+            - getNftEditions: parameters: mint, page, limit, apiKey, network
+            - getProgramAccounts: parameters: programId, apiKey, network
+            - getSignaturesForAddress: parameters: address, before, limit, apiKey, network
+            - getSignaturesForAsset: parameters: assetId, page, limit, before, after, apiKey, network
+            - getTokenAccountBalance: parameters: account, apiKey, network
+            - getTokenAccounts: parameters: address, apiKey, network
+            - getTokenLargestAccounts: parameters: mint, apiKey, network
+            - getTokenSupply: parameters: mint, apiKey, network
+            - getTransaction: parameters: signature, apiKey, network
+            - getTransactionCount: parameters: apiKey, network
+            - getTransactionHistory: parameters: address, before, until, source, type, limit, apiKey, network
+            - getLatestBlockhash: parameters: apiKey, network
             - getVersion: parameters: apiKey, network
             - getVoteAccounts: parameters: apiKey, network
             - getSupply: parameters: apiKey, network
-
+            - isBlockhashValid: parameters: blockhash, apiKey, network
+          BIRDEYE: consists of functions using the BirdEye API for Solana operations:
+            - getBaseQuoteOHLCV: parameters: baseAddress, quoteAddress, interval, timeFrom, timeTo, apiKey, network
+            - getHistoricalPrice: parameters: address, interval, timeFrom, timeTo, apiKey, network
+            - getNewTokens: parameters: timeTo, limit, apiKey, network
+            - getPrice: parameters: address, apiKey, network
+            - getPriceAtUnixTime: parameters: address, unixTimestamp, apiKey, network
+            - getTokenHolders: parameters: address, apiKey, network
+            - getTokenMetadata: parameters: address, apiKey, network
+            - getTokenOHLCV: parameters: address, interval, timeFrom, timeTo, apiKey, network
+            - getTokenTopTraders: parameters: address, limit, apiKey, network
+            - getTokenTrades: parameters: address, sort_by, sort_type, txnType, source, limit, apiKey, network
+            - getWalletPortfolio: parameters: address, apiKey, network
+            - getWalletTokenBalance: parameters: address, token, apiKey, network
           FUNCTION: indicates a start of a logic, always the root of a logic
             - parameters: label
           PRINT: indicates a print statement
@@ -93,7 +101,19 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
             - parameters: none
             - dataType
             - value
-
+          CONDITIONAL: indicates a conditional statement that branches a flow of logic into two paths
+          MINT: indicates a mint statement
+            - parameters: none
+            - name
+            - symbol
+            - description
+            - supply
+            - image
+          TRANSFER: indicates a transfer statement
+            - parameters: none
+            - tokenAddress
+            - amount
+            - recipient
           Make sure the nodes do not overlap.
           The positioning should approximately follow these rules:
           - FUNCTION is always placed above the blocks being connected.
@@ -109,147 +129,132 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
           If you are asked to perform an action that goes beyond the capabilities of the given nodes and functions, 
           return error as true otherwise false.
 
-
           An example of a function is below
           {
             "nodes": [
               {
-                "id": "const-1742539084023",
+                "id": "const-1749621164430",
                 "type": "CONST",
                 "position": {
-                  "x": 129.09340366020075,
-                  "y": 387.7135021329135
+                    "x": 240.67626357122003,
+                    "y": 295.0944802085949
                 },
                 "data": {
-                  "label": "CONST",
-                  "selectedFunction": "",
-                  "parameters": {},
-                  "value": "HAUWqZTnQNhSqC3AG4GYtuoqTZMi3ywvgqWMyKC7pump"
+                    "inputs": {
+                        "dataType": {
+                            "handleId": "input-dataType",
+                            "type": "string",
+                            "value": "string"
+                        },
+                        "value": {
+                            "handleId": "input-value",
+                            "type": "string",
+                            "value": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+                        }
+                    },
+                    "output": {
+                        "handleId": "output",
+                        "type": "string",
+                        "value": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+                    }
                 },
                 "measured": {
-                  "width": 258,
-                  "height": 114
+                    "width": 243,
+                    "height": 115
                 },
                 "selected": false,
                 "dragging": false
               },
               {
-                "id": "function-1742539096506",
+                "id": "function-1749621171174",
                 "type": "FUNCTION",
                 "position": {
-                  "x": 527.2645960571145,
-                  "y": 196.57017101220296
+                    "x": 546.5600338157957,
+                    "y": 142.02858100234798
                 },
                 "data": {
-                  "name": "Untitled Function",
-                  "label": "FUNCTION"
+                    "inputs": {
+                        "name": {
+                            "handleId": "input-name",
+                            "type": "string",
+                            "value": "Getting Asset"
+                        }
+                    },
+                    "output": {
+                        "handleId": "output",
+                        "type": "string",
+                        "value": ""
+                    }
                 },
                 "measured": {
-                  "width": 258,
-                  "height": 80
+                    "width": 243,
+                    "height": 81
                 },
                 "selected": false,
                 "dragging": false
               },
               {
-                "id": "print-1742539101850",
-                "type": "PRINT",
+                "id": "helius-1749621210483",
+                "type": "HELIUS",
                 "position": {
-                  "x": 1007.2758734415817,
-                  "y": 325.85287730297756
+                    "x": 547.0014446711123,
+                    "y": 294.4921809675752
                 },
                 "data": {
-                  "label": "PRINT",
-                  "selectedFunction": "",
-                  "parameters": {},
-                  "template": "$output"
+                    "inputs": {
+                        "function": {
+                            "handleId": "input-function",
+                            "type": "string",
+                            "value": "getAsset"
+                        },
+                        "network": {
+                            "handleId": "input-network",
+                            "type": "string",
+                            "value": "devnet"
+                        },
+                        "assetId": {
+                            "handleId": "input-assetId",
+                            "type": "string",
+                            "value": "9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump"
+                        }
+                    },
+                    "output": {
+                        "handleId": "output",
+                        "type": "object",
+                        "value": {}
+                    }
                 },
                 "measured": {
-                  "width": 254,
-                  "height": 117
+                    "width": 243,
+                    "height": 115
                 },
                 "selected": true,
                 "dragging": false
               },
               {
-                "id": "get-1742539131042",
-                "type": "GET",
-                "position": {
-                  "x": 582.1655707630974,
-                  "y": 439.9662261668413
-                },
-                "data": {
-                  "label": "GET",
-                  "selectedFunction": "getUserSolBalance",
-                  "parameters": {
-                    "network": "mainnet"
-                  }
-                },
-                "measured": {
-                  "width": 258,
-                  "height": 114
-                },
-                "selected": false,
-                "dragging": false
-              },
-              {
-                "id": "helius-1742539536871",
-                "type": "HELIUS",
-                "position": {
-                  "x": 503.69360405224734,
-                  "y": 699.4710634126772
-                },
-                "data": {
-                  "label": "HELIUS",
-                  "selectedFunction": "getAsset",
-                  "parameters": {
-                    "network": "mainnet",
-                    "apiKey": "59b22110-9b58-4580-9187-cf1cadeaa27d"
-                  }
-                },
-                "measured": {
-                  "width": 258,
-                  "height": 114
-                },
-                "selected": false,
-                "dragging": false
-              },
-              {
-                "id": "const-1742539543785",
-                "type": "CONST",
-                "position": {
-                  "x": 139.730535019182,
-                  "y": 625.0972809618129
-                },
-                "data": {
-                  "label": "CONST",
-                  "selectedFunction": "",
-                  "parameters": {},
-                  "value": "HAUWqZTnQNhSqC3AG4GYtuoqTZMi3ywvgqWMyKC7pump"
-                },
-                "measured": {
-                  "width": 258,
-                  "height": 114
-                },
-                "selected": false,
-                "dragging": false
-              },
-              {
-                "id": "print-1742539553798",
+                "id": "print-1749621221672",
                 "type": "PRINT",
                 "position": {
-                  "x": 1000.1696614977884,
-                  "y": 635.5261230791903
+                    "x": 540.6628061312763,
+                    "y": 509.1003715305915
                 },
                 "data": {
-                  "label": "PRINT",
-                  "selectedFunction": "",
-                  "parameters": {},
-                  "template": "$output$"
+                    "inputs": {
+                        "template": {
+                            "handleId": "input-template",
+                            "type": "string",
+                            "value": "$output$"
+                        }
+                    },
+                    "output": {
+                        "handleId": "output",
+                        "type": "string",
+                        "value": "$output$"
+                    }
                 },
                 "measured": {
-                  "width": 254,
-                  "height": 117
+                    "width": 254,
+                    "height": 117
                 },
                 "selected": false,
                 "dragging": false
@@ -257,97 +262,50 @@ export const callLLM = async (prompt: string, nodes: any[], edges: any[], apiKey
             ],
             "edges": [
               {
-                "source": "helius-1742539536871",
+                "source": "const-1749621164430",
                 "sourceHandle": "output",
-                "target": "print-1742539553798",
-                "targetHandle": "flow-top",
-                "id": "xy-edge__helius-1742539536871output-print-1742539553798flow"
-              },
-              {
-                "source": "function-1742539096506",
-                "sourceHandle": "output",
-                "target": "get-1742539131042",
-                "targetHandle": "flow-top",
-                "type": "smoothstep",
-                "animated": true,
-                "style": {
-                  "strokeWidth": 2,
-                  "stroke": "white"
-                },
-                "id": "xy-edge__function-1742539096506output-get-1742539131042flow"
-              },
-              {
-                "source": "const-1742539084023",
-                "sourceHandle": "output",
-                "target": "get-1742539131042",
-                "targetHandle": "input-address",
-                "type": "smoothstep",
-                "animated": true,
-                "style": {
-                  "strokeWidth": 2,
-                  "stroke": "white"
-                },
-                "id": "xy-edge__const-1742539084023output-get-1742539131042input-address"
-              },
-              {
-                "source": "get-1742539131042",
-                "sourceHandle": "output",
-                "target": "print-1742539101850",
-                "targetHandle": "template",
-                "type": "smoothstep",
-                "animated": true,
-                "style": {
-                  "strokeWidth": 2,
-                  "stroke": "white"
-                },
-                "id": "xy-edge__get-1742539131042output-print-1742539101850template"
-              },
-              {
-                "source": "helius-1742539536871",
-                "sourceHandle": "output",
-                "target": "print-1742539553798",
-                "targetHandle": "template",
-                "type": "smoothstep",
-                "animated": true,
-                "style": {
-                  "strokeWidth": 2,
-                  "stroke": "white"
-                },
-                "id": "xy-edge__helius-1742539536871output-print-1742539553798template"
-              },
-              {
-                "source": "const-1742539543785",
-                "sourceHandle": "output",
-                "target": "helius-1742539536871",
+                "target": "helius-1749621210483",
                 "targetHandle": "input-assetId",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
-                  "strokeWidth": 2,
-                  "stroke": "white"
+                    "strokeWidth": 2,
+                    "stroke": "white"
                 },
-                "id": "xy-edge__const-1742539543785output-helius-1742539536871input-assetId"
+                "id": "xy-edge__const-1749621164430output-helius-1749621210483input-assetId"
               },
               {
-                "source": "get-1742539131042",
+                "source": "function-1749621171174",
                 "sourceHandle": "flow-bottom",
-                "target": "helius-1742539536871",
+                "target": "helius-1749621210483",
                 "targetHandle": "flow-top",
                 "type": "smoothstep",
                 "animated": true,
                 "style": {
-                  "strokeWidth": 2,
-                  "stroke": "white"
+                    "strokeWidth": 2,
+                    "stroke": "white"
                 },
-                "id": "xy-edge__get-1742539131042flow-bottom-helius-1742539536871flow"
+                "id": "xy-edge__function-1749621171174flow-bottom-helius-1749621210483flow-top"
+              },
+              {
+                "source": "helius-1749621210483",
+                "sourceHandle": "flow-bottom",
+                "target": "print-1749621221672",
+                "targetHandle": "flow-top",
+                "type": "smoothstep",
+                "animated": true,
+                "style": {
+                    "strokeWidth": 2,
+                    "stroke": "white"
+                },
+                "id": "xy-edge__helius-1749621210483flow-bottom-print-1749621221672flow-top"
               }
             ],
             "viewport": {
-              "x": 93.66042235105147,
-              "y": 2.0700435540771878,
-              "zoom": 0.7044777109432065
+              "x": -282.67512911056133,
+              "y": -140.44044993706058,
+              "zoom": 1.1178056974905393
             }
-          }
           `
         },
         {
