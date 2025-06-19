@@ -59,6 +59,43 @@ export async function authenticateWithWallet(wallet: string, privvyUserId: strin
   }
 }
 
+// Authenticate with Supabase using Privy email/embedded wallet
+export async function authenticateWithEmailAndWallet(email: string, wallet: string, privvyUserId: string) {
+  if (!email && !wallet) return null;
+  
+  try {
+    const response = await fetch('/api/auth/wallet-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        wallet: wallet || null,
+        email: email || null,
+        privvyUserId,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Authentication error:', data.error);
+      return null;
+    }
+
+    if (data.session) {
+      await supabase.auth.setSession(data.session);
+      const { data: userData } = await supabase.auth.getUser();
+      return userData?.user;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return null;
+  }
+}
+
 // Get the current authenticated user
 export async function getCurrentUser() {
   const { data } = await supabase.auth.getUser();

@@ -7,15 +7,29 @@ const MAX_SIGN_UP_ATTEMPTS = 2;
 
 export async function POST(request: NextRequest) {
   try {
-    const { wallet, privvyUserId } = await request.json();
+    const { wallet, email: userEmail, privvyUserId } = await request.json();
     
-    if (!wallet) {
-      return NextResponse.json({ error: 'Wallet address is required' }, { status: 400 });
+    console.log('API Route received:', { wallet, userEmail, privvyUserId });
+    
+    if (!wallet && !userEmail) {
+      return NextResponse.json({ error: 'Either wallet address or email is required' }, { status: 400 });
     }
 
-    // Create a valid email format for authentication
-    const email = createEmailFromWallet(wallet);
-    const password = createPasswordFromWallet(wallet);
+    // Create authentication credentials based on available data
+    let email: string;
+    let password: string;
+    
+    if (userEmail) {
+      // Use email-based authentication
+      email = createEmailFromUserEmail(userEmail);
+      password = createPasswordFromEmail(userEmail);
+    } else if (wallet) {
+      // Use wallet-based authentication
+      email = createEmailFromWallet(wallet);
+      password = createPasswordFromWallet(wallet);
+    } else {
+      return NextResponse.json({ error: 'Authentication data is required' }, { status: 400 });
+    }
     const cookieStore = await cookies();
 
     const supabase = createServerClient(
@@ -41,9 +55,38 @@ export async function POST(request: NextRequest) {
       password,
     });
     
-    // If sign in succeeds, return the session
+    // If sign in succeeds, update profile if needed and return the session
     if (signInData?.session) {
       console.log('User signed in successfully');
+      
+      // Update profile with any missing data
+      if (signInData.user && (userEmail || wallet)) {
+        try {
+          const profileData: any = {};
+          
+          if (wallet) {
+            profileData.wallet_address = wallet;
+          }
+          
+          if (userEmail) {
+            profileData.email = userEmail;
+          }
+          
+          if (Object.keys(profileData).length > 0) {
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update(profileData)
+              .eq('user_id', signInData.user.id);
+              
+            if (updateError) {
+              console.error('Error updating profile:', updateError);
+            }
+          }
+        } catch (error) {
+          console.error('Error updating user profile:', error);
+        }
+      }
+      
       return NextResponse.json({ 
         success: true,
         session: signInData.session,
@@ -76,17 +119,39 @@ export async function POST(request: NextRequest) {
       // Create user profile
       if (signUpData.user) {
         try {
-          const { error: profileError } = await supabase
+          const profileData: any = {
+            id: signUpData.user.id,
+            user_id: signUpData.user.id,
+          };
+          
+          if (wallet) {
+            profileData.wallet_address = wallet;
+            profileData.display_name = wallet.slice(0, 6) + '...' + wallet.slice(-4);
+          }
+          
+          if (userEmail) {
+            profileData.email = userEmail;
+            if (!profileData.display_name) {
+              profileData.display_name = userEmail.split('@')[0];
+            }
+          }
+          
+          // Ensure display_name is never null
+          if (!profileData.display_name) {
+            profileData.display_name = `User${signUpData.user.id.slice(-8)}`;
+          }
+          
+          console.log('Creating profile with data:', profileData);
+          
+          const { data: profileResult, error: profileError } = await supabase
             .from('user_profiles')
-            .upsert({
-              id: signUpData.user.id,
-              user_id: signUpData.user.id,
-              wallet_address: wallet,
-              display_name: wallet.slice(0, 6) + '...' + wallet.slice(-4)
-            });
+            .upsert(profileData)
+            .select();
 
           if (profileError) {
             console.error('Error creating profile:', profileError);
+          } else {
+            console.log('Profile created successfully:', profileResult);
           }
         } catch (error) {
           console.error('Error creating user profile:', error);
@@ -157,4 +222,26 @@ function createEmailFromWallet(wallet: string): string {
 function createPasswordFromWallet(wallet: string): string {
   const last16Chars = wallet.slice(-16);
   return `pwd_${last16Chars}`;
+}
+
+// Convert user email to a valid email format for Supabase auth
+function createEmailFromUserEmail(userEmail: string): string {
+  // For email authentication, we can use the email directly or create a hash
+  // to ensure consistency across different email formats
+  const normalizedEmail = userEmail.toLowerCase().trim();
+  return normalizedEmail;
+}
+
+// Create a consistent password from email
+function createPasswordFromEmail(userEmail: string): string {
+  // Create a hash from the email for consistent password
+  const hashInput = userEmail.toLowerCase().trim();
+  let hash = 0;
+  for (let i = 0; i < hashInput.length; i++) {
+    const char = hashInput.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  const hashStr = Math.abs(hash).toString(16);
+  return `email_pwd_${hashStr}`;
 }

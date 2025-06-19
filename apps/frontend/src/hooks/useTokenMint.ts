@@ -163,18 +163,14 @@ export function useTokenMint() {
         )
       );
 
-      // Get recent blockhash
       const { blockhash } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
       transaction.feePayer = walletPublicKey;
 
-      // Sign transaction with mint keypair (since it's a signer)
       transaction.partialSign(mintKeypair);
 
-      // Get user to sign the transaction with their wallet
       const signedTx = await solanaWallet.signTransaction!(transaction);
 
-      // Send the transaction
       const signature = await connection.sendRawTransaction(
         signedTx.serialize(),
         { 
@@ -183,7 +179,6 @@ export function useTokenMint() {
         }
       );
       
-      // Confirm transaction
       await connection.confirmTransaction(signature, 'confirmed');
       
       return { 

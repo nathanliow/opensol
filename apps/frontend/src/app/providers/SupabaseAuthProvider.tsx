@@ -17,7 +17,12 @@ export function SupabaseAuthProvider({ children }: WithChildren) {
   
   useEffect(() => {
     // Only proceed if Privvy is ready and user is authenticated
-    if (!ready || !authenticated || !user) return;
+    if (!ready || !authenticated || !user) {
+      // Clear authentication cache when user logs out
+      authenticatedWallets.clear();
+      setAuthAttempts(0);
+      return;
+    }
     
     // Get current wallet address
     const walletAddress = user.wallet?.address;

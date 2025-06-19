@@ -9,6 +9,7 @@ import { Icons } from '@/components/icons/icons';
 import { courses } from '@/courses';
 import { DashboardMenu } from '@/components/dashboard/DashboardMenu';
 import { uploadImageToPinata } from '@/ipfs/uploadImageToPinata';
+import { usePrivy } from '@privy-io/react-auth';
 
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -16,6 +17,7 @@ export default function ProfilePage() {
   const [updating, setUpdating] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const { supabaseUser, userAddress, isConnected } = useUserAccountContext();
+  const { user } = usePrivy();
   const router = useRouter();
 
   // Edit states
@@ -194,7 +196,7 @@ export default function ProfilePage() {
     
     return (
       <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl font-bold">
-        {editDisplayName?.charAt(0).toUpperCase() || userAddress?.charAt(0).toUpperCase() || 'U'}
+        {editDisplayName?.charAt(0).toUpperCase() || userAddress?.charAt(0).toUpperCase() || user?.email?.address?.charAt(0).toUpperCase() || 'U'}
       </div>
     );
   };
@@ -292,7 +294,7 @@ export default function ProfilePage() {
                     />
                   ) : (
                     <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-3xl font-bold flex-shrink-0">
-                      {userData.display_name?.charAt(0).toUpperCase() || userAddress?.charAt(0).toUpperCase() || 'U'}
+                      {userData.display_name?.charAt(0).toUpperCase() || userAddress?.charAt(0).toUpperCase() || user?.email?.address?.charAt(0).toUpperCase() || 'U'}
                     </div>
                   )
                 )}
@@ -309,11 +311,6 @@ export default function ProfilePage() {
                         contentEditable
                         suppressContentEditableWarning={true}
                         onBlur={(e) => setEditDisplayName(e.currentTarget.textContent || '')}
-                        onFocus={(e) => {
-                          if (e.currentTarget.textContent === 'Click to add display name') {
-                            e.currentTarget.textContent = '';
-                          }
-                        }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
@@ -321,18 +318,24 @@ export default function ProfilePage() {
                           }
                         }}
                         style={{ 
-                          color: editDisplayName ? 'white' : '#9CA3AF',
-                          fontStyle: editDisplayName ? 'normal' : 'italic'
+                          color: 'white',
+                          fontStyle: 'normal'
                         }}
                       >
-                        {editDisplayName || 'Click to add display name'}
+                        {editDisplayName || userData.display_name || 'Anonymous User'}
                       </h2>
                     </div>
                     
                     <div className="flex flex-col gap-4 text-sm text-gray-400">
                       <div className="flex items-center gap-2">
                         <Icons.FiUser size={16} />
-                        Address: <span className="font-mono truncate">{userAddress}</span>
+                        {userAddress ? (
+                          <>Address: <span className="font-mono truncate">{userAddress}</span></>
+                        ) : user?.email?.address ? (
+                          <>Email: <span className="font-mono truncate">{user.email.address}</span></>
+                        ) : (
+                          <>No wallet or email connected</>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Icons.FiCalendar size={16} />
@@ -409,7 +412,13 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-4 text-sm text-gray-400">
                       <div className="flex items-center gap-2">
                         <Icons.FiUser size={16} />
-                        Address: <span className="font-mono truncate">{userAddress}</span>
+                        {userAddress ? (
+                          <>Address: <span className="font-mono truncate">{userAddress}</span></>
+                        ) : user?.email?.address ? (
+                          <>Email: <span className="font-mono truncate">{user.email.address}</span></>
+                        ) : (
+                          <>No wallet or email connected</>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <Icons.FiCalendar size={16} />

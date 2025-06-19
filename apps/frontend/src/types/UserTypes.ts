@@ -5,6 +5,7 @@ export interface UserData {
   bio: string;
   avatar_url: string;
   wallet_address: string;
+  email?: string;
   created_at: string;
   updated_at: string;
   starred_projects: string[];

@@ -15,7 +15,7 @@ interface MenuProps {
 }
 
 export const Menu = ({ onMenuToggle }: MenuProps) => {
-  const { login, logout } = usePrivy();
+  const { login, logout, user } = usePrivy();
   const { userAddress, supabaseUser } = useUserAccountContext();
   const { network, setNetwork } = useConfig();
   const { exitLesson } = useLesson();
@@ -66,6 +66,10 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
       router.push('/');
     } catch (error) {
       console.error('Error signing out:', error);
+      logout();
+      localStorage.removeItem('currentProjectId');
+      setIsOpen(false);
+      router.push('/');
     }
   };
 
@@ -99,20 +103,35 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
 
           {isOpen && (
             <div className="absolute top-12 right-0 w-64 max-h-[calc(100vh-150px)] overflow-y-auto p-2 bg-[#1E1E1E] border border-[#333333] rounded-lg shadow-lg z-50">
-              {userAddress && (
-                <button
-                  onClick={navigateToProfile}
-                  className="cursor-pointer w-full text-left py-3 px-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
-                >
-                  <div className="font-medium text-gray-300">Connected Wallet</div>
-                  <div className="mt-1 font-mono text-gray-400 truncate">{userAddress}</div>
-                </button>
+              {(userAddress || user?.email?.address) && (
+                <div className="py-1">
+                  <button
+                    onClick={navigateToProfile}
+                    className="cursor-pointer w-full text-left py-2 px-3 border-b border-[#333333] text-xs hover:bg-[#2D2D2D] rounded-md transition-colors"
+                  >
+                    {userAddress ? (
+                      <>
+                        <div className="font-medium text-gray-300">Connected Wallet</div>
+                        <div className="mt-1 font-mono text-gray-400 truncate">{userAddress}</div>
+                      </>
+                    ) : user?.email?.address ? (
+                      <>
+                        <div className="font-medium text-gray-300">Connected Email</div>
+                        <div className="mt-1 font-mono text-gray-400 truncate">{user.email.address}</div>
+                      </>
+                    ) : null}
+                  </button>
+                </div>
               )}
               <div>
                 <div className="py-1">
                   <button
                     onClick={navigateToDashboard}
-                    className="cursor-pointer w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2D2D2D] rounded-md flex items-center gap-2"
+                    className={`w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-2 ${
+                      supabaseUser 
+                        ? "cursor-pointer text-white hover:bg-[#2D2D2D]" 
+                        : "cursor-not-allowed text-gray-500"
+                    }`}
                     disabled={!supabaseUser}
                   >
                     <Icons.FiFolder size={16} />
@@ -126,7 +145,7 @@ export const Menu = ({ onMenuToggle }: MenuProps) => {
                     Documentation
                   </button>
                 </div>
-                <div className="border-t border-[#333333] py-3">
+                <div className="border-t border-[#333333] py-2">
                   <div className="text-xs text-gray-400 px-3 pb-1">Network</div>
                   <div className="flex flex-col gap-1">
                     <button

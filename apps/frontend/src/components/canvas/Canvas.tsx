@@ -84,7 +84,19 @@ function Flow() {
   
   const nodeTypesData = useMemo(() => createNodeTypes(setNodes), [setNodes]);
 
-  const canEdit = lessonMode || isProjectOwner;
+  const canEdit = lessonMode || (isProjectOwner && supabaseUser) || (!supabaseUser && !projectId);
+  
+  useEffect(() => {
+    if (projectLoadedRef.current) {
+      if (!supabaseUser) {
+        setIsProjectOwner(false);
+        projectLoadedRef.current = false;
+      } else if (projectId) {
+        setIsProjectOwner(false);
+        projectLoadedRef.current = false;
+      }
+    }
+  }, [supabaseUser?.id, projectId]);
 
   // Handle project change notification from Menu component
   const handleProjectChange = useCallback(() => {
@@ -106,7 +118,56 @@ function Flow() {
     }
     
     const loadProjectFromStorage = async () => {
-      if (!supabaseUser || (projectLoadedRef.current && !localStorage.getItem('forceProjectReload'))) {
+      if (projectLoadedRef.current && !localStorage.getItem('forceProjectReload')) {
+        setIsLoading(false);
+        return;
+      }
+      
+      // If no user is logged in
+      if (!supabaseUser) {
+        const storedProjectId = localStorage.getItem('currentProjectId');
+        
+        // If there's a project ID, try to load it as a public project
+        if (storedProjectId) {
+          try {
+            const projectData: Project | null = await getProject(storedProjectId);
+            
+            if (projectData?.is_public === true) {
+              // Load public project in view-only mode
+              setProjectId(storedProjectId);
+              setProjectData(projectData);
+              setIsProjectOwner(false);
+              setNodes(projectData.nodes ? [...projectData.nodes] : []);
+              setEdges(projectData.edges ? [...projectData.edges] : []);
+              setTimeout(() => {
+                saveState(projectData.nodes || [], projectData.edges || []);
+              }, 100);
+            } else {
+              // Project is private or doesn't exist, clear it and show blank canvas
+              localStorage.removeItem('currentProjectId');
+              setNodes([]);
+              setEdges([]);
+              setProjectId(null);
+              setIsProjectOwner(false);
+              clearHistory();
+            }
+          } catch (error) {
+            console.error('Error loading public project:', error);
+            localStorage.removeItem('currentProjectId');
+            setNodes([]);
+            setEdges([]);
+            setProjectId(null);
+            setIsProjectOwner(false);
+            clearHistory();
+          }
+        } else {
+          // No project ID, just provide a blank canvas for viewing
+          setNodes([]);
+          setEdges([]);
+          setProjectId(null);
+          setIsProjectOwner(false);
+          clearHistory();
+        }
         setIsLoading(false);
         return;
       }
@@ -164,11 +225,7 @@ function Flow() {
     };
     
     loadProjectFromStorage();
-    
-    return () => {
-      projectLoadedRef.current = false;
-    };
-  }, [supabaseUser, setNodes, setEdges, isLoading, lessonMode]);
+  }, [supabaseUser, setNodes, setEdges, lessonMode, saveState, clearHistory]);
 
   useEffect(() => {
     if (urlCourseId && urlLessonId) {
