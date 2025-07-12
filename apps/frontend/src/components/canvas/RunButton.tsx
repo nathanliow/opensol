@@ -10,10 +10,9 @@ import { nodeUtils } from '@/utils/nodeUtils';
 
 // Function imports
 import { createFileFromUrl } from '../../utils/createFileFromUrl';
-import { useTokenMint } from '../../hooks/useTokenMint';
+import { useSolanaOperations } from '../../hooks/useSolanaOperations';
 import { uploadImageToPinata } from '../../ipfs/uploadImageToPinata';
 import { uploadMetadataToPinata } from '../../ipfs/uploadMetadataToPinata';
-import { useTokenTransfer } from '@/hooks/useTokenTransfer';
 
 interface RunButtonProps {
   onOutput: (output: string) => void;
@@ -28,8 +27,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
   const { apiKeys, network } = useConfig();
   const reactFlowInstance = useReactFlow();
   
-  const { mintToken: reactMintToken } = useTokenMint();
-  const { transferToken: reactTransferToken } = useTokenTransfer();
+  const { executeSolanaOperation } = useSolanaOperations();
 
   const handleRun = useCallback(() => {
     try {
@@ -151,65 +149,12 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
       // Store execution results for updating node outputs (nodeId => result)
       const executionResults = new Map<string, OutputValueType>();
       
-      const mintToken = async (
-        name: string, 
-        symbol: string, 
-        description: string, 
-        imageUrl: string,
-        decimals: number, 
-        supply: number, 
-        metadataUri: string,
-        nodeId: string  
-      ) => {
-        try {          
-          const result = await reactMintToken(
-            name, 
-            symbol, 
-            description, 
-            imageUrl, 
-            decimals, 
-            supply, 
-            metadataUri,
-          );
-
-          executionResults.set(nodeId, result);
-          
-          return result;
-        } catch (error) {
-          console.error('Error in runMintToken:', error);
-          return null;
-        }
-      };
-
-      const transferToken = async (
-        tokenAddress: string,
-        amount: number,
-        recipient: string,
-        nodeId: string
-      ) => {
-        try {
-          const result = await reactTransferToken(
-            tokenAddress,
-            amount,
-            recipient,
-          );
-
-          executionResults.set(nodeId, result);
-
-          return result;
-        } catch (error) {
-          console.error('Error in transferToken:', error);
-          return null;
-        }
-      };
-      
       // Prepare the function code by removing any import statements
       const cleanedFunctionCode = functionCode.replace(/import\s+.*?from\s+.*?;/g, '');
       
       // Execute the flow with function injection
       const executeWithContext = new Function(
-        'mintToken',
-        'transferToken',
+        'executeSolanaOperation',
         'createFileFromUrl',
         'uploadImageToPinata',
         'uploadMetadataToPinata',
@@ -227,8 +172,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
           }
         }
       `)(
-        mintToken, 
-        transferToken, 
+        executeSolanaOperation, 
         createFileFromUrl, 
         uploadImageToPinata, 
         uploadMetadataToPinata, 
@@ -236,6 +180,17 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
         (nodeId: string, result: OutputValueType) => {
           if (nodeId && result) {
             executionResults.set(nodeId, result);
+            
+            // Find the node and update its output immediately
+            const node = relevantNodes.find(n => n.id === nodeId);
+            if (node) {
+              nodeUtils.updateNodeOutput(
+                node.id,
+                node.data.output?.type || 'object',
+                result,
+                reactFlowInstance.setNodes
+              );
+            }
           }
         }
       );
@@ -251,23 +206,6 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
             formattedOutput = result.output || JSON.stringify(result, null, 2);
           }
           
-          // Update node outputs with execution results
-          executionResults.forEach((result, nodeId) => {
-            if (result) {
-              // Find the node and update its output
-              const node = relevantNodes.find(n => n.id === nodeId);
-              if (node) {
-                // Update the node with the mint result
-                nodeUtils.updateNodeOutput(
-                  node.id,
-                  node.data.output?.type || 'object',
-                  result,
-                  reactFlowInstance.setNodes
-                );
-              }
-            }
-          });
-          
           onOutput(formattedOutput);
         })
         .catch((error: any) => {
@@ -276,7 +214,7 @@ export const RunButton = memo(({ onOutput, onCodeGenerated, onDebugGenerated, se
     } catch (error: any) {
       onOutput(`Compilation Error: ${error.message}`);
     }
-  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network, reactMintToken, reactFlowInstance]);
+  }, [nodes, edges, selectedFunction, onOutput, onCodeGenerated, onDebugGenerated, apiKeys, network, executeSolanaOperation, reactFlowInstance]);
 
   return (
     <button

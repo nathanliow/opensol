@@ -1,7 +1,7 @@
 // Blockchain functions
 import { getUserSolBalanceDisplayString, getUserSolBalanceExecuteString } from "../../../backend/src/block-functions/blockchain/get/getUserSolBalance";
-import { mintTokenString } from "@/hooks/useTokenMint";
-import { transferTokenString } from "@/hooks/useTokenTransfer";
+import { mintTokenDisplayString } from "../../../backend/src/block-functions/blockchain/mint/mintToken";
+import { transferTokenDisplayString } from "../../../backend/src/block-functions/blockchain/transfer/transferToken";
 
 // IPFS functions
 import { uploadMetadataToPinataString } from "@/ipfs/uploadMetadataToPinata";
@@ -122,8 +122,8 @@ import { minimumLedgerSlotDisplayString, minimumLedgerSlotExecuteString } from "
 export const functionDisplayStringMap: Record<string, string> = {
   // Blockchain functions
   getUserSolBalance: getUserSolBalanceDisplayString,
-  mintToken: mintTokenString,
-  transferToken: transferTokenString,
+  mintToken: mintTokenDisplayString,
+  transferToken: transferTokenDisplayString,
 
   // IPFS functions
   uploadImageToPinata: uploadImageToPinataString,
@@ -245,8 +245,8 @@ export const functionDisplayStringMap: Record<string, string> = {
 export const functionExecuteStringMap: Record<string, string> = {
   // Blockchain functions
   getUserSolBalance: getUserSolBalanceExecuteString,
-  mintToken: mintTokenString,
-  transferToken: transferTokenString,
+  mintToken: mintTokenDisplayString,
+  transferToken: transferTokenDisplayString,
 
   // IPFS functions
   uploadImageToPinata: uploadImageToPinataString,
