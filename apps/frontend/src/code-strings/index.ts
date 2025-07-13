@@ -1,7 +1,7 @@
 // Blockchain functions
 import { getUserSolBalanceDisplayString, getUserSolBalanceExecuteString } from "../../../backend/src/block-functions/blockchain/get/getUserSolBalance";
-import { mintTokenDisplayString } from "../../../backend/src/block-functions/blockchain/mint/mintToken";
-import { transferTokenDisplayString } from "../../../backend/src/block-functions/blockchain/transfer/transferToken";
+import { mintTokenDisplayString } from "@/hooks/functions/mintToken";
+import { transferTokenDisplayString } from "@/hooks/functions/transferToken";
 
 // IPFS functions
 import { uploadMetadataToPinataString } from "@/ipfs/uploadMetadataToPinata";
