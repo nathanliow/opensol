@@ -10,8 +10,6 @@ import { SolanaOperationOptions, SolanaOperationResult } from '@/types/SolanaOpe
 import { executeMintToken, MintTokenParams } from '../../../backend/src/block-functions/blockchain/mint/mintToken';
 import { executeTransferToken, TransferTokenParams } from '../../../backend/src/block-functions/blockchain/transfer/transferToken';
 
-type OperationParams = MintTokenParams | TransferTokenParams | Record<string, any>;
-
 export const useSolanaOperations = () => {
   const { authenticated } = usePrivy();
   const { ready, wallets } = useSolanaWallets();
@@ -26,7 +24,7 @@ export const useSolanaOperations = () => {
 
   const executeSolanaOperation = useCallback(async (
     operationType: string,
-    params: OperationParams,
+    params: Record<string, any>,
     options: SolanaOperationOptions = {}
   ): Promise<SolanaOperationResult> => {
     try {
@@ -78,9 +76,9 @@ export const useSolanaOperations = () => {
   ) => {
     switch (operationType) {
       case 'mintToken':
-        return await executeMintToken(params as MintTokenParams & { connection: Connection; wallet: any; walletAddress: string }, options);
+        return await executeMintToken(params as MintTokenParams & { connection: Connection; wallet: any; walletAddress: string; }, options);
       case 'transferToken':
-        return await executeTransferToken(params as TransferTokenParams & { connection: Connection; wallet: any; walletAddress: string }, options);
+        return await executeTransferToken(params as TransferTokenParams & { connection: Connection; wallet: any; walletAddress: string; }, options);
       case 'getAccount':
         return await executeGetAccount(params, options);
       case 'createAccount':
@@ -265,11 +263,11 @@ export const useSolanaOperations = () => {
   };
 
   // Convenience methods for specific operations
-  const mintToken = useCallback(async (params: MintTokenParams): Promise<SolanaOperationResult> => {
+  const mintToken = useCallback(async (params: MintTokenParams & Record<string, any>): Promise<SolanaOperationResult> => {
     return executeSolanaOperation('mintToken', params, { requiresSigning: true });
   }, [executeSolanaOperation]);
 
-  const transferToken = useCallback(async (params: TransferTokenParams): Promise<SolanaOperationResult> => {
+  const transferToken = useCallback(async (params: TransferTokenParams & Record<string, any>): Promise<SolanaOperationResult> => {
     return executeSolanaOperation('transferToken', params, { requiresSigning: true });
   }, [executeSolanaOperation]);
 
