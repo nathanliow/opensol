@@ -7,8 +7,8 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useSolanaWallets } from '@privy-io/react-auth/solana';
 import { useConfig } from '@/contexts/ConfigContext';
 import { SolanaOperationOptions, SolanaOperationResult } from '@/types/SolanaOperationTypes';
-import { executeMintToken, MintTokenParams } from '../../../backend/src/block-functions/blockchain/mint/mintToken';
-import { executeTransferToken, TransferTokenParams } from '../../../backend/src/block-functions/blockchain/transfer/transferToken';
+import { executeMintToken, MintTokenParams } from './functions/mintToken';
+import { executeTransferToken, TransferTokenParams } from './functions/transferToken';
 
 export const useSolanaOperations = () => {
   const { authenticated } = usePrivy();

@@ -33,7 +33,7 @@ export interface MintTokenParams {
 }
 
 export const executeMintToken = async (
-  params: MintTokenParams & Record<string, any>,
+  params: MintTokenParams & { connection: Connection; wallet: any; walletAddress: string },
   options: SolanaOperationOptions
 ) => {
   const {

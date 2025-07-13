@@ -9,7 +9,7 @@ export interface TransferTokenParams {
 }
 
 export const executeTransferToken = async (
-  params: TransferTokenParams & Record<string, any>,
+  params: TransferTokenParams & { connection: Connection; wallet: any; walletAddress: string },
   options: SolanaOperationOptions
 ) => {
   const {
