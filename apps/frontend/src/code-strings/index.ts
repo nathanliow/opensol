@@ -1,7 +1,7 @@
 // Blockchain functions
 import { getUserSolBalanceDisplayString, getUserSolBalanceExecuteString } from "../../../backend/src/block-functions/blockchain/get/getUserSolBalance";
-import { mintTokenString } from "@/hooks/useTokenMint";
-import { transferTokenString } from "@/hooks/useTokenTransfer";
+import { mintTokenDisplayString } from "@/hooks/functions/mintToken";
+import { transferTokenDisplayString } from "@/hooks/functions/transferToken";
 
 // IPFS functions
 import { uploadMetadataToPinataString } from "@/ipfs/uploadMetadataToPinata";
@@ -119,11 +119,14 @@ import { getVoteAccountsDisplayString, getVoteAccountsExecuteString } from "../.
 import { isBlockhashValidDisplayString, isBlockhashValidExecuteString } from "../../../backend/src/block-functions/provider/helius/isBlockhashValid";
 import { minimumLedgerSlotDisplayString, minimumLedgerSlotExecuteString } from "../../../backend/src/block-functions/provider/helius/minimumLedgerSlot";
 
+// Solana
+import { getAccountString } from "../../../backend/src/block-functions/provider/solana/getAccount";
+
 export const functionDisplayStringMap: Record<string, string> = {
   // Blockchain functions
   getUserSolBalance: getUserSolBalanceDisplayString,
-  mintToken: mintTokenString,
-  transferToken: transferTokenString,
+  mintToken: mintTokenDisplayString,
+  transferToken: transferTokenDisplayString,
 
   // IPFS functions
   uploadImageToPinata: uploadImageToPinataString,
@@ -240,13 +243,16 @@ export const functionDisplayStringMap: Record<string, string> = {
   getVoteAccounts: getVoteAccountsDisplayString,
   isBlockhashValid: isBlockhashValidDisplayString,
   minimumLedgerSlot: minimumLedgerSlotDisplayString,
+  
+  // Solana functions
+  getAccount: getAccountString,
 };
 
 export const functionExecuteStringMap: Record<string, string> = {
   // Blockchain functions
   getUserSolBalance: getUserSolBalanceExecuteString,
-  mintToken: mintTokenString,
-  transferToken: transferTokenString,
+  mintToken: mintTokenDisplayString,
+  transferToken: transferTokenDisplayString,
 
   // IPFS functions
   uploadImageToPinata: uploadImageToPinataString,
@@ -363,4 +369,7 @@ export const functionExecuteStringMap: Record<string, string> = {
   getVoteAccounts: getVoteAccountsExecuteString,
   isBlockhashValid: isBlockhashValidExecuteString,
   minimumLedgerSlot: minimumLedgerSlotExecuteString,
+  
+  // Solana functions
+  getAccount: getAccountString,
 };

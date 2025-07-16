@@ -241,6 +241,8 @@ export class FlowCompiler {
         return `helius_${counter}`;
       case 'BIRDEYE':
         return `birdeye_${counter}`;
+      case 'SOLANA':
+        return `solana_${counter}`;
       default:
         return `result_${counter}`;
     }
@@ -523,6 +525,60 @@ export class FlowCompiler {
         }
       }
 
+      case 'SOLANA': {
+        const templateName = node.data.inputs?.['function']?.value || '';
+        if (!templateName || typeof templateName !== 'string') return '';
+        
+        const template = this.templates[templateName];
+        if (!template) return '';
+
+        const templateParams = this.getTemplateParams(templateName);
+        const nodeInputs = nodeUtils.getFlowNode(this.nodes, node.id)?.data.inputs;
+        const connectedInputs = this.getNodeInputVarNames(node.id); 
+        const parameters: Record<string, any> = {};
+        
+        templateParams.forEach(param => {
+          const paramName = param.name;
+          if (paramName !== 'connection') {
+            if (connectedInputs[paramName]) {
+              parameters[paramName] = connectedInputs[paramName];
+            } else if (nodeInputs && nodeInputs[paramName]) {
+              parameters[paramName] = nodeInputs[paramName].value;
+            }
+          }
+        });
+
+        if (this.isGeneratingDisplayCode) {
+          // For display code, generate direct function call and add import
+          const functionName = this.setFunctionImport(template);
+          
+          // Add connection parameter for display code
+          const displayParameters = { connection: 'connection', ...parameters };
+          const paramsString = Object.entries(displayParameters)
+            .map(([key, value]) => this.formatParam(key, value))
+            .join(', ');
+
+          return `const ${varName} = await ${functionName}({ ${paramsString} });`;
+        } else {
+          // For function code, use executeSolanaOperation - do NOT inject function code
+          // since executeSolanaOperation handles dynamic imports correctly
+          const paramsString = Object.entries(parameters)
+            .map(([key, value]) => this.formatParam(key, value))
+            .join(', ');
+
+          let code = `const ${varName} = await executeSolanaOperation('${templateName}', { ${paramsString} });`;
+          
+          // Add updateNodeOutput call for tracking results
+          code += `\nif (${varName}.success && ${varName}.data) {`;
+          code += `\n  updateNodeOutput(${JSON.stringify(node.id)}, ${varName}.data);`;
+          code += `\n} else {`;
+          code += `\n  updateNodeOutput(${JSON.stringify(node.id)}, ${varName});`;
+          code += `\n}`;
+
+          return code;
+        }
+      }
+
       case 'MINT': {        
         const name = node.data.inputs?.['name']?.value || '';
         const symbol = node.data.inputs?.['symbol']?.value || '';
@@ -530,52 +586,116 @@ export class FlowCompiler {
         const image = node.data.inputs?.['image']?.value || '';
         const supply = node.data.inputs?.['supply']?.value || 1000000000;
 
-        return [
-          `// Upload image first if it's a URL`,
-          `let finalImageUrl_${varName} = ${JSON.stringify(image)};`,
-          `if (typeof finalImageUrl_${varName} === 'string' && (finalImageUrl_${varName}.startsWith('http') || finalImageUrl_${varName}.startsWith('blob:'))) {`,
-          `  try {`,
-          `    const imageFile = await createFileFromUrl(finalImageUrl_${varName});`,
-          `    if (imageFile) {`,
-          `      finalImageUrl_${varName} = await uploadImageToPinata(imageFile);`,
-          `    }`,
-          `  } catch (error) {`,
-          `    console.error('Error uploading image to Pinata:', error);`,
-          `  }`,
-          `}`,
-          ``,
-          `// Create and upload metadata`,
-          `let finalMetadataUri_${varName} = null;`,
-          `let metadataUploadAttempted_${varName} = false;`,
-          `if (!metadataUploadAttempted_${varName}) {`,
-          `  metadataUploadAttempted_${varName} = true;`,
-          `  try {`,
-          `    const metadata = {`,
-          `      name: ${JSON.stringify(name)},`,
-          `      symbol: ${JSON.stringify(symbol)},`,
-          `      description: ${JSON.stringify(description)},`,
-          `      image: finalImageUrl_${varName},`,
-          `      showName: true,`,
-          `      createdOn: "openSOL"`,
-          `    };`,
-          `    finalMetadataUri_${varName} = await uploadMetadataToPinata(metadata);`,
-          `  } catch (error) {`,
-          `    console.error('Error uploading metadata to Pinata:', error);`,
-          `    finalMetadataUri_${varName} = "";`,
-          `  }`,
-          `}`,
-          ``,
-          `const ${varName} = await mintToken(`,
-          `  ${JSON.stringify(name)},`,
-          `  ${JSON.stringify(symbol)},`, 
-          `  ${JSON.stringify(description)},`, 
-          `  finalImageUrl_${varName},`,
-          `  9,`, 
-          `  ${supply},`, 
-          `  finalMetadataUri_${varName},`,
-          `  ${JSON.stringify(node.id || '')},`,
-          `);`
-        ].join('\n');
+        if (this.isGeneratingDisplayCode) {
+           // For display code, generate direct function call and add import
+           this.setFunctionImport(null, 'mintToken', '@opensol/blockchain/mint/mintToken');
+           this.setFunctionImport(null, 'createFileFromUrl', '@opensol/utils/createFileFromUrl');
+           this.setFunctionImport(null, 'uploadImageToPinata', '@opensol/ipfs/uploadImageToPinata');
+           this.setFunctionImport(null, 'uploadMetadataToPinata', '@opensol/ipfs/uploadMetadataToPinata');
+           
+           let code = [
+            `// Upload image first if it's a URL`,
+            `let finalImageUrl_${varName} = ${JSON.stringify(image)};`,
+            `if (typeof finalImageUrl_${varName} === 'string' && (finalImageUrl_${varName}.startsWith('http') || finalImageUrl_${varName}.startsWith('blob:'))) {`,
+            `  try {`,
+            `    const imageFile = await createFileFromUrl(finalImageUrl_${varName});`,
+            `    if (imageFile) {`,
+            `      finalImageUrl_${varName} = await uploadImageToPinata(imageFile);`,
+            `    }`,
+            `  } catch (error) {`,
+            `    console.error('Error uploading image to Pinata:', error);`,
+            `  }`,
+            `}`,
+            ``,
+            `// Create and upload metadata`,
+            `let finalMetadataUri_${varName} = null;`,
+            `let metadataUploadAttempted_${varName} = false;`,
+            `if (!metadataUploadAttempted_${varName}) {`,
+            `  metadataUploadAttempted_${varName} = true;`,
+            `  try {`,
+            `    const metadata = {`,
+            `      name: ${JSON.stringify(name)},`,
+            `      symbol: ${JSON.stringify(symbol)},`,
+            `      description: ${JSON.stringify(description)},`,
+            `      image: finalImageUrl_${varName},`,
+            `      showName: true,`,
+            `      createdOn: "openSOL"`,
+            `    };`,
+            `    finalMetadataUri_${varName} = await uploadMetadataToPinata(metadata);`,
+            `  } catch (error) {`,
+            `    console.error('Error uploading metadata to Pinata:', error);`,
+            `    finalMetadataUri_${varName} = "";`,
+            `  }`,
+            `}`,
+            ``,
+            `const ${varName} = await mintToken(`,
+            `  ${JSON.stringify(name)},`,
+            `  ${JSON.stringify(symbol)},`,
+            `  ${JSON.stringify(description)},`,
+            `  finalImageUrl_${varName},`,
+            `  9,`,
+            `  ${supply},`,
+            `  finalMetadataUri_${varName},`,
+            `  ${JSON.stringify(node.id || '')}`,
+            `);`
+          ].join('\n');
+
+          return code;
+        } else {
+          // For function code, use executeSolanaOperation
+          let code = [
+            `// Upload image first if it's a URL`,
+            `let finalImageUrl_${varName} = ${JSON.stringify(image)};`,
+            `if (typeof finalImageUrl_${varName} === 'string' && (finalImageUrl_${varName}.startsWith('http') || finalImageUrl_${varName}.startsWith('blob:'))) {`,
+            `  try {`,
+            `    const imageFile = await createFileFromUrl(finalImageUrl_${varName});`,
+            `    if (imageFile) {`,
+            `      finalImageUrl_${varName} = await uploadImageToPinata(imageFile);`,
+            `    }`,
+            `  } catch (error) {`,
+            `    console.error('Error uploading image to Pinata:', error);`,
+            `  }`,
+            `}`,
+            ``,
+            `// Create and upload metadata`,
+            `let finalMetadataUri_${varName} = null;`,
+            `let metadataUploadAttempted_${varName} = false;`,
+            `if (!metadataUploadAttempted_${varName}) {`,
+            `  metadataUploadAttempted_${varName} = true;`,
+            `  try {`,
+            `    const metadata = {`,
+            `      name: ${JSON.stringify(name)},`,
+            `      symbol: ${JSON.stringify(symbol)},`,
+            `      description: ${JSON.stringify(description)},`,
+            `      image: finalImageUrl_${varName},`,
+            `      showName: true,`,
+            `      createdOn: "openSOL"`,
+            `    };`,
+            `    finalMetadataUri_${varName} = await uploadMetadataToPinata(metadata);`,
+            `  } catch (error) {`,
+            `    console.error('Error uploading metadata to Pinata:', error);`,
+            `    finalMetadataUri_${varName} = "";`,
+            `  }`,
+            `}`,
+            ``,
+            `const ${varName} = await executeSolanaOperation('mintToken', {`,
+            `  name: ${JSON.stringify(name)},`,
+            `  symbol: ${JSON.stringify(symbol)},`, 
+            `  description: ${JSON.stringify(description)},`, 
+            `  imageUri: finalImageUrl_${varName},`,
+            `  decimals: 9,`, 
+            `  supply: ${supply},`, 
+            `  metadataUri: finalMetadataUri_${varName},`,
+            `  nodeId: ${JSON.stringify(node.id || '')},`,
+            `}, { requiresSigning: true });`
+          ].join('\n');
+
+          code += `\nif (${varName}.success && ${varName}.data) {`;
+          code += `\n  updateNodeOutput(${JSON.stringify(node.id)}, ${varName}.data);`;
+          code += `\n}`;
+
+          return code;
+        }
       }
 
       case 'TRANSFER': {
@@ -583,13 +703,37 @@ export class FlowCompiler {
         const amount = node.data.inputs?.['amount']?.value || '';
         const recipient = node.data.inputs?.['recipient']?.value || '';
 
-        return [
-          `const ${varName} = await transferToken(`,
-          `  ${JSON.stringify(tokenAddress)},`, 
-          `  ${JSON.stringify(amount)},`, 
-          `  ${JSON.stringify(recipient)},`,
-          `);`
-        ].join('\n');
+        if (this.isGeneratingDisplayCode) {
+          // For display code, generate direct function call and add import
+          this.setFunctionImport(null, 'transferToken', '@opensol/blockchain/transfer/transferToken');
+          
+          let code = [
+            `const ${varName} = await transferToken(`,
+            `  ${JSON.stringify(tokenAddress)},`,
+            `  ${JSON.stringify(amount)},`,
+            `  ${JSON.stringify(recipient)},`,
+            `  ${JSON.stringify(node.id || '')}`,
+            `);`
+          ].join('\n');
+
+          return code;
+        } else {
+          // For function code, use executeSolanaOperation
+          let code = [
+            `const ${varName} = await executeSolanaOperation('transferToken', {`,
+            `  tokenAddress: ${JSON.stringify(tokenAddress)},`, 
+            `  amount: ${JSON.stringify(amount)},`, 
+            `  recipientAddress: ${JSON.stringify(recipient)},`,
+            `  nodeId: ${JSON.stringify(node.id || '')},`,
+            `}, { requiresSigning: true });`
+          ].join('\n');
+
+          code += `\nif (${varName}.success && ${varName}.data) {`;
+          code += `\n  updateNodeOutput(${JSON.stringify(node.id)}, ${varName}.data);`;
+          code += `\n}`;
+
+          return code;
+        }
       }
 
       case 'STRING': {
@@ -1138,36 +1282,37 @@ export class FlowCompiler {
 
     const printLinesJoined = this.printOutputs.map(line => `  ${line}`).join('\n');
 
-    if (this.nodes.some(n => n.type === 'MINT')) {
-      this.imports.push({ 
-        importName: 'mintToken', 
-        importPath: '@opensol/blockchain/mint'
-      });
-      if (!this.imports.some(imp => imp.importName === 'uploadImageToPinata')) {
-        this.imports.push({
-          importName: 'uploadImageToPinata',
-          importPath: '@opensol/ipfs/uploadImageToPinata'
+    // Add imports based on whether we're generating display code or function code
+    if (this.nodes.some(n => n.type === 'MINT' || n.type === 'TRANSFER' || n.type === 'SOLANA')) {
+      if (!this.isGeneratingDisplayCode) {
+        // For function code, add executeSolanaOperation
+        this.imports.push({ 
+          importName: 'executeSolanaOperation', 
+          importPath: '@opensol/hooks/useSolanaOperations'
         });
       }
-      if (!this.imports.some(imp => imp.importName === 'uploadMetadataToPinata')) {
-        this.imports.push({
-          importName: 'uploadMetadataToPinata',
-          importPath: '@opensol/ipfs/uploadMetadataToPinata'
-        });
+      
+      // Always add these utility imports when MINT/TRANSFER nodes are present
+      if (this.nodes.some(n => n.type === 'MINT' || n.type === 'TRANSFER')) {
+        if (!this.imports.some(imp => imp.importName === 'uploadImageToPinata')) {
+          this.imports.push({
+            importName: 'uploadImageToPinata',
+            importPath: '@opensol/ipfs/uploadImageToPinata'
+          });
+        }
+        if (!this.imports.some(imp => imp.importName === 'uploadMetadataToPinata')) {
+          this.imports.push({
+            importName: 'uploadMetadataToPinata',
+            importPath: '@opensol/ipfs/uploadMetadataToPinata'
+          });
+        }
+        if (!this.imports.some(imp => imp.importName === 'createFileFromUrl')) {
+          this.imports.push({
+            importName: 'createFileFromUrl',
+            importPath: '@opensol/utils/createFileFromUrl'
+          });
+        }
       }
-      if (!this.imports.some(imp => imp.importName === 'createFileFromUrl')) {
-        this.imports.push({
-          importName: 'createFileFromUrl',
-          importPath: '@opensol/utils/createFileFromUrl'
-        });
-      }
-    }
-
-    if (this.nodes.some(n => n.type === 'TRANSFER')) {
-      this.imports.push({
-        importName: 'transferToken',
-        importPath: '@opensol/blockchain/transfer'
-      });
     }
 
     const savedNoImports = this.noImports;
@@ -1178,6 +1323,8 @@ export class FlowCompiler {
       .replace('NODE_CODE_HERE', indentedNodeCode)
       .replace('PRINT_OUTPUT_HERE', printLinesJoined);
 
+    // Clear imports for display code generation
+    this.imports = [];
     this.noImports = false;
     this.isGeneratingDisplayCode = true; 
     this.nodeOutputVarNames.clear();
