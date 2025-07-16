@@ -108,6 +108,8 @@ import { getWalletPortfolio } from './provider/birdeye/getWalletPortfolio';
 import { getWalletTokenBalance } from './provider/birdeye/getWalletTokenBalance';
 import { getWalletTransactionHistory } from './provider/birdeye/getWalletTransactionHistory';
 
+import { getAccount } from './provider/solana/getAccount';
+
 // Group templates by their block type
 export const templates: Record<string, Record<string, BlockFunctionTemplate>> = {
   GET: {
@@ -220,6 +222,9 @@ export const templates: Record<string, Record<string, BlockFunctionTemplate>> = 
     getWalletPortfolio,
     getWalletTokenBalance,
     getWalletTransactionHistory,
+  },
+  SOLANA: {
+    getAccount
   },
   MATH: {
     solToUsd,

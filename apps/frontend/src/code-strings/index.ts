@@ -119,6 +119,9 @@ import { getVoteAccountsDisplayString, getVoteAccountsExecuteString } from "../.
 import { isBlockhashValidDisplayString, isBlockhashValidExecuteString } from "../../../backend/src/block-functions/provider/helius/isBlockhashValid";
 import { minimumLedgerSlotDisplayString, minimumLedgerSlotExecuteString } from "../../../backend/src/block-functions/provider/helius/minimumLedgerSlot";
 
+// Solana
+import { getAccountString } from "../../../backend/src/block-functions/provider/solana/getAccount";
+
 export const functionDisplayStringMap: Record<string, string> = {
   // Blockchain functions
   getUserSolBalance: getUserSolBalanceDisplayString,
@@ -240,6 +243,9 @@ export const functionDisplayStringMap: Record<string, string> = {
   getVoteAccounts: getVoteAccountsDisplayString,
   isBlockhashValid: isBlockhashValidDisplayString,
   minimumLedgerSlot: minimumLedgerSlotDisplayString,
+  
+  // Solana functions
+  getAccount: getAccountString,
 };
 
 export const functionExecuteStringMap: Record<string, string> = {
@@ -363,4 +369,7 @@ export const functionExecuteStringMap: Record<string, string> = {
   getVoteAccounts: getVoteAccountsExecuteString,
   isBlockhashValid: isBlockhashValidExecuteString,
   minimumLedgerSlot: minimumLedgerSlotExecuteString,
+  
+  // Solana functions
+  getAccount: getAccountString,
 };

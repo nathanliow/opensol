@@ -9,18 +9,36 @@ import { useConfig } from '@/contexts/ConfigContext';
 import { SolanaOperationOptions, SolanaOperationResult } from '@/types/SolanaOperationTypes';
 import { executeMintToken, MintTokenParams } from './functions/mintToken';
 import { executeTransferToken, TransferTokenParams } from './functions/transferToken';
+import { executeGetAccount } from './functions/solana/executeGetAccount';
 
 export const useSolanaOperations = () => {
   const { authenticated } = usePrivy();
   const { ready, wallets } = useSolanaWallets();
   const solanaWallet = wallets[0];
-  const { network } = useConfig();
+  const { network, apiKeys } = useConfig();
   const [loading, setLoading] = useState(false);
 
   const getConnection = useCallback((requiresMainnet = false) => {
     const networkType = requiresMainnet ? 'mainnet-beta' : network === 'mainnet' ? 'mainnet-beta' : network;
+    
+    // Use Helius RPC if API key is available
+    const heliusApiKey = apiKeys?.helius?.key;
+    if (heliusApiKey && heliusApiKey.trim() !== '') {
+      let heliusUrl: string;
+      switch (networkType) {
+        case 'mainnet-beta':
+          heliusUrl = `https://mainnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+          break;
+        case 'devnet':
+        default:
+          heliusUrl = `https://devnet.helius-rpc.com/?api-key=${heliusApiKey}`;
+          break;
+      }
+      return new Connection(heliusUrl);
+    }
+    
     return new Connection(clusterApiUrl(networkType));
-  }, [network]);
+  }, [network, apiKeys]);
 
   const executeSolanaOperation = useCallback(async (
     operationType: string,
@@ -81,184 +99,8 @@ export const useSolanaOperations = () => {
         return await executeTransferToken(params as TransferTokenParams & { connection: Connection; wallet: any; walletAddress: string; }, options);
       case 'getAccount':
         return await executeGetAccount(params, options);
-      case 'createAccount':
-        return await executeCreateAccount(params, options);
-      case 'createMint':
-        return await executeCreateMint(params, options);
       default:
         throw new Error(`Unknown Solana operation: ${operationType}`);
-    }
-  };
-
-  const executeGetAccount = async (
-    params: Record<string, any>,
-    options: SolanaOperationOptions
-  ) => {
-    const { connection, address, commitment = 'confirmed', programId = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' } = params;
-
-    try {
-      // Dynamic imports for Solana SPL Token functionality
-      const { getAccount, TOKEN_PROGRAM_ID } = await import('@solana/spl-token');
-      const { PublicKey } = await import('@solana/web3.js');
-
-        const addressPubkey = new PublicKey(address);
-        const programIdPubkey = programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' 
-          ? TOKEN_PROGRAM_ID 
-          : new PublicKey(programId);
-        
-        const accountInfo = await getAccount(
-          connection,
-          addressPubkey,
-          commitment as any,
-          programIdPubkey
-        );
-      
-      return {
-        data: {
-          success: true,
-          address: accountInfo.address.toString(),
-          mint: accountInfo.mint.toString(),
-          owner: accountInfo.owner.toString(),
-          amount: accountInfo.amount.toString(),
-          delegate: accountInfo.delegate?.toString() || null,
-          delegatedAmount: accountInfo.delegatedAmount.toString(),
-          isInitialized: accountInfo.isInitialized,
-          isFrozen: accountInfo.isFrozen,
-          isNative: accountInfo.isNative,
-          rentExemptReserve: accountInfo.rentExemptReserve?.toString() || null,
-          closeAuthority: accountInfo.closeAuthority?.toString() || null,
-          commitment
-        },
-        signature: undefined // getAccount is a read operation, no signature
-      };
-    } catch (error) {
-      throw new Error(`Error getting account: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
-
-  
-  const executeCreateMint = async (
-    params: Record<string, any>,
-    options: SolanaOperationOptions
-  ) => {
-    const { connection, mintAuthority, freezeAuthority, decimals = 9, keypair, commitment = 'confirmed', programId = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' } = params;
-
-    if (options.requiresSigning) {
-      try {
-        // Dynamic imports for Solana SPL Token functionality
-        const { createMint, TOKEN_PROGRAM_ID } = await import('@solana/spl-token');
-        const { PublicKey, Keypair } = await import('@solana/web3.js');
-        const bs58Module = await import('bs58');
-        const bs58 = bs58Module.default || bs58Module;
-
-        const mintAuthorityPubkey = new PublicKey(mintAuthority);
-        const freezeAuthorityPubkey = freezeAuthority ? new PublicKey(freezeAuthority) : null;
-        const programIdPubkey = programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' 
-          ? TOKEN_PROGRAM_ID 
-          : new PublicKey(programId);
-          
-        const keypairObj = keypair ? Keypair.fromSecretKey(bs58.decode(keypair)) : undefined;
-        const payerKeypair = params.wallet; // Use connected wallet as payer
-        
-        const newMintPubkey = await createMint(
-          connection,
-          payerKeypair,
-          mintAuthorityPubkey,
-          freezeAuthorityPubkey,
-          decimals,
-          keypairObj,
-          { commitment: commitment as any },
-          programIdPubkey
-        );
-        
-        return {
-          data: {
-            success: true,
-            publicKey: newMintPubkey.toString(),
-            mintAuthority: mintAuthority,
-            freezeAuthority: freezeAuthority,
-            decimals: decimals,
-            commitment
-          },
-          signature: undefined // createMint returns PublicKey, not transaction signature
-        };
-      } catch (error) {
-        throw new Error(`Error creating mint: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    } else {
-      // Non-signing operation (read-only)
-      return {
-        data: {
-          success: true,
-          message: 'Mint creation requires signing',
-          mintAuthority,
-          freezeAuthority,
-          decimals,
-          commitment
-        },
-        signature: undefined
-      };
-    }
-  };
-
-  const executeCreateAccount = async (
-    params: Record<string, any>,
-    options: SolanaOperationOptions
-  ) => {
-    const { connection, mint, owner, keypair, commitment = 'confirmed', programId = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' } = params;
-
-    if (options.requiresSigning) {
-      try {
-        // Dynamic imports for Solana SPL Token functionality
-        const { createAccount, TOKEN_PROGRAM_ID } = await import('@solana/spl-token');
-        const { PublicKey, Keypair } = await import('@solana/web3.js');
-        const bs58Module = await import('bs58');
-        const bs58 = bs58Module.default || bs58Module;
-
-        const mintPubkey = new PublicKey(mint);
-        const ownerPubkey = new PublicKey(owner);
-        const programIdPubkey = programId === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' 
-          ? TOKEN_PROGRAM_ID 
-          : new PublicKey(programId);
-          
-        const keypairObj = keypair ? Keypair.fromSecretKey(bs58.decode(keypair)) : undefined;
-        const payerKeypair = params.wallet; // Use connected wallet as payer
-        
-        const newAccountPubkey = await createAccount(
-          connection,
-          payerKeypair,
-          mintPubkey,
-          ownerPubkey,
-          keypairObj,
-          { commitment: commitment as any },
-          programIdPubkey
-        );
-        
-        return {
-          data: {
-            success: true,
-            publicKey: newAccountPubkey.toString(),
-            mint: mint,
-            owner: owner,
-            commitment
-          },
-          signature: undefined // createAccount returns PublicKey, not transaction signature
-        };
-      } catch (error) {
-        throw new Error(`Error creating token account: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    } else {
-      // Non-signing operation (read-only)
-      return {
-        data: {
-          success: true,
-          message: 'Token account creation requires signing',
-          mint,
-          owner,
-          commitment
-        },
-        signature: undefined
-      };
     }
   };
 
@@ -275,21 +117,11 @@ export const useSolanaOperations = () => {
     return executeSolanaOperation('getAccount', params, { requiresSigning: false });
   }, [executeSolanaOperation]);
 
-  const createAccount = useCallback(async (params: Record<string, any>): Promise<SolanaOperationResult> => {
-    return executeSolanaOperation('createAccount', params, { requiresSigning: true });
-  }, [executeSolanaOperation]);
-
-  const createMint = useCallback(async (params: Record<string, any>): Promise<SolanaOperationResult> => {
-    return executeSolanaOperation('createMint', params, { requiresSigning: true });
-  }, [executeSolanaOperation]);
-
   return {
     executeSolanaOperation,
     mintToken,
     transferToken,
     getAccount,
-    createAccount,
-    createMint,
     loading
   };
 };

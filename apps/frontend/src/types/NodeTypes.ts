@@ -16,6 +16,7 @@ import TransferNode from "../components/nodes/blockchain/TransferNode";
 
 import HeliusNode from "../components/nodes/provider/HeliusNode";
 import BirdeyeNode from "../components/nodes/provider/BirdeyeNode";
+import SolanaNode from "../components/nodes/provider/SolanaNode";
 
 /*
  * FRONTEND TYPES FOR NODES AND EDGES
@@ -64,6 +65,7 @@ export const createNodeTypes = (setNodes: (updater: any) => void) => ({
   // Provider
   HELIUS: HeliusNode,
   BIRDEYE: BirdeyeNode,
+  SOLANA: SolanaNode,
 
   // Misc
 
@@ -446,6 +448,36 @@ export const nodeTypes: Record<string, NodeType> = {
         handleId: 'input-function',
         type: 'string',
         value: ''
+      }
+    },
+    defaultOutput: {
+      handleId: 'output',
+      type: 'object',
+      value: {}
+    }
+  },
+  SOLANA: {
+    metadata: {
+      id: 'SOLANA',
+      label: 'SOLANA',
+      category: 'Provider',
+      documentationUrl: 'https://opensol-2.gitbook.io/opensol/nodes/provider/solana',
+      backgroundColor: 'bg-[#9945FF]',
+      borderColor: 'border-[#9945FF]',
+      primaryColor: '[#9945FF]',
+      secondaryColor: '[#14F195]',
+      textColor: 'text-black',
+    },
+    defaultInputs: {
+      function: {
+        handleId: 'input-function',
+        type: 'string',
+        value: ''
+      },
+      network: {
+        handleId: 'input-network',
+        type: 'string',
+        value: 'devnet'
       }
     },
     defaultOutput: {

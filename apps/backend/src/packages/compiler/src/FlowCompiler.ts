@@ -241,6 +241,8 @@ export class FlowCompiler {
         return `helius_${counter}`;
       case 'BIRDEYE':
         return `birdeye_${counter}`;
+      case 'SOLANA':
+        return `solana_${counter}`;
       default:
         return `result_${counter}`;
     }
@@ -520,6 +522,60 @@ export class FlowCompiler {
           return code;
         } else {
           return `const ${varName} = await ${functionName}({ ${paramsString} });`;
+        }
+      }
+
+      case 'SOLANA': {
+        const templateName = node.data.inputs?.['function']?.value || '';
+        if (!templateName || typeof templateName !== 'string') return '';
+        
+        const template = this.templates[templateName];
+        if (!template) return '';
+
+        const templateParams = this.getTemplateParams(templateName);
+        const nodeInputs = nodeUtils.getFlowNode(this.nodes, node.id)?.data.inputs;
+        const connectedInputs = this.getNodeInputVarNames(node.id); 
+        const parameters: Record<string, any> = {};
+        
+        templateParams.forEach(param => {
+          const paramName = param.name;
+          if (paramName !== 'connection') {
+            if (connectedInputs[paramName]) {
+              parameters[paramName] = connectedInputs[paramName];
+            } else if (nodeInputs && nodeInputs[paramName]) {
+              parameters[paramName] = nodeInputs[paramName].value;
+            }
+          }
+        });
+
+        if (this.isGeneratingDisplayCode) {
+          // For display code, generate direct function call and add import
+          const functionName = this.setFunctionImport(template);
+          
+          // Add connection parameter for display code
+          const displayParameters = { connection: 'connection', ...parameters };
+          const paramsString = Object.entries(displayParameters)
+            .map(([key, value]) => this.formatParam(key, value))
+            .join(', ');
+
+          return `const ${varName} = await ${functionName}({ ${paramsString} });`;
+        } else {
+          // For function code, use executeSolanaOperation - do NOT inject function code
+          // since executeSolanaOperation handles dynamic imports correctly
+          const paramsString = Object.entries(parameters)
+            .map(([key, value]) => this.formatParam(key, value))
+            .join(', ');
+
+          let code = `const ${varName} = await executeSolanaOperation('${templateName}', { ${paramsString} });`;
+          
+          // Add updateNodeOutput call for tracking results
+          code += `\nif (${varName}.success && ${varName}.data) {`;
+          code += `\n  updateNodeOutput(${JSON.stringify(node.id)}, ${varName}.data);`;
+          code += `\n} else {`;
+          code += `\n  updateNodeOutput(${JSON.stringify(node.id)}, ${varName});`;
+          code += `\n}`;
+
+          return code;
         }
       }
 
